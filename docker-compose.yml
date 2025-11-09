@@ -29,7 +29,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=postgresql://admin:admin_password@db:5432/analytics_db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - FASTAPI_ENV=development
     depends_on:
@@ -56,9 +56,13 @@ services:
       - POSTGRES_PASSWORD=admin_password
       - POSTGRES_DB=analytics_db
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - 2019Nov_clean_postgres_data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d
+
+
+
 
 volumes:
   redis_data:
-  postgres_data:
+  2019Nov_clean_postgres_data:
+
