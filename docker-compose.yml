@@ -29,8 +29,8 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - DATABASE_URL=postgresql://admin:admin_password@db:5432/analytics_db
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - API_KEY=${API_KEY} # 
       - FASTAPI_ENV=development
     depends_on:
       - redis
@@ -46,23 +46,19 @@ services:
       - redis_data:/data
     command: redis-server --appendonly yes
 
-  # PostgreSQL Database (Read-only access for app)
+  # PostgreSQL Database
   db:
     image: postgres:15-alpine
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=admin_password
-      - POSTGRES_DB=analytics_db
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     volumes:
       - 2019Nov_clean_postgres_data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d
 
-
-
-
 volumes:
   redis_data:
   2019Nov_clean_postgres_data:
-
