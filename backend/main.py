@@ -1,12 +1,13 @@
 # Main FastAPI application
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.api.routes import router
-from app.database import connection
 from app.config import settings
+from app.database import connection
 
 
 @asynccontextmanager

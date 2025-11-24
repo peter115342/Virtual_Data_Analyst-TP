@@ -1,9 +1,10 @@
 # PostgreSQL connection with READ-ONLY access
 
 
+import re
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-import re
 
 
 class DatabaseManager:
@@ -63,7 +64,7 @@ class DatabaseManager:
             ]
             for keyword in dangerous_keywords:
                 if re.search(keyword, sql, re.IGNORECASE):
-                    raise ValueError(f"Write operation not allowed in read-only mode")
+                    raise ValueError("Write operation not allowed in read-only mode")
 
         with self.engine.connect() as conn:
             if self.readonly:

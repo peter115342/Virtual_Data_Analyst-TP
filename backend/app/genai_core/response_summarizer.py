@@ -1,7 +1,9 @@
 # LLM-based response formatting and summarization
 
 import json
+
 from openai import OpenAI
+
 from app.config import settings
 
 
