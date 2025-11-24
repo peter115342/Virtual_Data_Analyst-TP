@@ -27,24 +27,12 @@ services:
     volumes:
       - ./backend:/app
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
-      - API_KEY=${API_KEY} # 
+      - API_KEY=${API_KEY}
       - FASTAPI_ENV=development
     depends_on:
-      - redis
       - db
     command: uv run fastapi dev main.py --host 0.0.0.0 --port 8000
-
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
 
   # PostgreSQL Database
   db:
@@ -60,5 +48,4 @@ services:
       - ./db/init:/docker-entrypoint-initdb.d
 
 volumes:
-  redis_data:
   2019Nov_clean_postgres_data:

@@ -1,30 +1,47 @@
-# TODO: Implement the main FastAPI application
+# Main FastAPI application
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
-# TODO: Import routers from api module
-# TODO: Import database connection
-# TODO: Import Redis cache connection
+from app.api.routes import router
+from app.database import connection
+from app.config import settings
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage startup and shutdown events"""
+    connection.db_manager = connection.DatabaseManager(
+        database_url=settings.database_url, readonly=settings.database_readonly
+    )
+    await connection.db_manager.connect()
+    print("Database connected")
+
+    yield
+
+    await connection.db_manager.disconnect()
+    print("Database disconnected")
+
 
 app = FastAPI(
     title="Virtual Data Analyst API",
     description="GenAI-powered dashboard generator backend",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
-# TODO: Configure CORS middleware with proper origins
+# Configure CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: Use environment variable
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# TODO: Add startup event to initialize Redis and Database connections
-# TODO: Add shutdown event to close connections
-# TODO: Include API routers
+# Include API router
+app.include_router(router)
 
 
 @app.get("/")
@@ -35,6 +52,8 @@ async def root():
 @app.get("/health")
 async def health_check():
     """
-    TODO: Add Redis and Database connection checks
+    Health check endpoint with database status
     """
-    return {"status": "healthy", "redis": "TODO", "database": "TODO"}
+    db_status = "connected" if connection.db_manager else "not initialized"
+
+    return {"status": "healthy", "database": db_status}

@@ -1,48 +1,124 @@
-# TODO: Implement PostgreSQL connection with READ-ONLY access
+# PostgreSQL connection with READ-ONLY access
 
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+import re
 
 
 class DatabaseManager:
     def __init__(self, database_url: str, readonly: bool = True):
         """
-        TODO: Initialize database connection
-        TODO: Ensure read-only mode is enforced
+        Initialize database connection
+        Ensure read-only mode is enforced
         """
         self.readonly = readonly
+        self.database_url = database_url
         self.engine = None
         self.session_maker = None
 
     async def connect(self):
         """
-        TODO: Establish database connection
-        TODO: Configure for read-only if readonly=True
+        Establish database connection
+        Configure for read-only if readonly=True
         """
-        pass
+        self.engine = create_engine(
+            self.database_url, pool_size=5, max_overflow=10, pool_pre_ping=True, echo=False
+        )
+
+        self.session_maker = sessionmaker(bind=self.engine)
+
+        with self.engine.connect() as conn:
+            if self.readonly:
+                conn.execute(text("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY"))
+            conn.execute(text("SELECT 1"))
 
     async def disconnect(self):
         """
-        TODO: Close database connection
+        Close database connection
         """
-        pass
+        if self.engine:
+            self.engine.dispose()
 
     async def execute_query(self, sql: str) -> list[dict]:
         """
         Execute SQL query (read-only)
-
-        TODO: Implement query execution
-        TODO: Add safety checks to prevent write operations
-        TODO: Return results as list of dictionaries
+        Add safety checks to prevent write operations
+        Return results as list of dictionaries
         """
-        pass
+        if not self.engine:
+            raise RuntimeError("Database not connected. Call connect() first.")
+
+        if self.readonly:
+            dangerous_keywords = [
+                r"\bINSERT\b",
+                r"\bUPDATE\b",
+                r"\bDELETE\b",
+                r"\bDROP\b",
+                r"\bCREATE\b",
+                r"\bALTER\b",
+                r"\bTRUNCATE\b",
+                r"\bGRANT\b",
+                r"\bREVOKE\b",
+            ]
+            for keyword in dangerous_keywords:
+                if re.search(keyword, sql, re.IGNORECASE):
+                    raise ValueError(f"Write operation not allowed in read-only mode")
+
+        with self.engine.connect() as conn:
+            if self.readonly:
+                conn.execute(text("SET TRANSACTION READ ONLY"))
+
+            result = conn.execute(text(sql))
+
+            columns = result.keys()
+            rows = [dict(zip(columns, row)) for row in result.fetchall()]
+
+            return rows
 
     async def get_schema(self) -> dict:
         """
         Get database schema for LLM context
-
-        TODO: Query information_schema
-        TODO: Return formatted schema information
+        Query information_schema
+        Return formatted schema information
         """
-        pass
+        if not self.engine:
+            raise RuntimeError("Database not connected. Call connect() first.")
+
+        schema_query = """
+        SELECT 
+            table_name,
+            column_name,
+            data_type,
+            is_nullable
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+        ORDER BY table_name, ordinal_position
+        """
+
+        rows = await self.execute_query(schema_query)
+
+        schema = {}
+        for row in rows:
+            table = row["table_name"]
+            if table not in schema:
+                schema[table] = []
+            schema[table].append(
+                {
+                    "column": row["column_name"],
+                    "type": row["data_type"],
+                    "nullable": row["is_nullable"] == "YES",
+                }
+            )
+
+        return schema
+
+
+db_manager: DatabaseManager | None = None
+
+
+def get_db_manager() -> DatabaseManager:
+    """Dependency to get database manager instance"""
+    if db_manager is None:
+        raise RuntimeError("Database manager not initialized")
+    return db_manager
