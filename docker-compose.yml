@@ -26,9 +26,10 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+    env_file:
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
-      - API_KEY=${API_KEY}
       - FASTAPI_ENV=development
     depends_on:
       - db
