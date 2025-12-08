@@ -176,6 +176,47 @@ async def generate_sql(request: GenerateSQLRequest):
         raise HTTPException(status_code=500, detail=f"Error generating SQL: {str(e)}")
 
 
+@router.post("/ask", response_model=AskResponse)
+async def ask(request: AskRequest):
+    """
+    Returns:
+        - question: The original question
+        - sql_query: The generated SQL query
+        - summary: Natural language summary of results
+        - row_count: Number of rows returned
+    """
+    try:
+        db = get_db_manager()
+        generator = QueryGenerator()
+        summarizer = ResponseSummarizer()
+
+        schema = await db.get_schema()
+
+        sql_query = await generator.generate_query(request.question, schema)
+
+        data = await db.execute_query(sql_query)
+        row_count = len(data)
+
+        summary = await summarizer.summarize_query_results(
+            sql_query=sql_query, data=data, context=request.question
+        )
+
+        return AskResponse(
+            status="success",
+            question=request.question,
+            sql_query=sql_query,
+            summary=summary,
+            row_count=row_count,
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error processing question: {str(e)}"
+        )
+
+
 @router.post("/query-and-summarize", response_model=QueryResponse)
 async def query_and_summarize(request: QueryRequest):
     """
