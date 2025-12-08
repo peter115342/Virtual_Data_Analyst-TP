@@ -1,6 +1,5 @@
 # Configuration management using pydantic-settings
 
-
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
