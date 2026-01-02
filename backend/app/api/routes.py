@@ -8,6 +8,8 @@ from pydantic import BaseModel
 
 from app.database.connection import get_db_manager
 from app.genai_core.response_summarizer import ResponseSummarizer
+from app.database.utils import build_postgres_url
+from app.database import connection
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -254,6 +256,43 @@ async def query_and_summarize(request: QueryRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
+
+
+@router.post("/connect-database")
+async def connect_database(request: PostgresConnectRequest):
+    """
+    Create connection to database
+
+    Returns:
+        - Status of database connection
+    """
+    try:
+        databse_url = build_postgres_url(
+            username=request.username,
+            password=request.password,
+            host=request.host,
+            port=request.port,
+            database=request.database,
+        )
+
+        # close old connection (if exists)
+        if connection.db_manager:
+            await connection.db_manager.disconnect()
+
+        # create new connection
+        connection.db_manager = connection.DatabaseManager(
+            url=databse_url,
+        )
+
+        await connection.db_manager.connect()
+
+        return {
+            "status": "success",
+            "message": "Database connection established",
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error connecting database: {str(e)}")
 
 
 @router.get("/schema")
