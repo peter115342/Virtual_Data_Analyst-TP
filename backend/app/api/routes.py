@@ -3,7 +3,7 @@ Main API Routes
 TODO: Implement API endpoints according to architecture
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 from app.database.connection import get_db_manager
@@ -119,6 +119,18 @@ class QueryResponse(BaseModel):
     row_count: int
 
 
+class PostgresConnectRequest(BaseModel):
+    """
+    Postgres database connect request
+    """
+
+    host: str
+    port: int = 5432
+    username: str
+    password: str
+    database: str
+
+
 @router.post("/query-and-summarize", response_model=QueryResponse)
 async def query_and_summarize(request: QueryRequest):
     """
@@ -146,3 +158,8 @@ async def query_and_summarize(request: QueryRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
+
+
+@router.get("/schema")
+async def schema(db = Depends(get_db_manager)):
+    return await db.get_schema()
