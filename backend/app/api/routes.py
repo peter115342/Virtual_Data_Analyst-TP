@@ -156,10 +156,10 @@ class PostgresConnectRequest(BaseModel):
     """
 
     host: str
-    port: int = 5432
+    port: int
     username: str
     password: str
-    database: str
+    db_name: str
 
 
 @router.post("/generate-sql", response_model=GenerateSQLResponse)
@@ -272,7 +272,7 @@ async def connect_database(request: PostgresConnectRequest):
             password=request.password,
             host=request.host,
             port=request.port,
-            database=request.database,
+            db_name=request.db_name,
         )
 
         # close old connection (if exists)
