@@ -11,16 +11,20 @@ from app.database import connection
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage startup and shutdown events"""
-    connection.db_manager = connection.DatabaseManager(
-        database_url=settings.database_url, readonly=settings.database_readonly
-    )
-    await connection.db_manager.connect()
-    print("Database connected")
+    if settings.database_url:
+        connection.db_manager = connection.DatabaseManager(
+            database_url=settings.database_url, readonly=settings.database_readonly
+        )
+        await connection.db_manager.connect()
+        print("Database connected")
+    else:
+        print("No DATABASE_URL provided - use /api/connect-database endpoint to connect")
 
     yield
 
-    await connection.db_manager.disconnect()
-    print("Database disconnected")
+    if connection.db_manager:
+        await connection.db_manager.disconnect()
+        print("Database disconnected")
 
 
 app = FastAPI(

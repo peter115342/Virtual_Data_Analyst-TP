@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 from app.database.connection import get_db_manager
+from app.genai_core.query_generator import QueryGenerator
 from app.genai_core.response_summarizer import ResponseSummarizer
 from app.database.utils import build_postgres_url
 from app.database import connection
@@ -267,7 +268,7 @@ async def connect_database(request: PostgresConnectRequest):
         - Status of database connection
     """
     try:
-        databse_url = build_postgres_url(
+        database_url = build_postgres_url(
             username=request.username,
             password=request.password,
             host=request.host,
@@ -281,7 +282,7 @@ async def connect_database(request: PostgresConnectRequest):
 
         # create new connection
         connection.db_manager = connection.DatabaseManager(
-            url=databse_url,
+            database_url=database_url,
         )
 
         await connection.db_manager.connect()
