@@ -293,7 +293,34 @@ async def connect_database(request: PostgresConnectRequest):
         }
 
     except Exception as e:
+        connection.db_manager = None
         raise HTTPException(status_code=400, detail=f"Error connecting database: {str(e)}")
+
+
+@router.post("/disconnect-database")
+async def disconnect_database():
+    """
+    Remove database connection
+
+    Returns:
+        - Status of database disconnection
+    """
+    try:
+        # close old connection (if exists)
+        if connection.db_manager:
+            await connection.db_manager.disconnect()
+            connection.db_manager = None
+            return {
+                "status": "success",
+                "message": "Database disconnected",
+            }
+        else:
+            return {
+                "message": "Database connection was not established - disconnection not possible",
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error disconnecting database: {str(e)}")
 
 
 @router.get("/schema")
