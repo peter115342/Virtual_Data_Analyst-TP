@@ -3,12 +3,14 @@ Main API Routes
 TODO: Implement API endpoints according to architecture
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 from app.database.connection import get_db_manager
 from app.genai_core.query_generator import QueryGenerator
 from app.genai_core.response_summarizer import ResponseSummarizer
+from app.database.utils import build_postgres_url
+from app.database import connection
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -149,6 +151,18 @@ class QueryResponse(BaseModel):
     row_count: int
 
 
+class PostgresConnectRequest(BaseModel):
+    """
+    Postgres database connect request
+    """
+
+    host: str
+    port: int
+    username: str
+    password: str
+    db_name: str
+
+
 @router.post("/generate-sql", response_model=GenerateSQLResponse)
 async def generate_sql(request: GenerateSQLRequest):
     """
@@ -243,3 +257,72 @@ async def query_and_summarize(request: QueryRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
+
+
+@router.post("/connect-database")
+async def connect_database(request: PostgresConnectRequest):
+    """
+    Create connection to database
+
+    Returns:
+        - Status of database connection
+    """
+    try:
+        database_url = build_postgres_url(
+            username=request.username,
+            password=request.password,
+            host=request.host,
+            port=request.port,
+            db_name=request.db_name,
+        )
+
+        # close old connection (if exists)
+        if connection.db_manager:
+            await connection.db_manager.disconnect()
+
+        # create new connection
+        connection.db_manager = connection.DatabaseManager(
+            database_url=database_url,
+        )
+
+        await connection.db_manager.connect()
+
+        return {
+            "status": "success",
+            "message": "Database connection established",
+        }
+
+    except Exception as e:
+        connection.db_manager = None
+        raise HTTPException(status_code=400, detail=f"Error connecting database: {str(e)}")
+
+
+@router.post("/disconnect-database")
+async def disconnect_database():
+    """
+    Remove database connection
+
+    Returns:
+        - Status of database disconnection
+    """
+    try:
+        # close old connection (if exists)
+        if connection.db_manager:
+            await connection.db_manager.disconnect()
+            connection.db_manager = None
+            return {
+                "status": "success",
+                "message": "Database disconnected",
+            }
+        else:
+            return {
+                "message": "Database connection was not established - disconnection not possible",
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error disconnecting database: {str(e)}")
+
+
+@router.get("/schema")
+async def schema(db = Depends(get_db_manager)):
+    return await db.get_schema()

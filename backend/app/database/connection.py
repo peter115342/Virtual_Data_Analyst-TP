@@ -87,7 +87,7 @@ class DatabaseManager:
             raise RuntimeError("Database not connected. Call connect() first.")
 
         schema_query = """
-        SELECT
+        SELECT 
             table_name,
             column_name,
             data_type,

@@ -29,24 +29,21 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - DATABASE_URL=
       - FASTAPI_ENV=development
-    depends_on:
-      - db
     command: uv run fastapi dev main.py --host 0.0.0.0 --port 8000
 
-  # PostgreSQL Database
-  db:
-    image: postgres:15-alpine
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
-    volumes:
-      - 2019Nov_clean_postgres_data:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d
+  # db:
+  #   image: postgres:15-alpine
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     - POSTGRES_USER=${DB_USER}
+  #     - POSTGRES_PASSWORD=${DB_PASSWORD}
+  #     - POSTGRES_DB=${DB_NAME}
+  #   volumes:
+  #     - 2019Nov_clean_postgres_data:/var/lib/postgresql/data
+  #     - ./db/init:/docker-entrypoint-initdb.d
 
-volumes:
-  2019Nov_clean_postgres_data:
+# volumes:
+#   2019Nov_clean_postgres_data:
