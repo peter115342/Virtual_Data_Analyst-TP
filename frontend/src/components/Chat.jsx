@@ -1,20 +1,51 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import InputQuestion from "./InputQuestion"
 import UserMessage from "./UserMessage"
-
+import { askQuestion } from "../services/databaseService";
 
 export default function Chat() {
     const [messages, setMessages] = useState([])
 
-    const handleSend = (text) => {
-        console.log("HANDLE SEND", text)
+    const handleSend = async (text) => {
+        setMessages((prev) => [
+            ...prev,
+            { text, fromUser: true },
+            { text: "Thinking...", fromUser: false, loading: true },
+        ]);
 
-        setMessages(prev => [
-        ...prev,
-        { text, fromUser: true },
-        { text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", fromUser: false }
-        ])
-    }
+        try {
+            const result = await askQuestion(text);
+
+            setMessages((prev) => {
+                const messagesWithoutThinking = prev.slice(0, -1);
+
+                return [
+                    ...messagesWithoutThinking,
+                    {
+                        text: `${result.summary || "No response."}\n\nSQL Query: ${result.sql_query || "N/A"}`,
+                        fromUser: false,
+                        sql: result.sql_query,
+                        rowCount: result.row_count,
+                    },
+                ];
+            });
+        } catch (error) {
+            setMessages((prev) => {
+                const messagesWithoutThinking = prev.slice(0, -1);
+
+                return [
+                    ...messagesWithoutThinking,
+                    {
+                        text: "❌ Failed to get response from server.",
+                        fromUser: false,
+                    },
+                ];
+            });
+        }
+    };
+
+
+
 
     return (
         <div className="h-screen flex flex-col justify-end bg-gray-700 p-4 gap-2" >
