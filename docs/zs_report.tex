@@ -1,3 +1,4 @@
+
 \documentclass[a4paper, 12pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -381,6 +382,137 @@ Na základe testovania sme sa rozhodli pre kombináciu:
 \end{itemize}
 
 \clearpage
+\section{Databázová vrstva}
+Databázová vrstva predstavuje jednu zo základných súčastí navrhovanej aplikácie, keďže zabezpečuje ukladanie, spracovanie a poskytovanie dát pre ostatné komponenty systému. 
+
+\subsection{Počiatočný návrh databázovej vrstvy}
+
+Databázovú časť sme v úvodnej fáze vývoja navrhli tak, aby poskytovala dostatočný základ pre testovanie aplikácie a prácu s dátami. 
+Použili sme kontajnerové riešenie, vďaka ktorému bolo možné databázu rýchlo spustiť a jednoducho integrovať do vývojového prostredia. 
+Kontajner umožnil opakovateľné nasadenie rovnakého databázového prostredia, čo výrazne uľahčilo overovanie správnej funkcionality prepojenia s backendom.
+
+Ako prvú databázu sme zvolili PostgreSQL, ktorá je stabilná a široko používaná relačná databáza. 
+Štruktúra databázy vychádzala z verejne dostupného datasetu z platformy  \textbf{Kaggle}, ktorý obsahuje údaje o správaní zákazníkov v e-commerce prostredí.\newline 
+
+Pred samotným použitím sme dataset upravili tak, aby bolo možné dáta efektívne využívať počas vývoja a testovania aplikácie. 
+Konkrétne sme vykonali nasledujúce úpravy:
+
+\begin{itemize}
+    \item odstránili sme neúplné záznamy, ktoré by mohli negatívne ovplyvniť testovanie,
+    \item zjednotili sme dátové typy pre zjednodušenie importu a spracovania dát,
+    \item pripravili sme dataset na automatický import do databázy.\newline
+\end{itemize}
+
+\noindent 
+V inicializačnom SQL skripte sme vytvorili tabuľku \texttt{events}, ktorá obsahuje kľúčové stĺpce:
+
+\begin{itemize}
+    \item \texttt{event\_id} – jedinečný identifikátor udalosti,
+    \item \texttt{event\_time} – čas vzniku udalosti,
+    \item \texttt{event\_type} – typ udalosti,
+    \item \texttt{product\_id}, \texttt{category\_id},
+    \item \texttt{category\_code}, \texttt{brand},
+    \item \texttt{price}, \texttt{user\_id},
+    \item \texttt{user\_session}.\newline
+\end{itemize}
+
+Súčasťou skriptu bolo aj vytvorenie indexov pre rýchle vyhľadávanie podľa času udalosti, typu udalosti, produktu a používateľa. 
+Tento prístup umožňuje efektívnu prácu s databázou aj pri väčších objemoch dát. 
+Dáta sa automaticky načítavali zo súboru CSV pri štarte databázového kontajnera, takže boli hneď pripravené na testovanie.
+Takto pripravená databáza umožnila overiť správnu komunikáciu backendu s databázou, testovať základné operácie s dátami a kontrolovať korektnosť ich spracovania. 
+Napriek tomu, že nešlo o finálnu databázovú vrstvu, predstavovala vhodný základ pre ďalší vývoj aplikácie.\clearpage
+V tejto fáze bola databáza súčasťou rovnakého projektu \texttt{Docker Compose} ako backend a frontend, čo umožňovalo spúšťanie všetkých služieb naraz a výrazne zjednodušovalo integráciu a úvodné testovanie aplikácie.
+
+S postupujúcim vývojom aplikácie sme sa rozhodli databázu oddeliť do samostatného súboru \texttt{Docker Compose}. 
+Toto riešenie umožňuje databázu spúšťať a spravovať nezávisle od backendu a frontendu, zjednodušuje jej samostatné testovanie a poskytuje väčšiu kontrolu nad konfiguráciou databázového prostredia, napríklad pri zmene verzie databázy. 
+Oddelenie databázy zároveň vytvára priestor pre ďalšie úpravy a plánované rozšírenia aplikácie o podporu rôznych typov databáz.
+
+\subsection{Pripájanie na databázu}
+
+Po vytvorení a inicializácii databázového prostredia bolo ďalším krokom návrh a implementácia aplikačnej vrstvy, ktorá umožňuje backendu dynamicky sa pripájať k databáze.
+
+Databázový konektor bol navrhnutý ako samostatná logická súčasť backendu, ktorá sprostredkúva komunikáciu medzi aplikáciou a databázou PostgreSQL. 
+Cieľom bolo umožniť flexibilné pripojenie k rôznym databázovým inštanciám bez nutnosti meniť kód aplikácie.
+Hlavné vlastnosti konektora:
+
+\begin{itemize}
+    \item bol implementovaný ako modul vo FastAPI,
+    \item využíva štandardné PostgreSQL knižnice na nadväzovanie spojenia,
+    \item podporuje dynamické vytváranie pripojenia na základe vstupov používateľa,
+    \item uchováva informáciu o aktívnom pripojení počas behu aplikácie.
+\end{itemize}
+
+\subsubsection{API endpointy pre správu pripojenia}
+
+Na ovládanie databázového spojenia sme vytvorili dva samostatné API endpointy:
+
+\begin{enumerate}
+    \item Endpoint na pripojenie k databáze
+    \begin{itemize}
+        \item umožňuje používateľovi nadviazať spojenie s databázou,
+        \item prijíma prihlasovacie údaje v tele požiadavky,
+        \item po úspešnom pripojení vracia potvrdenie o nadviazaní spojenia.
+    \end{itemize}
+    \item Endpoint na odpojenie od databázy
+    \begin{itemize}
+        \item slúži na bezpečné ukončenie aktívneho pripojenia,
+        \item používateľ ho aktivuje jednoduchým kliknutím (alebo volaním endpointu),
+        \item zabezpečuje uvoľnenie zdrojov na strane backendu.\newline
+    \end{itemize}
+\end{enumerate}
+\clearpage
+\noindent
+Pri vytváraní spojenia používateľ zadáva nasledujúce parametre:
+
+\begin{itemize}
+    \item Host – adresa databázového servera,
+    \item User – meno databázového používateľa,
+    \item Password – prístupové heslo k databáze,
+    \item Database name – meno cieľovej databázy,
+    \item Port – port, na ktorom databáza počúva.
+\end{itemize}
+
+\noindent
+Tieto údaje sú zasielané backendu, ktorý ich následne spracuje.
+Na základe zadaných údajov aplikácia automaticky vytvorí tzv. connection string.
+Tento reťazec sa následne použije na inicializáciu spojenia s databázou prostredníctvom databázovej knižnice.
+
+\subsubsection*{Podporované typy pripojenia}
+
+Aplikácia umožňuje pripojenie na dva typy databázových prostredí:
+\begin{itemize}
+    \item Lokálnu databázu
+    \begin{itemize}
+        \item bežiacu priamo na počítači vývojára alebo serveri,
+        \item vhodnú najmä na vývoj a testovanie.
+    \end{itemize}
+    \item Databázu spustenú v Docker kontajneri
+    \begin{itemize}
+        \item bežiacu na pozadí ako samostatná služba,
+        \item prístupnú cez názov kontajnera alebo localhost,
+        \item využívanú najmä pri integrácii s ostatnými službami v Docker Compose.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection*{Odpojenie databázy}
+
+Proces odpojenia je riešený jednoducho:
+\begin{itemize}
+    \item používateľ aktivuje endpoint na odpojenie,
+    \item backend uzavrie aktívne spojenie,
+    \item systém uvoľní pridelené zdroje,
+    \item aplikácia prejde do stavu „nepripojená“.
+    \item Tento mechanizmus zabraňuje zbytočnému držaniu otvorených spojení.
+\end{itemize}
+
+\noindent
+Po úspešnom pripojení k databáze aplikácia umožňuje:
+\begin{itemize}
+    \item načítať zoznam dostupných tabuliek,
+    \item zobraziť stĺpce vybranej tabuľky,
+    \item vypísať názvy stĺpcov spolu s ich dátovými typmi.
+\end{itemize}
+
 \clearpage
 \section{Frontendová časť aplikácie}
 
@@ -575,6 +707,12 @@ Pri vypracovaní projektu sme využili nasledujúce AI nástroje ako podporné p
     
     \item Redis Documentation. (2025). \textit{Redis Documentation}. \\
     \url{https://redis.io/documentation}
+
+    \item Medium (2023). \textit{Building Fast and Robust APIs with FastAPI and SQL Databases}. \\
+    \url{https://medium.com/towards-data-engineering/fastapi-with-sql-1c7852ccbf21}
+    
+    \item Budibase. (2023). \textit{How to Integrate Multiple Databases}. \\
+    \url{https://budibase.com/blog/data/how-to-integrate-multiple-databases/}
     
     \item Vite Documentation. (2025). \textit{Vite - Next Generation Frontend Tooling}. \\
     \url{https://vitejs.dev/}
