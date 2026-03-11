@@ -324,5 +324,16 @@ async def disconnect_database():
 
 
 @router.get("/schema")
-async def schema(db = Depends(get_db_manager)):
-    return await db.get_schema()
+# async def schema(db = Depends(get_db_manager)):
+#     return await db.get_schema()
+async def schema():
+    if not connection.db_manager:
+        return {
+            "status": "not connected",
+            "message": "Database is not connected."
+        }
+    try:
+        schema = await connection.db_manager.get_schema()
+        return schema
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching schema: {str(e)}")

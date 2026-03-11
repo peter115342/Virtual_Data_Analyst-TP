@@ -246,5 +246,7 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+# CSV files
+db/init_db_bike_store/*.csv
 
 .vscode/

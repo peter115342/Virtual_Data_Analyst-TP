@@ -1,0 +1,25 @@
+# Standalone PostgreSQL Database for testing, docker-compose -f docker-compose.db_bikes.yml up -d
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: vda-test-db-joins
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+      - POSTGRES_DB=${DB_NAME:-db_name}
+    volumes:
+      - vda_postgres_data_test_joins:/var/lib/postgresql/data
+      - ./db/init_db_bike_store:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  vda_postgres_data_test_joins:
