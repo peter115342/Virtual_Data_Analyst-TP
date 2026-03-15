@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from app.database.connection import get_db_manager
 from app.genai_core.query_generator import QueryGenerator
 from app.genai_core.response_summarizer import ResponseSummarizer
-from app.database.utils import build_postgres_url
+from app.database.utils import build_postgres_url, build_mysql_url
 from app.database import connection
 
 router = APIRouter(prefix="/api", tags=["api"])
@@ -162,6 +162,17 @@ class PostgresConnectRequest(BaseModel):
     password: str
     db_name: str
 
+class MysqlConnectRequest(BaseModel):
+    """
+    MySQL database connect request
+    """
+
+    host: str
+    port: int
+    username: str
+    password: str
+    db_name: str
+
 
 @router.post("/generate-sql", response_model=GenerateSQLResponse)
 async def generate_sql(request: GenerateSQLRequest):
@@ -260,7 +271,7 @@ async def query_and_summarize(request: QueryRequest):
 
 
 @router.post("/connect-database")
-async def connect_database(request: PostgresConnectRequest):
+async def connect_database(request: MysqlConnectRequest):
     """
     Create connection to database
 
@@ -268,7 +279,15 @@ async def connect_database(request: PostgresConnectRequest):
         - Status of database connection
     """
     try:
-        database_url = build_postgres_url(
+        # database_url = build_postgres_url(
+        #     username=request.username,
+        #     password=request.password,
+        #     host=request.host,
+        #     port=request.port,
+        #     db_name=request.db_name,
+        # )
+
+        database_url = build_mysql_url(
             username=request.username,
             password=request.password,
             host=request.host,
