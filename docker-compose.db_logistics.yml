@@ -1,0 +1,33 @@
+# Standalone MSSQL Database for testing, docker-compose -f docker-compose.db_logistics.yml up -d
+
+version: '3.8'
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: vda-db-logistics
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: ${MSSQL_SA_PASSWORD:-example_password}
+      MSSQL_PID: ${MSSQL_PRODUCT_ID:-dev}
+    volumes:
+      - vda_test_ms_sqlserver_data:/var/opt/mssql
+      - ./db/init_db_logistics:/init
+      - ./db/csv:/csv
+    command: >
+      /bin/bash -c "
+      /opt/mssql/bin/sqlservr &
+      sleep 20 &&
+      /init/init.sh
+      wait
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P ${MSSQL_SA_PASSWORD:-example_123} -Q 'SELECT 1' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  vda_test_ms_sqlserver_data:
