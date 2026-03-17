@@ -3,7 +3,7 @@
 
 import re
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, inspect
 from sqlalchemy.orm import sessionmaker
 
 
@@ -31,7 +31,16 @@ class DatabaseManager:
 
         with self.engine.connect() as conn:
             if self.readonly:
-                conn.execute(text("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY"))
+                dialect = self.engine.dialect.name
+
+                if dialect == "postgresql":
+                    conn.execute(text(
+                        "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY"))
+                elif dialect == "mysql":
+                    conn.execute(text("SET SESSION TRANSACTION READ ONLY"))
+                else:
+                    raise ValueError(f"Unsupported database dialect{dialect}")
+
             conn.execute(text("SELECT 1"))
 
     async def disconnect(self):
@@ -86,31 +95,19 @@ class DatabaseManager:
         if not self.engine:
             raise RuntimeError("Database not connected. Call connect() first.")
 
-        schema_query = """
-        SELECT 
-            table_name,
-            column_name,
-            data_type,
-            is_nullable
-        FROM information_schema.columns
-        WHERE table_schema = 'public'
-        ORDER BY table_name, ordinal_position
-        """
-
-        rows = await self.execute_query(schema_query)
+        inspector = inspect(self.engine)
 
         schema = {}
-        for row in rows:
-            table = row["table_name"]
-            if table not in schema:
-                schema[table] = []
-            schema[table].append(
+        for table_name in inspector.get_table_names():
+            columns_info = inspector.get_columns(table_name)
+            schema[table_name] = [
                 {
-                    "column": row["column_name"],
-                    "type": row["data_type"],
-                    "nullable": row["is_nullable"] == "YES",
+                    "column": col["name"],
+                    "type": str(col["type"]),
+                    "nullable": col["nullable"],
                 }
-            )
+                for col in columns_info
+            ]
 
         return schema
 

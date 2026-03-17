@@ -1,19 +1,26 @@
 # connection urls
 
-def build_postgres_url(
+# def build_postgres_url(
+#         username: str,
+#         password: str,
+#         host: str,
+#         port: int,
+#         db_name: str,
+# ) -> str:
+#     return f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{db_name}"
+
+def build_db_connection_url(
+        type: str,
         username: str,
         password: str,
         host: str,
         port: int,
         db_name: str,
 ) -> str:
-    return f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{db_name}"
-
-def build_mysql_url(
-        username: str,
-        password: str,
-        host: str,
-        port: int, # 3306
-        db_name: str,
-) -> str:
-    return f"mysql+pymysql://{username}:{password}@{host}:{port}/{db_name}"
+    if type == "postgres":
+        return f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{db_name}"
+    if type == "mysql":
+        return f"mysql+pymysql://{username}:{password}@{host}:{port}/{db_name}"
+    else:
+        # ZLE - OPRAVIT bud ENUM alebo neviem co
+        return "bad"
