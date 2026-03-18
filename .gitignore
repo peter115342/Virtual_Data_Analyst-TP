@@ -248,5 +248,7 @@ __marimo__/
 
 # CSV files
 db/init_db_bike_store/*.csv
+db/init_db_ecommerce/*.csv
+db/init_db_logistics/csv/*.csv
 
 .vscode/

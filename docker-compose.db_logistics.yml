@@ -1,6 +1,6 @@
 # Standalone MSSQL Database for testing, docker-compose -f docker-compose.db_logistics.yml up -d
 
-version: '3.8'
+version: '3.9'
 
 services:
   db:
@@ -14,20 +14,22 @@ services:
       MSSQL_PID: ${MSSQL_PRODUCT_ID:-dev}
     volumes:
       - vda_test_ms_sqlserver_data:/var/opt/mssql
-      - ./db/init_db_logistics:/init
-      - ./db/csv:/csv
+      - ./db/init_db_logistics/init:/init
+      - ./db/init_db_logistics/csv:/csv
     command: >
       /bin/bash -c "
       /opt/mssql/bin/sqlservr &
-      sleep 20 &&
+      echo ' Waiting for SQL Server...' &&
+      sleep 25 &&
       /init/init.sh
       wait
       "
     healthcheck:
       test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P ${MSSQL_SA_PASSWORD:-example_123} -Q 'SELECT 1' || exit 1"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
 
 volumes:
   vda_test_ms_sqlserver_data:
