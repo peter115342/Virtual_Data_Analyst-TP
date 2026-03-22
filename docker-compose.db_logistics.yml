@@ -10,8 +10,8 @@ services:
       - "1433:1433"
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: ${MSSQL_SA_PASSWORD:-example_password}
-      MSSQL_PID: ${MSSQL_PRODUCT_ID:-dev}
+      SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Strong_password123!}
+      MSSQL_PID: ${MSSQL_PRODUCT_ID:-Developer}
     volumes:
       - vda_test_ms_sqlserver_data:/var/opt/mssql
       - ./db/init_db_logistics/init:/init
@@ -25,7 +25,7 @@ services:
       wait
       "
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P ${MSSQL_SA_PASSWORD:-example_123} -Q 'SELECT 1' || exit 1"]
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P ${MSSQL_SA_PASSWORD:-Strong_password123!} -Q 'SELECT 1' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10

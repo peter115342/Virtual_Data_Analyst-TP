@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from app.database.connection import get_db_manager
 from app.genai_core.query_generator import QueryGenerator
 from app.genai_core.response_summarizer import ResponseSummarizer
-from app.database.utils import build_postgres_url
+from app.database.utils import build_postgres_url, build_mssql_url
 from app.database import connection
 
 router = APIRouter(prefix="/api", tags=["api"])
@@ -268,7 +268,7 @@ async def connect_database(request: PostgresConnectRequest):
         - Status of database connection
     """
     try:
-        database_url = build_postgres_url(
+        database_url = build_mssql_url(
             username=request.username,
             password=request.password,
             host=request.host,

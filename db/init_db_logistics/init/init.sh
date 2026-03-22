@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SA_PASSWORD = ${MSSQL_SA_PASSWORD:-example_password}
+#SA_PASSWORD = ${MSSQL_SA_PASSWORD:-Strong_password123}
 
 echo " Waiting for SQL Server..."
 sleep 20
