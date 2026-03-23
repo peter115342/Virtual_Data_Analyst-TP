@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from app.database.connection import get_db_manager
 from app.genai_core.query_generator import QueryGenerator
 from app.genai_core.response_summarizer import ResponseSummarizer
-from app.database.utils import build_postgres_url
+from app.database.utils import build_db_connection_url
 from app.database import connection
 
 router = APIRouter(prefix="/api", tags=["api"])
@@ -151,11 +151,12 @@ class QueryResponse(BaseModel):
     row_count: int
 
 
-class PostgresConnectRequest(BaseModel):
+class DatabaseConnectRequest(BaseModel):
     """
-    Postgres database connect request
+    Postgres / MySQL database connect request
     """
 
+    db_type: str
     host: str
     port: int
     username: str
@@ -260,15 +261,23 @@ async def query_and_summarize(request: QueryRequest):
 
 
 @router.post("/connect-database")
-async def connect_database(request: PostgresConnectRequest):
+async def connect_database(request: DatabaseConnectRequest):
     """
     Create connection to database
 
     Returns:
         - Status of database connection
     """
+
+    valid_db_types = {"postgres", "mysql"}
+    db_type = request.db_type
+
+    if db_type not in valid_db_types:
+        raise HTTPException(status_code=400, detail=f"Invalid database type: {db_type}")
+
     try:
-        database_url = build_postgres_url(
+        database_url = build_db_connection_url(
+            type=request.db_type,
             username=request.username,
             password=request.password,
             host=request.host,
