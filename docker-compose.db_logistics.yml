@@ -16,20 +16,27 @@ services:
       - vda_test_ms_sqlserver_data:/var/opt/mssql
       - ./db/init_db_logistics/init:/init
       - ./db/init_db_logistics/csv:/csv
-    command: >
-      /bin/bash -c "
-      /opt/mssql/bin/sqlservr &
-      echo ' Waiting for SQL Server...' &&
-      sleep 25 &&
-      /init/init.sh
-      wait
-      "
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P ${MSSQL_SA_PASSWORD:-Strong_password123!} -Q 'SELECT 1' || exit 1"]
-      interval: 10s
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/1433"]
+      interval: 5s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 20
+
+  db-init:
+    image: mcr.microsoft.com/mssql-tools:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Strong_password123!}
+    volumes:
+      - ./db/init_db_logistics/init:/init
+      - ./db/init_db_logistics/csv:/csv
+    entrypoint: ["/bin/bash", "-c"]
+    command: > 
+      "apt-get update && 
+      apt-get install -y unixodbc && 
+      /init/init.sh"
 
 volumes:
   vda_test_ms_sqlserver_data:
