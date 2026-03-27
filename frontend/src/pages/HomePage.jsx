@@ -6,7 +6,7 @@ import DatabaseModal from "../components/DatabaseModal.jsx";
 import useDatabase from "../hooks/useDatabase";
 
 
-export default function HomePage() {
+export default function HomePage({ onLogout, userName }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -44,6 +44,8 @@ export default function HomePage() {
           toggle={() => setIsSidebarOpen(!isSidebarOpen)}
           onOpenDatabase={() => handleDatabaseButtonClick()}
           isConnected={isConnected}
+          onLogout={onLogout}
+          userName={userName}
         />
       </div>
 

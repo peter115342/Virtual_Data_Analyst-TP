@@ -6,6 +6,7 @@ TODO: Implement API endpoints according to architecture
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
+from app.auth.entra import validate_token
 from app.database.connection import get_db_manager
 from app.genai_core.query_generator import QueryGenerator
 from app.genai_core.response_summarizer import ResponseSummarizer
@@ -165,7 +166,7 @@ class DatabaseConnectRequest(BaseModel):
 
 
 @router.post("/generate-sql", response_model=GenerateSQLResponse)
-async def generate_sql(request: GenerateSQLRequest):
+async def generate_sql(request: GenerateSQLRequest, _claims: dict = Depends(validate_token)):
     """
     Generate SQL query from natural language question
 
@@ -192,7 +193,7 @@ async def generate_sql(request: GenerateSQLRequest):
 
 
 @router.post("/ask", response_model=AskResponse)
-async def ask(request: AskRequest):
+async def ask(request: AskRequest, _claims: dict = Depends(validate_token)):
     """
     Returns:
         - question: The original question
@@ -227,13 +228,11 @@ async def ask(request: AskRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error processing question: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error processing question: {str(e)}")
 
 
 @router.post("/query-and-summarize", response_model=QueryResponse)
-async def query_and_summarize(request: QueryRequest):
+async def query_and_summarize(request: QueryRequest, _claims: dict = Depends(validate_token)):
     """
     Execute SQL query and get LLM summary of the results
 
@@ -261,7 +260,9 @@ async def query_and_summarize(request: QueryRequest):
 
 
 @router.post("/connect-database")
-async def connect_database(request: DatabaseConnectRequest):
+async def connect_database(
+    request: DatabaseConnectRequest, _claims: dict = Depends(validate_token)
+):
     """
     Create connection to database
 
@@ -307,7 +308,7 @@ async def connect_database(request: DatabaseConnectRequest):
 
 
 @router.post("/disconnect-database")
-async def disconnect_database():
+async def disconnect_database(_claims: dict = Depends(validate_token)):
     """
     Remove database connection
 
@@ -333,14 +334,9 @@ async def disconnect_database():
 
 
 @router.get("/schema")
-# async def schema(db = Depends(get_db_manager)):
-#     return await db.get_schema()
-async def schema():
+async def schema(_claims: dict = Depends(validate_token)):
     if not connection.db_manager:
-        return {
-            "status": "not connected",
-            "message": "Database is not connected."
-        }
+        return {"status": "not connected", "message": "Database is not connected."}
     try:
         schema = await connection.db_manager.get_schema()
         return schema

@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     api_key: str = ""
     openai_base_url: str = "https://genai-sharedservice-emea.pwc.com/"
 
+    # Azure Entra ID Settings
+    azure_ad_client_id: str = ""
+    azure_ad_tenant_id: str = ""
+
     # CORS Settings
     cors_origins: str | list[str] = "http://localhost:5173"
 
