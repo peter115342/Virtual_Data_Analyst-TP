@@ -1,0 +1,203 @@
+
+ALTER SESSION SET CONTAINER = FREEPDB1;
+-- =========================
+-- DIMENSION TABLES
+-- =========================
+
+CREATE TABLE appuser.customers (
+    customer_id VARCHAR2(20) PRIMARY KEY,
+    customer_name VARCHAR2(150),
+    customer_type VARCHAR2(50),
+    credit_terms_days NUMBER,
+    primary_freight_type VARCHAR2(100),
+    account_status VARCHAR2(20),
+    contract_start_date DATE,
+    annual_revenue_potential NUMBER
+);
+
+CREATE TABLE appuser.drivers (
+    driver_id VARCHAR2(20) PRIMARY KEY,
+    first_name VARCHAR2(50),
+    last_name VARCHAR2(50),
+    hire_date DATE,
+    termination_date DATE,
+    license_number VARCHAR2(50),
+    license_state VARCHAR2(10),
+    date_of_birth DATE,
+    home_terminal VARCHAR2(100),
+    employment_status VARCHAR2(20),
+    cdl_class VARCHAR2(10),
+    years_experience NUMBER
+);
+
+CREATE TABLE appuser.trucks (
+    truck_id VARCHAR2(20) PRIMARY KEY,
+    unit_number NUMBER,
+    make VARCHAR2(50),
+    model_year NUMBER,
+    vin VARCHAR2(50),
+    acquisition_date DATE,
+    acquisition_mileage NUMBER,
+    fuel_type VARCHAR2(20),
+    tank_capacity_gallons NUMBER,
+    status VARCHAR2(20),
+    home_terminal VARCHAR2(100)
+);
+
+CREATE TABLE appuser.trailers (
+    trailer_id VARCHAR2(20) PRIMARY KEY,
+    trailer_number NUMBER,
+    trailer_type VARCHAR2(50),
+    length_feet NUMBER,
+    model_year NUMBER,
+    vin VARCHAR2(50),
+    acquisition_date DATE,
+    status VARCHAR2(20),
+    current_location VARCHAR2(100)
+);
+
+CREATE TABLE appuser.facilities (
+    facility_id VARCHAR2(20) PRIMARY KEY,
+    facility_name VARCHAR2(150),
+    facility_type VARCHAR2(50),
+    city VARCHAR2(100),
+    state VARCHAR2(10),
+    latitude FLOAT,
+    longitude FLOAT,
+    dock_doors NUMBER,
+    operating_hours VARCHAR2(50)
+);
+
+CREATE TABLE appuser.routes (
+    route_id VARCHAR2(20) PRIMARY KEY,
+    origin_city VARCHAR2(100),
+    origin_state VARCHAR2(10),
+    destination_city VARCHAR2(100),
+    destination_state VARCHAR2(10),
+    typical_distance_miles NUMBER,
+    base_rate_per_mile FLOAT,
+    fuel_surcharge_rate FLOAT,
+    transit_transit_days NUMBER
+);
+
+-- =========================
+-- FACT TABLES
+-- =========================
+
+CREATE TABLE appuser.loads (
+    load_id VARCHAR2(20) PRIMARY KEY,
+    customer_id VARCHAR2(20),
+    route_id VARCHAR2(20),
+    load_date DATE,
+    load_type VARCHAR2(50),
+    weight_lbs NUMBER,
+    pieces NUMBER,
+    revenue FLOAT,
+    fuel_surcharge FLOAT,
+    accessorial_charges FLOAT,
+    load_status VARCHAR2(20),
+    booking_type VARCHAR2(50)
+);
+
+CREATE TABLE appuser.trips (
+    trip_id VARCHAR2(20) PRIMARY KEY,
+    load_id VARCHAR2(20),
+    driver_id VARCHAR2(20),
+    truck_id VARCHAR2(20),
+    trailer_id VARCHAR2(20),
+    dispatch_date DATE,
+    actual_distance_miles NUMBER,
+    actual_duration_hours FLOAT,
+    fuel_gallons_used FLOAT,
+    average_mpg FLOAT,
+    idle_time_hours FLOAT,
+    trip_status VARCHAR2(20)
+);
+
+CREATE TABLE appuser.delivery_events (
+    event_id VARCHAR2(20) PRIMARY KEY,
+    load_id VARCHAR2(20),
+    trip_id VARCHAR2(20),
+    event_type VARCHAR2(20),
+    facility_id VARCHAR2(20),
+    scheduled_datetime TIMESTAMP,
+    actual_datetime TIMESTAMP,
+    detention_minutes NUMBER,
+    on_time_flag NUMBER(1),
+    location_city VARCHAR2(100),
+    location_state VARCHAR2(10)
+);
+
+CREATE TABLE appuser.fuel_purchases (
+    fuel_purchase_id VARCHAR2(20) PRIMARY KEY,
+    trip_id VARCHAR2(20),
+    truck_id VARCHAR2(20),
+    driver_id VARCHAR2(20),
+    purchase_datetime TIMESTAMP,
+    location_city VARCHAR2(100),
+    location_state VARCHAR2(10),
+    gallons FLOAT,
+    price_per_gallon FLOAT,
+    total_cost FLOAT,
+    fuel_card_number VARCHAR2(50)
+);
+
+CREATE TABLE appuser.maintenance_records (
+    maintenance_id VARCHAR2(20) PRIMARY KEY,
+    truck_id VARCHAR2(20),
+    maintenance_date DATE,
+    maintenance_type VARCHAR2(50),
+    odometer_reading NUMBER,
+    labor_hours FLOAT,
+    labor_cost FLOAT,
+    parts_cost FLOAT,
+    total_cost FLOAT,
+    facility_location VARCHAR2(100),
+    downtime_hours FLOAT,
+    service_description VARCHAR2(200)
+);
+
+CREATE TABLE appuser.safety_incidents (
+    incident_id VARCHAR2(20) PRIMARY KEY,
+    trip_id VARCHAR2(20),
+    truck_id VARCHAR2(20),
+    driver_id VARCHAR2(20),
+    incident_date TIMESTAMP,
+    incident_type VARCHAR2(50),
+    location_city VARCHAR2(100),
+    location_state VARCHAR2(10),
+    at_fault_flag NUMBER(1),
+    injury NUMBER(1),
+    vehicle_damage_cost FLOAT,
+    cargo_damage_cost FLOAT,
+    claim_amount FLOAT,
+    preventable_flag NUMBER(1),
+    description VARCHAR2(200)
+);
+
+CREATE TABLE appuser.driver_monthly_metrics (
+    driver_id VARCHAR2(20),
+    month DATE,
+    trips_completed NUMBER,
+    total_miles NUMBER,
+    total_revenue FLOAT,
+    average_mpg FLOAT,
+    fuel_used FLOAT,
+    on_time_delivery_rate FLOAT,
+    average_idle_hours FLOAT,
+    PRIMARY KEY (driver_id, month)
+);
+
+CREATE TABLE appuser.truck_utilization_metrics (
+    truck_id VARCHAR2(20),
+    month DATE,
+    trips_completed NUMBER,
+    total_miles NUMBER,
+    total_revenue FLOAT,
+    average_mpg FLOAT,
+    maintenance_events NUMBER,
+    maintenance_cost FLOAT,
+    downtime_hours FLOAT,
+    utilization_rate FLOAT,
+    PRIMARY KEY (truck_id, month)
+);
