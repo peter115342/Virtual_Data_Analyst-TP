@@ -153,7 +153,7 @@ class QueryResponse(BaseModel):
 
 class DatabaseConnectRequest(BaseModel):
     """
-    Postgres / MySQL / SQL server database connect request
+    Postgres / MySQL database connect request
     """
 
     db_type: str
