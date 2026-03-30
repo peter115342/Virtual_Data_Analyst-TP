@@ -3,7 +3,7 @@
 
 import re
 
-from sqlalchemy import create_engine, text, inspect
+from sqlalchemy import create_engine, text, inspect, select, literal
 from sqlalchemy.orm import sessionmaker
 
 
@@ -38,10 +38,13 @@ class DatabaseManager:
                         "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY"))
                 elif dialect == "mysql":
                     conn.execute(text("SET SESSION TRANSACTION READ ONLY"))
+                elif dialect == "oracle":
+                    conn.execute(text("SET TRANSACTION READ ONLY"))
                 else:
-                    raise ValueError(f"Unsupported database dialect{dialect}")
+                    raise ValueError(f"Unsupported database dialect {dialect}")
 
-            conn.execute(text("SELECT 1"))
+            # conn.execute(text("SELECT 1"))
+            conn.execute(select(literal(1)))
 
     async def disconnect(self):
         """
