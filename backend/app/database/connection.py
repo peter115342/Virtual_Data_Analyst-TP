@@ -38,8 +38,11 @@ class DatabaseManager:
                         "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY"))
                 elif dialect == "mysql":
                     conn.execute(text("SET SESSION TRANSACTION READ ONLY"))
+                elif dialect == "mssql":
+                    # TODO Read-only is not fully implemented
+                    pass
                 else:
-                    raise ValueError(f"Unsupported database dialect{dialect}")
+                    raise ValueError(f"Unsupported database dialect {dialect}")
 
             conn.execute(text("SELECT 1"))
 
