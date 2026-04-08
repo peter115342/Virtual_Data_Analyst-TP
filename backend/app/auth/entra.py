@@ -56,6 +56,9 @@ async def validate_token(
     """
     token = credentials.credentials
 
+    if settings.fastapi_env == "development" and token == "dev":
+        return {"sub": "dev-user-001", "name": "Dev User", "preferred_username": "dev@localhost"}
+
     if not settings.azure_ad_client_id or not settings.azure_ad_tenant_id:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -11,7 +11,7 @@ from app.database.connection import get_db_manager
 from app.genai_core.query_generator import QueryGenerator
 from app.genai_core.response_summarizer import ResponseSummarizer
 from app.database.utils import build_db_connection_url
-from app.database import connection
+from app.database import connection, chat_history
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -119,6 +119,7 @@ class AskRequest(BaseModel):
     """
 
     question: str
+    session_id: str | None = None
 
 
 class AskResponse(BaseModel):
@@ -131,6 +132,7 @@ class AskResponse(BaseModel):
     sql_query: str
     summary: str
     row_count: int
+    session_id: str | None = None
 
 
 class QueryRequest(BaseModel):
@@ -163,6 +165,7 @@ class DatabaseConnectRequest(BaseModel):
     username: str
     password: str
     db_name: str
+    user_id: str | None = None
 
 
 @router.post("/generate-sql", response_model=GenerateSQLResponse)
@@ -217,12 +220,30 @@ async def ask(request: AskRequest, _claims: dict = Depends(validate_token)):
             sql_query=sql_query, data=data, context=request.question
         )
 
+        if request.session_id:
+            try:
+                await chat_history.add_message(
+                    session_id=request.session_id,
+                    role="user",
+                    content=request.question,
+                )
+                await chat_history.add_message(
+                    session_id=request.session_id,
+                    role="assistant",
+                    content=summary,
+                    sql_query=sql_query,
+                    row_count=row_count,
+                )
+            except Exception as hist_err:
+                print(f"Warning: failed to save chat history: {hist_err}")
+
         return AskResponse(
             status="success",
             question=request.question,
             sql_query=sql_query,
             summary=summary,
             row_count=row_count,
+            session_id=request.session_id,
         )
 
     except ValueError as e:
@@ -297,9 +318,23 @@ async def connect_database(
 
         await connection.db_manager.connect()
 
+        # Create a chat session in MongoDB
+        session_id = None
+        try:
+            user_id = request.user_id or _claims.get("sub", "anonymous")
+            session_id = await chat_history.create_session(
+                user_id=user_id,
+                db_type=request.db_type,
+                db_host=request.host,
+                db_name=request.db_name,
+            )
+        except Exception as hist_err:
+            print(f"Warning: failed to create chat session: {hist_err}")
+
         return {
             "status": "success",
             "message": "Database connection established",
+            "session_id": session_id,
         }
 
     except Exception as e:
@@ -307,8 +342,15 @@ async def connect_database(
         raise HTTPException(status_code=400, detail=f"Error connecting database: {str(e)}")
 
 
+class DisconnectRequest(BaseModel):
+    session_id: str | None = None
+
+
 @router.post("/disconnect-database")
-async def disconnect_database(_claims: dict = Depends(validate_token)):
+async def disconnect_database(
+    request: DisconnectRequest = None,
+    _claims: dict = Depends(validate_token),
+):
     """
     Remove database connection
 
@@ -320,6 +362,13 @@ async def disconnect_database(_claims: dict = Depends(validate_token)):
         if connection.db_manager:
             await connection.db_manager.disconnect()
             connection.db_manager = None
+
+            if request and request.session_id:
+                try:
+                    await chat_history.close_session(request.session_id)
+                except Exception as hist_err:
+                    print(f"Warning: failed to close chat session: {hist_err}")
+
             return {
                 "status": "success",
                 "message": "Database disconnected",
@@ -342,3 +391,18 @@ async def schema(_claims: dict = Depends(validate_token)):
         return schema
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching schema: {str(e)}")
+
+
+@router.get("/history/{session_id}")
+async def get_session_history(session_id: str, _claims: dict = Depends(validate_token)):
+    session = await chat_history.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return session
+
+
+@router.get("/sessions")
+async def list_sessions(_claims: dict = Depends(validate_token)):
+    user_id = _claims.get("sub", "anonymous")
+    sessions = await chat_history.list_user_sessions(user_id)
+    return {"sessions": sessions}

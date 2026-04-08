@@ -8,7 +8,7 @@ const api = axios.create({
   },
 });
 
-// Attach Azure AD ID token to every request
+// Attach Azure AD ID token to every request (or "dev" token in dev mode)
 api.interceptors.request.use(async (config) => {
   const accounts = msalInstance.getAllAccounts();
   if (accounts.length > 0) {
@@ -22,6 +22,9 @@ api.interceptors.request.use(async (config) => {
       // If silent fails, trigger interactive login
       await msalInstance.acquireTokenRedirect(loginRequest);
     }
+  } else {
+    // Dev mode — no MSAL account, send static dev token
+    config.headers.Authorization = "Bearer dev";
   }
   return config;
 });

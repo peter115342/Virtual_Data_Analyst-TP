@@ -4,12 +4,15 @@ import { connectDatabase, disconnectDatabase } from "../services/databaseService
 export default function useDatabase() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
 
   const connect = async (data) => {
     try {
       setLoading(true);
       setError(null);
-      return await connectDatabase(data);
+      const result = await connectDatabase(data);
+      setSessionId(result.session_id || null);
+      return result;
     } catch (err) {
       setError(err.response?.data?.message || "Connection failed");
       throw err;
@@ -19,7 +22,9 @@ export default function useDatabase() {
   };
 
   const disconnect = async () => {
-    return await disconnectDatabase();
+    const result = await disconnectDatabase(sessionId);
+    setSessionId(null);
+    return result;
   };
 
   return {
@@ -27,5 +32,6 @@ export default function useDatabase() {
     disconnect,
     loading,
     error,
+    sessionId,
   };
 }
