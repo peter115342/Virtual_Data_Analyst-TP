@@ -1,4 +1,0 @@
--- 00_alter_user.sql
-ALTER SESSION SET CONTAINER = FREEPDB1;
-
-ALTER USER appuser QUOTA UNLIMITED ON users;

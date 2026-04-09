@@ -1,7 +1,7 @@
 OPTIONS (SKIP=1)
 LOAD DATA
 INFILE '/container-entrypoint-initdb.d/data/maintenance_records.csv'
-INTO TABLE appuser.maintenance_records
+INTO TABLE maintenance_records
 FIELDS TERMINATED BY ','
 (
     maintenance_id,

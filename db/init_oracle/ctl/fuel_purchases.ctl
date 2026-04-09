@@ -1,7 +1,7 @@
 OPTIONS (SKIP=1)
 LOAD DATA
 INFILE '/container-entrypoint-initdb.d/data/fuel_purchases.csv'
-INTO TABLE appuser.fuel_purchases
+INTO TABLE fuel_purchases
 FIELDS TERMINATED BY ','
 (
     fuel_purchase_id,

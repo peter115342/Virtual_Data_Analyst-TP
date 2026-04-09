@@ -1,7 +1,7 @@
 OPTIONS (SKIP=1)
 LOAD DATA
 INFILE '/container-entrypoint-initdb.d/data/customers.csv'
-INTO TABLE appuser.customers
+INTO TABLE customers
 FIELDS TERMINATED BY ','
 TRAILING NULLCOLS
 (

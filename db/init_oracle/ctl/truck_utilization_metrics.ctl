@@ -1,7 +1,7 @@
 OPTIONS (SKIP=1)
 LOAD DATA
 INFILE '/container-entrypoint-initdb.d/data/truck_utilization_metrics.csv'
-INTO TABLE appuser.truck_utilization_metrics
+INTO TABLE truck_utilization_metrics
 FIELDS TERMINATED BY ','
 (
     truck_id,

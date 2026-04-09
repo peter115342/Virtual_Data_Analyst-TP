@@ -1,10 +1,10 @@
 
-ALTER SESSION SET CONTAINER = FREEPDB1;
+-- ALTER SESSION SET CONTAINER = FREEPDB1;
 -- =========================
 -- DIMENSION TABLES
 -- =========================
 
-CREATE TABLE appuser.customers (
+CREATE TABLE customers (
     customer_id VARCHAR2(20) PRIMARY KEY,
     customer_name VARCHAR2(150),
     customer_type VARCHAR2(50),
@@ -15,7 +15,7 @@ CREATE TABLE appuser.customers (
     annual_revenue_potential NUMBER
 );
 
-CREATE TABLE appuser.drivers (
+CREATE TABLE drivers (
     driver_id VARCHAR2(20) PRIMARY KEY,
     first_name VARCHAR2(50),
     last_name VARCHAR2(50),
@@ -30,7 +30,7 @@ CREATE TABLE appuser.drivers (
     years_experience NUMBER
 );
 
-CREATE TABLE appuser.trucks (
+CREATE TABLE trucks (
     truck_id VARCHAR2(20) PRIMARY KEY,
     unit_number NUMBER,
     make VARCHAR2(50),
@@ -44,7 +44,7 @@ CREATE TABLE appuser.trucks (
     home_terminal VARCHAR2(100)
 );
 
-CREATE TABLE appuser.trailers (
+CREATE TABLE trailers (
     trailer_id VARCHAR2(20) PRIMARY KEY,
     trailer_number NUMBER,
     trailer_type VARCHAR2(50),
@@ -56,7 +56,7 @@ CREATE TABLE appuser.trailers (
     current_location VARCHAR2(100)
 );
 
-CREATE TABLE appuser.facilities (
+CREATE TABLE facilities (
     facility_id VARCHAR2(20) PRIMARY KEY,
     facility_name VARCHAR2(150),
     facility_type VARCHAR2(50),
@@ -68,7 +68,7 @@ CREATE TABLE appuser.facilities (
     operating_hours VARCHAR2(50)
 );
 
-CREATE TABLE appuser.routes (
+CREATE TABLE routes (
     route_id VARCHAR2(20) PRIMARY KEY,
     origin_city VARCHAR2(100),
     origin_state VARCHAR2(10),
@@ -84,7 +84,7 @@ CREATE TABLE appuser.routes (
 -- FACT TABLES
 -- =========================
 
-CREATE TABLE appuser.loads (
+CREATE TABLE loads (
     load_id VARCHAR2(20) PRIMARY KEY,
     customer_id VARCHAR2(20),
     route_id VARCHAR2(20),
@@ -99,7 +99,7 @@ CREATE TABLE appuser.loads (
     booking_type VARCHAR2(50)
 );
 
-CREATE TABLE appuser.trips (
+CREATE TABLE trips (
     trip_id VARCHAR2(20) PRIMARY KEY,
     load_id VARCHAR2(20),
     driver_id VARCHAR2(20),
@@ -114,7 +114,7 @@ CREATE TABLE appuser.trips (
     trip_status VARCHAR2(20)
 );
 
-CREATE TABLE appuser.delivery_events (
+CREATE TABLE delivery_events (
     event_id VARCHAR2(20) PRIMARY KEY,
     load_id VARCHAR2(20),
     trip_id VARCHAR2(20),
@@ -128,7 +128,7 @@ CREATE TABLE appuser.delivery_events (
     location_state VARCHAR2(10)
 );
 
-CREATE TABLE appuser.fuel_purchases (
+CREATE TABLE fuel_purchases (
     fuel_purchase_id VARCHAR2(20) PRIMARY KEY,
     trip_id VARCHAR2(20),
     truck_id VARCHAR2(20),
@@ -142,7 +142,7 @@ CREATE TABLE appuser.fuel_purchases (
     fuel_card_number VARCHAR2(50)
 );
 
-CREATE TABLE appuser.maintenance_records (
+CREATE TABLE maintenance_records (
     maintenance_id VARCHAR2(20) PRIMARY KEY,
     truck_id VARCHAR2(20),
     maintenance_date DATE,
@@ -157,7 +157,7 @@ CREATE TABLE appuser.maintenance_records (
     service_description VARCHAR2(200)
 );
 
-CREATE TABLE appuser.safety_incidents (
+CREATE TABLE safety_incidents (
     incident_id VARCHAR2(20) PRIMARY KEY,
     trip_id VARCHAR2(20),
     truck_id VARCHAR2(20),
@@ -175,7 +175,7 @@ CREATE TABLE appuser.safety_incidents (
     description VARCHAR2(200)
 );
 
-CREATE TABLE appuser.driver_monthly_metrics (
+CREATE TABLE driver_monthly_metrics (
     driver_id VARCHAR2(20),
     month DATE,
     trips_completed NUMBER,
@@ -188,7 +188,7 @@ CREATE TABLE appuser.driver_monthly_metrics (
     PRIMARY KEY (driver_id, month)
 );
 
-CREATE TABLE appuser.truck_utilization_metrics (
+CREATE TABLE truck_utilization_metrics (
     truck_id VARCHAR2(20),
     month DATE,
     trips_completed NUMBER,

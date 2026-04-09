@@ -1,7 +1,7 @@
 OPTIONS (SKIP=1)
 LOAD DATA
 INFILE '/container-entrypoint-initdb.d/data/trucks.csv'
-INTO TABLE appuser.trucks
+INTO TABLE trucks
 FIELDS TERMINATED BY ','
 (
     truck_id,

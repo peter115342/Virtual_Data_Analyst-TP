@@ -1,7 +1,7 @@
 OPTIONS (SKIP=1)
 LOAD DATA
 INFILE '/container-entrypoint-initdb.d/data/trips.csv'
-INTO TABLE appuser.trips
+INTO TABLE trips
 FIELDS TERMINATED BY ','
 (
     trip_id,

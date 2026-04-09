@@ -1,7 +1,7 @@
 OPTIONS (SKIP=1)
 LOAD DATA
 INFILE '/container-entrypoint-initdb.d/data/driver_monthly_metrics.csv'
-INTO TABLE appuser.driver_monthly_metrics
+INTO TABLE driver_monthly_metrics
 FIELDS TERMINATED BY ','
 (
     driver_id,
