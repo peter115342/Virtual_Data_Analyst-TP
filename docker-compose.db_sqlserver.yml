@@ -5,7 +5,7 @@ version: '3.9'
 services:
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: vda-db-logistics
+    container_name: vda-db-sqlserver
     ports:
       - "1433:1433"
     environment:
