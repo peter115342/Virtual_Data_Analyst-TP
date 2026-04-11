@@ -1,19 +1,19 @@
 import { useState } from "react";
 import InputDatabase from "./InputDatabase";
 import crossGray from "../assets/cross-gray.svg";
-import useDatabase from "../hooks/useDatabase";
 
-export default function DatabaseModal({ onClose, onConnected }) {
-  const { connect, loading, error } = useDatabase();
+export default function DatabaseModal({ onClose, onConnected, connect, loading, error }) {
 
   const [host, setHost] = useState("");
   const [port, setPort] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [dbName, setDbName] = useState("");
+  const [dbType, setDbType] = useState("postgres");
 
   const handleConnect = async () => {
     await connect({
+      db_type: dbType,
       host,
       port: Number(port),
       username,
@@ -44,6 +44,14 @@ export default function DatabaseModal({ onClose, onConnected }) {
         </h2>
 
         <div className="flex flex-col gap-4">
+          <select
+            value={dbType}
+            onChange={(e) => setDbType(e.target.value)}
+            className="bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-600"
+          >
+            <option value="postgres">PostgreSQL</option>
+            <option value="mysql">MySQL</option>
+          </select>
           <InputDatabase value={host} onChange={setHost} placeholder="Database Host" />
           <InputDatabase value={port} onChange={setPort} placeholder="Database Port" />
           <InputDatabase value={username} onChange={setUsername} placeholder="Username" />

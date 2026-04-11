@@ -3,7 +3,7 @@ import InputQuestion from "./InputQuestion"
 import UserMessage from "./UserMessage"
 import { askQuestion } from "../services/databaseService";
 
-export default function Chat() {
+export default function Chat({ sessionId }) {
     const [messages, setMessages] = useState([])
 
     const handleSend = async (text) => {
@@ -14,7 +14,7 @@ export default function Chat() {
         ]);
 
         try {
-            const result = await askQuestion(text);
+            const result = await askQuestion(text, sessionId);
 
             setMessages((prev) => {
                 const messagesWithoutThinking = prev.slice(0, -1);

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
 from app.config import settings
-from app.database import connection
+from app.database import connection, mongo, chat_history
 
 
 @asynccontextmanager
@@ -20,11 +20,19 @@ async def lifespan(app: FastAPI):
     else:
         print("No DATABASE_URL provided - use /api/connect-database endpoint to connect")
 
+    try:
+        await mongo.connect()
+        await chat_history.ensure_indexes()
+    except Exception as e:
+        print(f"MongoDB connection failed: {e}")
+
     yield
 
     if connection.db_manager:
         await connection.db_manager.disconnect()
         print("Database disconnected")
+
+    await mongo.disconnect()
 
 
 app = FastAPI(
@@ -59,4 +67,10 @@ async def health_check():
     """
     db_status = "connected" if connection.db_manager else "not initialized"
 
-    return {"status": "healthy", "database": db_status}
+    try:
+        mongo.get_db()
+        mongo_status = "connected"
+    except RuntimeError:
+        mongo_status = "not connected"
+
+    return {"status": "healthy", "database": db_status, "mongodb": mongo_status}

@@ -7,14 +7,27 @@ export const connectDatabase = async (data) => {
 };
 
 
-export const disconnectDatabase = async () => {
-  const response = await api.post("/api/disconnect-database");
+export const disconnectDatabase = async (sessionId) => {
+  const response = await api.post("/api/disconnect-database", {
+    session_id: sessionId || null,
+  });
   return response.data;
 };
 
-export const askQuestion = async (question) => {
+export const askQuestion = async (question, sessionId) => {
   const response = await api.post("/api/ask", {
     question,
+    session_id: sessionId || null,
   });
+  return response.data;
+};
+
+export const getSessionHistory = async (sessionId) => {
+  const response = await api.get(`/api/history/${sessionId}`);
+  return response.data;
+};
+
+export const listSessions = async () => {
+  const response = await api.get("/api/sessions");
   return response.data;
 };

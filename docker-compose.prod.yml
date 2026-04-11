@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ""
+        VITE_AZURE_AD_CLIENT_ID: ${AZURE_AD_CLIENT_ID:-}
+        VITE_AZURE_AD_TENANT_ID: ${AZURE_AD_TENANT_ID:-}
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    env_file:
+      - .env.prod
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
