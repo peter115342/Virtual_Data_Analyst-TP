@@ -12,6 +12,7 @@ from app.genai_core.query_generator import QueryGenerator
 from app.genai_core.response_summarizer import ResponseSummarizer
 from app.database.utils import build_db_connection_url
 from app.database import connection, chat_history
+from app.database.mongo import get_db
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -406,3 +407,53 @@ async def list_sessions(_claims: dict = Depends(validate_token)):
     user_id = _claims.get("sub", "anonymous")
     sessions = await chat_history.list_user_sessions(user_id)
     return {"sessions": sessions}
+
+@router.get("/mongo/sessions")
+async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
+    try:
+        db = get_db()
+        collection = db["sessions"]
+        user_id = _claims.get("sub", "anonymous")
+        cursor = collection.find(
+            {"user_id": user_id},
+            {
+                "_id": 1,
+                "session_id": 1,
+                "user_id": 1,
+                "db_type": 1,
+                "db_host": 1,
+                "db_name": 1,
+                "connected_at": 1,
+                "disconnected_at": 1,
+                "messages": 1,
+            }
+        ).sort("connected_at", -1)
+
+        def format_message(msg: dict) -> dict:
+            return {
+                "role": msg.get("role"),
+                "content": msg.get("content"),
+                "sql_query": msg.get("sql_query"),
+                "row_count": msg.get("row_count"),
+                "timestamp": msg.get("timestamp"),
+            }
+
+        sessions = []
+        async for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            raw_messages = doc.get("messages", [])
+            doc["messages"] = [format_message(m) for m in raw_messages if m]
+            sessions.append(doc)
+
+        return {
+            "status": "success",
+            "user_id": user_id,
+            "count": len(sessions),
+            "sessions": sessions
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Mongo sessions fetch failed: {str(e)}"
+        )
