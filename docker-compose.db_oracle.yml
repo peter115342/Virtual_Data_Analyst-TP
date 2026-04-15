@@ -9,9 +9,9 @@ services:
     ports:
       - "1521:1521"
     environment:
-      ORACLE_PASSWORD: oracle
-      APP_USER: appuser
-      APP_USER_PASSWORD: apppass
+      - ORACLE_PASSWORD=${ORACLE_PWD:-oracle}
+      - APP_USER=${ORACLE_USERNAME:-appuser}
+      - APP_USER_PASSWORD=${ORACLE_USER_PWD:-apppass}
     volumes:
       - vda_test_oracle_data:/opt/oracle/oradata
       - ./db/init_oracle:/container-entrypoint-initdb.d
