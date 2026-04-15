@@ -30,6 +30,17 @@ class Settings(BaseSettings):
     mongodb_url: str = "mongodb://localhost:27017"
     mongodb_db_name: str = "vda"
 
+    # Redis Settings
+    redis_url: str = "redis://localhost:6379/0"
+
+    # Cache Settings (seconds)
+    cache_schema_ttl_seconds: int = 3600
+    cache_nl2sql_ttl_seconds: int = 604800
+    cache_sql_results_ttl_seconds: int = 900
+    cache_summary_ttl_seconds: int = 900
+    cache_chat_ttl_seconds: int = 86400
+    cache_max_rows: int = 2000
+
     # CORS Settings
     cors_origins: str | list[str] = "http://localhost:5173"
 
