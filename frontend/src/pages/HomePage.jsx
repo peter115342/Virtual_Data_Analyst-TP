@@ -1,4 +1,3 @@
-// HomePage.jsx
 import { useState , useEffect} from "react";
 import SideBar from "../components/SideBar.jsx";
 import Chat from "../components/Chat.jsx";
@@ -26,17 +25,17 @@ export default function HomePage({ onLogout, userName }) {
     }
   };
 
-  // ✅ HOOK JE TU – SPRÁVNE
   useEffect(() => {
     if (isConnected) {
       setIsDatabaseModalOpen(false);
     }
   }, [isConnected]);
   return (
-    <div className="h-screen flex bg-gray-100 relative">
+    <div className="h-screen flex bg-[#eeeeee] relative">
       <div
-        className={`bg-gray-800 transition-all duration-300
+        className={`
           ${isSidebarOpen ? "w-72" : "w-14"}
+          transition-all duration-300 ease-in-out
         `}
       >
         <SideBar
@@ -50,7 +49,13 @@ export default function HomePage({ onLogout, userName }) {
       </div>
 
       <div className="flex-1">
-        <Chat sessionId={sessionId} />
+        <Chat
+          sessionId={sessionId}
+          isConnected={isConnected}
+          onDatabaseClick={handleDatabaseButtonClick}
+          userName={userName}
+          onLogout={onLogout}
+        />
       </div>
 
       {isDatabaseModalOpen && (

@@ -13,7 +13,9 @@ from app.genai_core.response_summarizer import ResponseSummarizer
 from app.database.utils import build_db_connection_url
 from app.database import connection, chat_history
 from app.database.mongo import get_db
-
+from app.database import connection
+from app.database.connection import db_manager
+from sqlalchemy import text
 router = APIRouter(prefix="/api", tags=["api"])
 
 
@@ -457,3 +459,18 @@ async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
             status_code=500,
             detail=f"Mongo sessions fetch failed: {str(e)}"
         )
+    
+
+
+@router.get("/database/status")
+def get_database_status():
+    if db_manager is None or db_manager.engine is None:
+        return {"connected": False}
+
+    try:
+        with db_manager.engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"connected": True}
+    except:
+        return {"connected": False}
+

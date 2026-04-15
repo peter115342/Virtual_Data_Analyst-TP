@@ -1,6 +1,7 @@
 import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react"
 import { loginRequest } from "./auth/msalConfig"
 import { useState } from "react"
+import "./App.css";
 import HomePage from "./pages/HomePage.jsx"
 
 

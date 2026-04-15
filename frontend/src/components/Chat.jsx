@@ -2,8 +2,9 @@ import { useState } from "react"
 import InputQuestion from "./InputQuestion"
 import UserMessage from "./UserMessage"
 import { askQuestion } from "../services/databaseService";
+import ChatHeader from "./ChatHeader";
 
-export default function Chat({ sessionId }) {
+export default function Chat({ sessionId, isConnected, onDatabaseClick, userName, onLogout }) {
     const [messages, setMessages] = useState([])
 
     const handleSend = async (text) => {
@@ -36,7 +37,7 @@ export default function Chat({ sessionId }) {
                 return [
                     ...messagesWithoutThinking,
                     {
-                        text: "❌ Failed to get response from server.",
+                        text: "Failed to get response from server.",
                         fromUser: false,
                     },
                 ];
@@ -47,18 +48,29 @@ export default function Chat({ sessionId }) {
 
 
 
-    return (
-        <div className="h-screen flex flex-col justify-end bg-gray-700 p-4 gap-2" >
-            <div className="flex flex-col gap-2 overflow-y-auto" >
-                {messages.map((msg, i) => (
-                <UserMessage
-                    key={i}
-                    context={msg.text}
-                    isUser={msg.fromUser}
-                />
-                ))}
-            </div>
-            <InputQuestion onSend={handleSend} />
-        </div>
-    )
+return (
+  <div className="h-full flex flex-col relative">
+
+    <ChatHeader
+      isConnected={isConnected}
+      onDatabaseClick={onDatabaseClick}
+      userName={userName}
+      onLogout={onLogout}
+    />
+
+    <div className="flex-1 flex flex-col min-h-0">
+
+      <div className="flex-1 pt-20 overflow-y-auto p-4 flex flex-col gap-2">
+        {messages.map((msg, i) => (
+          <UserMessage key={i} context={msg.text} isUser={msg.fromUser} />
+        ))}
+      </div>
+
+      <div className="p-4 flex justify-center sticky bottom-0">
+        <InputQuestion onSend={handleSend} />
+      </div>
+
+    </div>
+  </div>
+);
 }
