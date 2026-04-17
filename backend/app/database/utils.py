@@ -21,6 +21,8 @@ def build_db_connection_url(
         return f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{db_name}"
     if type == "mysql":
         return f"mysql+pymysql://{username}:{password}@{host}:{port}/{db_name}"
+    if type == "oracle":
+        return f"oracle+oracledb://{username}:{password}@{host}:{port}?service_name=FREEPDB1"
     else:
         # ZLE - OPRAVIT bud ENUM alebo neviem co
         return "bad"

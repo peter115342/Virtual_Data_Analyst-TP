@@ -1,0 +1,25 @@
+# Standalone Oracle Database for testing, docker-compose -f docker-compose.db_oracle.yml up -d
+
+version: '3.8'
+
+services:
+  db:
+    image: gvenzl/oracle-free:23-slim
+    container_name: vda-test-db-oracle
+    ports:
+      - "1521:1521"
+    environment:
+      - ORACLE_PASSWORD=${ORACLE_PWD:-oracle}
+      - APP_USER=${ORACLE_USERNAME:-appuser}
+      - APP_USER_PASSWORD=${ORACLE_USER_PWD:-apppass}
+    volumes:
+      - vda_test_oracle_data:/opt/oracle/oradata
+      - ./db/init_oracle:/container-entrypoint-initdb.d
+#    healthcheck:
+#      test: ["CMD-SHELL", "echo 'SELECT 1 FROM dual;' | sqlplus -s APPUSER/apppass@localhost:1521/FREEPDB1 || exit 1"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+
+volumes:
+  vda_test_oracle_data:

@@ -292,7 +292,7 @@ async def connect_database(
         - Status of database connection
     """
 
-    valid_db_types = {"postgres", "mysql"}
+    valid_db_types = {"postgres", "mysql", "oracle"}
     db_type = request.db_type
 
     if db_type not in valid_db_types:
