@@ -292,11 +292,12 @@ async def connect_database(
         - Status of database connection
     """
 
-    valid_db_types = {"postgres", "mysql", "oracle"}
+    valid_db_types = {"postgres", "mysql", "oracle", "sqlserver"}
     db_type = request.db_type
 
     if db_type not in valid_db_types:
-        raise HTTPException(status_code=400, detail=f"Invalid database type: {db_type}")
+        raise HTTPException(status_code=400,
+                            detail=f"Invalid database type: {db_type}")
 
     try:
         database_url = build_db_connection_url(

@@ -21,6 +21,8 @@ def build_db_connection_url(
         return f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{db_name}"
     if type == "mysql":
         return f"mysql+pymysql://{username}:{password}@{host}:{port}/{db_name}"
+    if type == "sqlserver":
+        return f"mssql+pyodbc://{username}:{password}@{host}:{port}/{db_name}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes&ApplicationIntent=ReadOnly"
     if type == "oracle":
         return f"oracle+oracledb://{username}:{password}@{host}:{port}?service_name=FREEPDB1"
     else:

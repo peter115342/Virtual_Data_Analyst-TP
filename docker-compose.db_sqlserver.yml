@@ -1,0 +1,32 @@
+# Standalone MSSQL Database for testing, docker-compose -f docker-compose.db_sqlserver.yml up -d
+
+version: '3.9'
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: vda-db-sqlserver
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Strong_password123!}
+      MSSQL_PID: ${MSSQL_PRODUCT_ID:-Developer}
+    volumes:
+      - vda_test_ms_sqlserver_data:/var/opt/mssql
+      - ./db/init_db_sqlserver/init:/init
+      - ./db/init_db_sqlserver/csv:/csv
+    command: >
+      bash -c "
+      /opt/mssql/bin/sqlservr & 
+      /init/init.sh;
+      wait
+      "
+#    healthcheck:
+#      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/1433"]
+#      interval: 5s
+#      timeout: 5s
+#      retries: 20
+
+volumes:
+  vda_test_ms_sqlserver_data:
