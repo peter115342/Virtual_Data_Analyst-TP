@@ -1,0 +1,83 @@
+
+-- ALTER SESSION SET CONTAINER = FREEPDB1;
+
+-- ALTER TABLE bank_accounts ADD PRIMARY KEY (id);
+
+-- LOADS
+ALTER TABLE loads
+ADD CONSTRAINT fk_loads_customers
+FOREIGN KEY (customer_id) REFERENCES customers(customer_id);
+
+ALTER TABLE loads
+ADD CONSTRAINT fk_loads_routes
+FOREIGN KEY (route_id) REFERENCES routes(route_id);
+
+-- TRIPS
+ALTER TABLE trips
+ADD CONSTRAINT fk_trips_loads
+FOREIGN KEY (load_id) REFERENCES loads(load_id);
+
+ALTER TABLE trips
+ADD CONSTRAINT fk_trips_drivers
+FOREIGN KEY (driver_id) REFERENCES drivers(driver_id);
+
+ALTER TABLE trips
+ADD CONSTRAINT fk_trips_trucks
+FOREIGN KEY (truck_id) REFERENCES trucks(truck_id);
+
+ALTER TABLE trips
+ADD CONSTRAINT fk_trips_trailers
+FOREIGN KEY (trailer_id) REFERENCES trailers(trailer_id);
+
+-- DELIVERY EVENTS
+ALTER TABLE delivery_events
+ADD CONSTRAINT fk_delivery_events_loads
+FOREIGN KEY (load_id) REFERENCES loads(load_id);
+
+ALTER TABLE delivery_events
+ADD CONSTRAINT fk_delivery_events_trips
+FOREIGN KEY (trip_id) REFERENCES trips(trip_id);
+
+ALTER TABLE delivery_events
+ADD CONSTRAINT fk_delivery_events_facilities
+FOREIGN KEY (facility_id) REFERENCES facilities(facility_id);
+
+-- FUEL
+ALTER TABLE fuel_purchases
+ADD CONSTRAINT fk_fuel_trips
+FOREIGN KEY (trip_id) REFERENCES trips(trip_id);
+
+ALTER TABLE fuel_purchases
+ADD CONSTRAINT fk_fuel_trucks
+FOREIGN KEY (truck_id) REFERENCES trucks(truck_id);
+
+ALTER TABLE fuel_purchases
+ADD CONSTRAINT fk_fuel_drivers
+FOREIGN KEY (driver_id) REFERENCES drivers(driver_id);
+
+-- MAINTENANCE
+ALTER TABLE maintenance_records
+ADD CONSTRAINT fk_maintenance_trucks
+FOREIGN KEY (truck_id) REFERENCES trucks(truck_id);
+
+-- SAFETY
+ALTER TABLE safety_incidents
+ADD CONSTRAINT fk_safety_trips
+FOREIGN KEY (trip_id) REFERENCES trips(trip_id);
+
+ALTER TABLE safety_incidents
+ADD CONSTRAINT fk_safety_trucks
+FOREIGN KEY (truck_id) REFERENCES trucks(truck_id);
+
+ALTER TABLE safety_incidents
+ADD CONSTRAINT fk_safety_drivers
+FOREIGN KEY (driver_id) REFERENCES drivers(driver_id);
+
+-- METRICS
+ALTER TABLE driver_monthly_metrics
+ADD CONSTRAINT fk_driver_metrics
+FOREIGN KEY (driver_id) REFERENCES drivers(driver_id);
+
+ALTER TABLE truck_utilization_metrics
+ADD CONSTRAINT fk_truck_metrics
+FOREIGN KEY (truck_id) REFERENCES trucks(truck_id);

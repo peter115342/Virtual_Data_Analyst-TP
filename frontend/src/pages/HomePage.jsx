@@ -6,12 +6,12 @@ import DatabaseModal from "../components/DatabaseModal.jsx";
 import useDatabase from "../hooks/useDatabase";
 
 
-export default function HomePage() {
+export default function HomePage({ onLogout, userName }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
-  const { disconnect } = useDatabase();
+  const { connect, disconnect, loading, error, sessionId } = useDatabase();
 
   const handleDatabaseButtonClick = async () => {
     if (isConnected) {
@@ -44,11 +44,13 @@ export default function HomePage() {
           toggle={() => setIsSidebarOpen(!isSidebarOpen)}
           onOpenDatabase={() => handleDatabaseButtonClick()}
           isConnected={isConnected}
+          onLogout={onLogout}
+          userName={userName}
         />
       </div>
 
       <div className="flex-1">
-        <Chat />
+        <Chat sessionId={sessionId} />
       </div>
 
       {isDatabaseModalOpen && (
@@ -56,8 +58,11 @@ export default function HomePage() {
           onClose={() => setIsDatabaseModalOpen(false)}
           onConnected={() => {
             setIsConnected(true);
-            setIsDatabaseModalOpen(false); 
+            setIsDatabaseModalOpen(false);
           }}
+          connect={connect}
+          loading={loading}
+          error={error}
         />
       )}
     </div>
