@@ -12,6 +12,8 @@ class QueryGenerator:
         self.model = "azure.gpt-4.1"
 
     def _format_schema_for_prompt(self, schema: dict) -> str:
+        # TODO
+        #  change syntax to ORM
         """
         Convert schema dict to a readable text format for the LLM
 
@@ -30,28 +32,39 @@ class QueryGenerator:
             schema_text += "\n"
         return schema_text
 
-    async def generate_query(self, question: str, schema: dict) -> str:
+    async def generate_query(self, question: str, schema: dict, dialect: str) -> str:
+        # TODO
+        #  change syntax to ORM
         """
         Generate SQL query from natural language question using LLM
 
         Args:
             question: Natural language question from the user
             schema: Database schema dictionary
+            dialect: Database dialect
 
         Returns:
             Generated SQL query string
         """
         schema_text = self._format_schema_for_prompt(schema)
 
-        system_prompt = """You are a PostgreSQL expert. Your task is to convert natural language questions into valid SQL queries.
+        limit_syntax = {
+            "postgresql": "LIMIT",
+            "mysql": "LIMIT",
+            "oracle": "FETCH FIRST N ROWS ONLY",
+            "mssql": "TOP N or FETCH FIRST N ROWS ONLY",
+        }
+        limit_hint = limit_syntax.get(dialect, "appropriate row-limiting syntax for your dialect")
+
+        system_prompt = f"""You are a {dialect} expert. Your task is to convert natural language questions into valid SQL queries.
 
 IMPORTANT RULES:
 1. Generate ONLY SELECT queries (read-only access)
 2. NEVER use INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, TRUNCATE, GRANT, or REVOKE
 3. Return ONLY the raw SQL query - no explanations, no markdown formatting, no code blocks
-4. Use proper PostgreSQL syntax
+4. Use proper {dialect} syntax
 5. Include appropriate WHERE clauses, JOINs, GROUP BY, ORDER BY as needed
-6. Add LIMIT clauses when appropriate to avoid returning too much data
+6. Add {limit_hint} clauses when appropriate to avoid returning too much data
 7. Use table and column names exactly as they appear in the schema
 """
 

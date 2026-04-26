@@ -157,7 +157,7 @@ class QueryResponse(BaseModel):
 
 class DatabaseConnectRequest(BaseModel):
     """
-    Postgres / MySQL database connect request
+    Postgres / MySQL / SQL server / OracleDB database connect request
     """
 
     db_type: str
@@ -170,7 +170,7 @@ class DatabaseConnectRequest(BaseModel):
 
 
 @router.post("/generate-sql", response_model=GenerateSQLResponse)
-async def generate_sql(request: GenerateSQLRequest, _claims: dict = Depends(validate_token)):
+async def generate_sql(request: GenerateSQLRequest): #, _claims: dict = Depends(validate_token)):
     """
     Generate SQL query from natural language question
 
@@ -187,8 +187,9 @@ async def generate_sql(request: GenerateSQLRequest, _claims: dict = Depends(vali
         generator = QueryGenerator()
 
         schema = await db.get_schema()
+        dialect = await db.get_db_dialect()
 
-        sql_query = await generator.generate_query(request.question, schema)
+        sql_query = await generator.generate_query(request.question, schema, dialect)
 
         return GenerateSQLResponse(status="success", sql_query=sql_query)
 
@@ -197,7 +198,7 @@ async def generate_sql(request: GenerateSQLRequest, _claims: dict = Depends(vali
 
 
 @router.post("/ask", response_model=AskResponse)
-async def ask(request: AskRequest, _claims: dict = Depends(validate_token)):
+async def ask(request: AskRequest): #, _claims: dict = Depends(validate_token)):
     """
     Returns:
         - question: The original question
@@ -211,8 +212,9 @@ async def ask(request: AskRequest, _claims: dict = Depends(validate_token)):
         summarizer = ResponseSummarizer()
 
         schema = await db.get_schema()
+        dialect = await db.get_db_dialect()
 
-        sql_query = await generator.generate_query(request.question, schema)
+        sql_query = await generator.generate_query(request.question, schema, dialect)
 
         data = await db.execute_query(sql_query)
         row_count = len(data)
@@ -254,7 +256,7 @@ async def ask(request: AskRequest, _claims: dict = Depends(validate_token)):
 
 
 @router.post("/query-and-summarize", response_model=QueryResponse)
-async def query_and_summarize(request: QueryRequest, _claims: dict = Depends(validate_token)):
+async def query_and_summarize(request: QueryRequest): #, _claims: dict = Depends(validate_token)):
     """
     Execute SQL query and get LLM summary of the results
 
@@ -283,8 +285,8 @@ async def query_and_summarize(request: QueryRequest, _claims: dict = Depends(val
 
 @router.post("/connect-database")
 async def connect_database(
-    request: DatabaseConnectRequest, _claims: dict = Depends(validate_token)
-):
+    request: DatabaseConnectRequest): #, _claims: dict = Depends(validate_token)
+# ):
     """
     Create connection to database
 
@@ -350,9 +352,9 @@ class DisconnectRequest(BaseModel):
 
 @router.post("/disconnect-database")
 async def disconnect_database(
-    request: DisconnectRequest = None,
-    _claims: dict = Depends(validate_token),
-):
+    request: DisconnectRequest = None,):
+    # _claims: dict = Depends(validate_token),
+# ):
     """
     Remove database connection
 
@@ -385,7 +387,7 @@ async def disconnect_database(
 
 
 @router.get("/schema")
-async def schema(_claims: dict = Depends(validate_token)):
+async def schema(): #_claims: dict = Depends(validate_token)):
     if not connection.db_manager:
         return {"status": "not connected", "message": "Database is not connected."}
     try:

@@ -57,6 +57,8 @@ class DatabaseManager:
             self.engine.dispose()
 
     async def execute_query(self, sql: str) -> list[dict]:
+        # TODO
+        #  change syntax to ORM
         """
         Execute SQL query (read-only)
         Add safety checks to prevent write operations
@@ -116,6 +118,16 @@ class DatabaseManager:
             ]
 
         return schema
+
+    async def get_db_dialect(self) -> str:
+        """
+        Get database dialect
+        """
+        if not self.engine:
+            raise RuntimeError("Database not connected. Call connect() first.")
+
+        dialect_name = self.engine.dialect.name
+        return dialect_name
 
 
 db_manager: DatabaseManager | None = None
