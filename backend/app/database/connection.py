@@ -85,7 +85,10 @@ class DatabaseManager:
 
         with self.engine.connect() as conn:
             if self.readonly:
-                conn.execute(text("SET TRANSACTION READ ONLY"))
+                dialect = self.engine.dialect.name
+                if dialect in ("postgresql", "mysql", "oracle"):
+                    conn.execute(text("SET TRANSACTION READ ONLY"))
+                # mssql and sqlite — rely on regex guard only
 
             result = conn.execute(text(sql))
 

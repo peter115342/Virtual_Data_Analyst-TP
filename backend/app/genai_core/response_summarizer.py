@@ -16,8 +16,6 @@ class ResponseSummarizer:
     async def summarize_query_results(
         self, sql_query: str, data: list[dict], context: str | None = None
     ) -> str:
-        # TODO ??
-        #  change syntax to ORM ??
         """
         Generate a human-readable summary of database query results using LLM
 

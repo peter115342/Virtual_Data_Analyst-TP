@@ -12,8 +12,6 @@ class QueryGenerator:
         self.model = "azure.gpt-4.1"
 
     def _format_schema_for_prompt(self, schema: dict) -> str:
-        # TODO
-        #  change syntax to ORM
         """
         Convert schema dict to a readable text format for the LLM
 
@@ -33,8 +31,6 @@ class QueryGenerator:
         return schema_text
 
     async def generate_query(self, question: str, schema: dict, dialect: str) -> str:
-        # TODO
-        #  change syntax to ORM
         """
         Generate SQL query from natural language question using LLM
 
