@@ -103,6 +103,7 @@ class GenerateSQLRequest(BaseModel):
     """
 
     question: str
+    session_id: str | None = None
 
 
 class GenerateSQLResponse(BaseModel):
@@ -168,6 +169,47 @@ class DatabaseConnectRequest(BaseModel):
     db_name: str
     user_id: str | None = None
 
+async def get_chat_context(session_id: str | None):
+    if not session_id:
+        return "", "", "", ""
+
+    session = await chat_history.get_session(session_id)
+    if not session or "messages" not in session:
+        return "", "", "", ""
+
+    messages = session["messages"]
+    
+    history_text = "\n".join(
+        f"{m.get('role', '').upper()}: {m.get('content', '')}"
+        for m in messages[-12:] 
+    )
+
+    previous_sql = ""
+    previous_question = ""
+    last_successful_sql = ""
+    
+    for m in reversed(messages):
+        if not previous_question and m.get("role") == "user":
+            previous_question = m.get("content")
+        if not previous_sql and m.get("sql_query"):
+            previous_sql = m.get("sql_query")
+        if not last_successful_sql and m.get("sql_query") and m.get("success"):
+            last_successful_sql = m.get("sql_query")
+            
+    return history_text, previous_sql, previous_question, last_successful_sql
+
+@router.post("/new-chat")
+async def new_chat(_claims: dict = Depends(validate_token)):
+    user_id = _claims.get("sub", "anonymous")
+
+    session_id = await chat_history.create_session(user_id=user_id)
+
+    return {
+        "status": "success",
+        "session_id": session_id,
+        "message": "Kontext is empty."
+    }
+
 
 @router.post("/generate-sql", response_model=GenerateSQLResponse)
 async def generate_sql(request: GenerateSQLRequest, _claims: dict = Depends(validate_token)):
@@ -187,9 +229,32 @@ async def generate_sql(request: GenerateSQLRequest, _claims: dict = Depends(vali
         generator = QueryGenerator()
 
         schema = await db.get_schema()
+        history_text, previous_sql, previous_question, last_successful_sql = await get_chat_context(request.session_id)
 
-        sql_query = await generator.generate_query(request.question, schema)
-
+        sql_query = await generator.generate_query( 
+            question=request.question,  
+            schema=schema,  
+            history_text=history_text,  
+            previous_sql=previous_sql,  
+            previous_question=previous_question,
+            last_successful_sql=last_successful_sql,   
+        )  
+        if request.session_id:
+            try:
+                await chat_history.add_message(
+                    session_id=request.session_id,
+                    role="user",
+                    content=request.question,
+                )
+                await chat_history.add_message(
+                    session_id=request.session_id,
+                    role="assistant",
+                    content="Generating SQL...",
+                    sql_query=sql_query,
+                    success=None  
+                )
+            except Exception as hist_err:
+                print(f"Warning: failed to save chat history in generate-sql: {hist_err}")
         return GenerateSQLResponse(status="success", sql_query=sql_query)
 
     except Exception as e:
@@ -212,9 +277,23 @@ async def ask(request: AskRequest, _claims: dict = Depends(validate_token)):
 
         schema = await db.get_schema()
 
-        sql_query = await generator.generate_query(request.question, schema)
+        history_text, previous_sql, previous_question, last_successful_sql = await get_chat_context(request.session_id)  
 
-        data = await db.execute_query(sql_query)
+        sql_query = await generator.generate_query(  
+            question=request.question,  
+            schema=schema,  
+            history_text=history_text,  
+            previous_sql=previous_sql,  
+            previous_question=previous_question,
+            last_successful_sql=last_successful_sql  
+        )  
+        data = []
+        execution_success = False
+        try:
+            data = await db.execute_query(sql_query)
+            execution_success = True
+        except Exception as sql_err:
+            print(f"SQL failed: {sql_err}")
         row_count = len(data)
 
         summary = await summarizer.summarize_query_results(
@@ -234,6 +313,7 @@ async def ask(request: AskRequest, _claims: dict = Depends(validate_token)):
                     content=summary,
                     sql_query=sql_query,
                     row_count=row_count,
+                    success=execution_success,
                 )
             except Exception as hist_err:
                 print(f"Warning: failed to save chat history: {hist_err}")
