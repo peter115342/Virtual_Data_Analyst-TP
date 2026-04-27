@@ -57,8 +57,6 @@ class DatabaseManager:
             self.engine.dispose()
 
     async def execute_query(self, sql: str) -> list[dict]:
-        # TODO
-        #  change syntax to ORM
         """
         Execute SQL query (read-only)
         Add safety checks to prevent write operations
