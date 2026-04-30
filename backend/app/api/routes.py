@@ -170,7 +170,7 @@ class DatabaseConnectRequest(BaseModel):
 
 
 @router.post("/generate-sql", response_model=GenerateSQLResponse)
-async def generate_sql(request: GenerateSQLRequest): #, _claims: dict = Depends(validate_token)):
+async def generate_sql(request: GenerateSQLRequest, _claims: dict = Depends(validate_token)):
     """
     Generate SQL query from natural language question
 
@@ -198,7 +198,7 @@ async def generate_sql(request: GenerateSQLRequest): #, _claims: dict = Depends(
 
 
 @router.post("/ask", response_model=AskResponse)
-async def ask(request: AskRequest): #, _claims: dict = Depends(validate_token)):
+async def ask(request: AskRequest, _claims: dict = Depends(validate_token)):
     """
     Returns:
         - question: The original question
@@ -256,7 +256,7 @@ async def ask(request: AskRequest): #, _claims: dict = Depends(validate_token)):
 
 
 @router.post("/query-and-summarize", response_model=QueryResponse)
-async def query_and_summarize(request: QueryRequest): #, _claims: dict = Depends(validate_token)):
+async def query_and_summarize(request: QueryRequest, _claims: dict = Depends(validate_token)):
     """
     Execute SQL query and get LLM summary of the results
 
@@ -285,8 +285,8 @@ async def query_and_summarize(request: QueryRequest): #, _claims: dict = Depends
 
 @router.post("/connect-database")
 async def connect_database(
-    request: DatabaseConnectRequest): #, _claims: dict = Depends(validate_token)
-# ):
+    request: DatabaseConnectRequest, _claims: dict = Depends(validate_token)
+):
     """
     Create connection to database
 
@@ -352,9 +352,9 @@ class DisconnectRequest(BaseModel):
 
 @router.post("/disconnect-database")
 async def disconnect_database(
-    request: DisconnectRequest = None,):
-    # _claims: dict = Depends(validate_token),
-# ):
+    request: DisconnectRequest = None,
+    _claims: dict = Depends(validate_token),
+):
     """
     Remove database connection
 
@@ -387,7 +387,7 @@ async def disconnect_database(
 
 
 @router.get("/schema")
-async def schema(): #_claims: dict = Depends(validate_token)):
+async def schema(_claims: dict = Depends(validate_token)):
     if not connection.db_manager:
         return {"status": "not connected", "message": "Database is not connected."}
     try:

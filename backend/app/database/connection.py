@@ -122,7 +122,7 @@ class DatabaseManager:
 
     async def get_db_dialect(self) -> str:
         """
-        Get database dialect
+        Get the dialect of connected database (type of database)
         """
         if not self.engine:
             raise RuntimeError("Database not connected. Call connect() first.")
