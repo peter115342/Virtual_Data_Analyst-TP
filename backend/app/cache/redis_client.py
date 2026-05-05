@@ -41,6 +41,9 @@ async def disconnect() -> None:
 def is_connected() -> bool:
 	return _client is not None
 
+def raw_client() -> Redis | None:
+	return _client
+
 
 async def get_json(key: str) -> dict[str, Any] | list[Any] | None:
 	"""Read and deserialize JSON value from cache."""
@@ -130,3 +133,41 @@ async def delete_pattern(pattern: str) -> int:
 		print(f"Redis delete pattern warning for '{pattern}': {exc}")
 		return 0
 
+async def zadd(key: str, mapping: dict[str, float]) -> int | None:
+	if _client is None:
+		return None
+	try:
+		return int(await _client.zadd(key, mapping))
+	except Exception as exc:
+		print(f"Redis ZADD warning for key '{key}': {exc}")
+		return None
+
+
+async def zrevrange(key: str, start: int, stop: int) -> list[str]:
+	if _client is None:
+		return []
+	try:
+		return list(await _client.zrevrange(key, start, stop))
+	except Exception as exc:
+		print(f"Redis ZREVRANGE warning for key '{key}': {exc}")
+		return []
+
+
+async def zremrangebyrank(key: str, start: int, stop: int) -> int | None:
+	if _client is None:
+		return None
+	try:
+		return int(await _client.zremrangebyrank(key, start, stop))
+	except Exception as exc:
+		print(f"Redis ZREMRANGEBYRANK warning for key '{key}': {exc}")
+		return None
+
+
+async def expire(key: str, ttl_seconds: int) -> bool:
+	if _client is None:
+		return False
+	try:
+		return bool(await _client.expire(key, ttl_seconds))
+	except Exception as exc:
+		print(f"Redis EXPIRE warning for key '{key}': {exc}")
+		return False

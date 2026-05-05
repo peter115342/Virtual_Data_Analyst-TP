@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 
 from app.cache import redis_client
+from app.cache import semantic_qa_cache
 from app.auth.entra import validate_token
 from app.config import settings
 from app.database import connection, chat_history
@@ -30,6 +31,7 @@ CACHE_METRIC_BUCKETS = (
     "nl2sql",
     "sql_results",
     "summary",
+    "qa_semantic",
     "chat_history",
 )
 
@@ -93,7 +95,9 @@ def _question_signature(question: str) -> str:
     tokens = [
         token
         for token in normalized.split(" ")
-        if token and token not in QUESTION_STOPWORDS and len(token) > 1
+        if token
+        and token not in QUESTION_STOPWORDS
+        and (token.isdigit() or len(token) > 1)
     ]
 
     if not tokens:
@@ -509,6 +513,62 @@ async def ask(
         summarizer = ResponseSummarizer()
         db_fp = _db_fingerprint(db)
 
+        semantic_probe = await semantic_qa_cache.probe_similar_answer(db_fp, request.question)
+        if semantic_probe.best_similarity is not None:
+            response.headers["X-Cache-QA-Semantic-Best-Similarity"] = (
+                f"{semantic_probe.best_similarity:.4f}"
+            )
+        response.headers["X-Cache-QA-Semantic-Threshold"] = f"{settings.semantic_cache_threshold:.4f}"
+
+        semantic_hit = semantic_probe.hit
+        if semantic_hit is not None:
+            await _record_cache_metric("qa_semantic", "hit")
+            response.headers["X-Cache-QA-Semantic"] = "HIT"
+            response.headers["X-Cache-QA-Semantic-Similarity"] = f"{semantic_hit.similarity:.4f}"
+            response.headers["X-Cache-Trace"] = "qa_semantic=HIT"
+
+            if request.session_id:
+                try:
+                    await chat_history.add_message(
+                        session_id=request.session_id,
+                        role="user",
+                        content=request.question,
+                    )
+                    await chat_history.add_message(
+                        session_id=request.session_id,
+                        role="assistant",
+                        content=semantic_hit.summary,
+                        sql_query=semantic_hit.sql_query,
+                        row_count=semantic_hit.row_count,
+                    )
+
+                    await _append_chat_cache(
+                        session_id=request.session_id,
+                        role="user",
+                        content=request.question,
+                    )
+                    await _append_chat_cache(
+                        session_id=request.session_id,
+                        role="assistant",
+                        content=semantic_hit.summary,
+                        sql_query=semantic_hit.sql_query,
+                        row_count=semantic_hit.row_count,
+                    )
+                except Exception as hist_err:
+                    print(f"Warning: failed to save chat history: {hist_err}")
+
+            return AskResponse(
+                status="success",
+                question=request.question,
+                sql_query=semantic_hit.sql_query,
+                summary=semantic_hit.summary,
+                row_count=semantic_hit.row_count,
+                session_id=request.session_id,
+            )
+
+        await _record_cache_metric("qa_semantic", "miss")
+        response.headers["X-Cache-QA-Semantic"] = "MISS"
+
         schema, schema_hit = await _get_cached_schema(db, db_fp)
 
         sql_query, nl2sql_hit, question_signature = await _get_cached_sql_query(
@@ -535,6 +595,7 @@ async def ask(
         response.headers["X-Cache-Summary"] = _cache_header_status(summary_hit)
         response.headers["X-Cache-NL2SQL-Signature-Hash"] = _short_hash(question_signature)
         response.headers["X-Cache-Trace"] = (
+            f"qa_semantic=MISS;"
             f"schema={_cache_header_status(schema_hit)};"
             f"nl2sql={_cache_header_status(nl2sql_hit)};"
             f"sql_results={_cache_header_status(sql_results_hit)};"
@@ -570,6 +631,18 @@ async def ask(
                 )
             except Exception as hist_err:
                 print(f"Warning: failed to save chat history: {hist_err}")
+
+        try:
+            await semantic_qa_cache.store_answer(
+                db_fp=db_fp,
+                question=request.question,
+                sql_query=sql_query,
+                summary=summary,
+                row_count=row_count,
+            )
+        except Exception as cache_err:
+            print(f"Warning: semantic cache store failed: {cache_err}")
+
 
         return AskResponse(
             status="success",
@@ -787,6 +860,8 @@ async def cache_stats(_claims: dict = Depends(validate_token)):
         "nl2sql": await redis_client.count_pattern(f"{CACHE_PREFIX}:nl2sql:*"),
         "sql_results": await redis_client.count_pattern(f"{CACHE_PREFIX}:sqlres:*"),
         "summary": await redis_client.count_pattern(f"{CACHE_PREFIX}:summary:*"),
+        "qa_entries": await redis_client.count_pattern(f"{CACHE_PREFIX}:qa:entry:*"),
+        "qa_indexes": await redis_client.count_pattern(f"{CACHE_PREFIX}:qa:index:*"),
         "chat": await redis_client.count_pattern(f"{CACHE_PREFIX}:chat:*"),
         "metrics": await redis_client.count_pattern(f"{CACHE_METRICS_PREFIX}:*"),
     }

@@ -41,6 +41,16 @@ class Settings(BaseSettings):
     cache_chat_ttl_seconds: int = 86400
     cache_max_rows: int = 2000
 
+    # Semantic Q&A Cache (Redis) Settings
+    semantic_cache_enabled: bool = True
+    semantic_cache_ttl_seconds: int = 604800  # 7 days
+    semantic_cache_threshold: float = 0.70
+    semantic_cache_keyword_threshold: float = 0.25
+    semantic_cache_keyword_weight: float = 0.25
+    semantic_cache_max_candidates: int = 200
+    semantic_cache_max_entries: int = 5000
+    semantic_cache_embedding_model: str = "azure.text-embedding-3-small"
+
     # CORS Settings
     cors_origins: str | list[str] = "http://localhost:5173"
 
