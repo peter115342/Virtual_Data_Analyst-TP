@@ -42,3 +42,8 @@ export const listMongoSessions = async () => {
 
   return response.data;
 };
+
+export const getDatabaseStatus = async () => {
+  const response = await api.get("/api/database/status");
+  return response.data;
+};

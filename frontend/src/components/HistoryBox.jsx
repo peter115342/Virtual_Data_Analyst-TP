@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 
-export default function HistoryBox({ title, description }) {
+export default function HistoryBox({ title, description, onClick, isActive }) {
     const [expanded, setExpanded] = useState(false);
     const [position, setPosition] = useState(null);
     const timeoutRef = useRef(null);
@@ -29,14 +29,20 @@ export default function HistoryBox({ title, description }) {
         <>
             <div
                 ref={itemRef}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    console.log("CLICK HISTORY BOX");
+                    onClick && onClick();
+                }}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
-                className="w-full h-9 px-2 py-1 text-black rounded-lg cursor-pointer hover:bg-[#F4BA8D] transition"
-            >
+                className={`w-full px-3 py-2 text-black rounded-lg cursor-pointer
+                    ${isActive ? "bg-[#F9730B] text-white" : "hover:bg-[#F4BA8D]"}`}
+                >
                 <h2 className="text-sm font-normal truncate">{title}</h2>
             </div>
 
-            {expanded && position && (
+            {/* {expanded && position && (
                 <div
                     className="fixed z-[9999] bg-[#F4BA8D] text-white rounded-lg shadow-xl p-2 w-72"
                     style={{
@@ -50,7 +56,7 @@ export default function HistoryBox({ title, description }) {
                         {description}
                     </p>
                 </div>
-            )}
+            )} */}
         </>
     );
 }

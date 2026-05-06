@@ -13,17 +13,22 @@ export default function DatabaseModal({ onClose, onConnected, connect, loading, 
   const [dbType, setDbType] = useState("postgres");
 
   const handleConnect = async () => {
-    await connect({
-      db_type: dbType,
-      host,
-      port: Number(port),
-      username,
-      password,
-      db_name: dbName,
-    });
-    onConnected();
-  };
+    try {
+      await connect({
+        db_type: dbType,
+        host,
+        port: Number(port),
+        username,
+        password,
+        db_name: dbName,
+      });
 
+      onConnected();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"

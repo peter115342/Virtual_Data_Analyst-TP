@@ -3,6 +3,8 @@ import InputQuestion from "./InputQuestion"
 import UserMessage from "./UserMessage"
 import { askQuestion } from "../services/databaseService";
 import ChatHeader from "./ChatHeader";
+import { getSessionHistory } from "../services/databaseService";
+import { useEffect } from "react";
 
 export default function Chat({ sessionId, isConnected, onDatabaseClick, userName, onLogout }) {
     const [messages, setMessages] = useState([])
@@ -45,7 +47,30 @@ export default function Chat({ sessionId, isConnected, onDatabaseClick, userName
         }
     };
 
+    useEffect(() => {
+        const loadHistory = async () => {
+            if (!sessionId) return;
 
+            try {
+            const data = await getSessionHistory(sessionId);
+            console.log("HISTORY DATA:", data);
+            const formatted = data.messages.map((msg) => ({
+                text: msg.content,
+                fromUser: msg.role === "user",
+            }));
+
+            setMessages(formatted);
+            } catch (err) {
+            console.log("Failed to load history", err);
+            }
+        };
+
+        loadHistory();
+        }, [sessionId]);
+
+    useEffect(() => {
+        console.log("SESSION CHANGED:", sessionId);
+        }, [sessionId]);
 
 
 return (

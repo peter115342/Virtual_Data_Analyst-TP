@@ -1,22 +1,44 @@
-import { useState , useEffect} from "react";
+import { useState, useEffect } from "react";
 import SideBar from "../components/SideBar.jsx";
 import Chat from "../components/Chat.jsx";
 import DatabaseModal from "../components/DatabaseModal.jsx";
 import useDatabase from "../hooks/useDatabase";
-
+import { getDatabaseStatus } from "../services/databaseService.js";
 
 export default function HomePage({ onLogout, userName }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [activeSessionId, setActiveSessionId] = useState(null);
 
   const { connect, disconnect, loading, error, sessionId } = useDatabase();
+
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const res = await getDatabaseStatus();
+        setIsConnected(res.connected);
+        console.log("Database status:", res);
+      } catch (err) {
+        console.log("Status check failed", err);
+        setIsConnected(false);
+      }
+    };
+
+    checkConnection();
+  }, []);
+
+  const handleSelectSession = (id) => {
+    setActiveSessionId(id);
+    console.log("ACTIVE SESSION:", activeSessionId);
+  };
 
   const handleDatabaseButtonClick = async () => {
     if (isConnected) {
       try {
         await disconnect();
-        setIsConnected(false);
+        const res = await getDatabaseStatus();
+        setIsConnected(res.connected);
       } catch (err) {
         console.error("Disconnect failed", err);
       }
@@ -30,6 +52,7 @@ export default function HomePage({ onLogout, userName }) {
       setIsDatabaseModalOpen(false);
     }
   }, [isConnected]);
+
   return (
     <div className="h-screen flex bg-[#eeeeee] relative">
       <div
@@ -39,18 +62,20 @@ export default function HomePage({ onLogout, userName }) {
         `}
       >
         <SideBar
+          onSelectSession={handleSelectSession}
           isOpenS={isSidebarOpen}
           toggle={() => setIsSidebarOpen(!isSidebarOpen)}
-          onOpenDatabase={() => handleDatabaseButtonClick()}
+          onOpenDatabase={handleDatabaseButtonClick}
           isConnected={isConnected}
           onLogout={onLogout}
           userName={userName}
+          activeSessionId={activeSessionId}
         />
       </div>
 
       <div className="flex-1">
         <Chat
-          sessionId={sessionId}
+          sessionId={activeSessionId || sessionId}
           isConnected={isConnected}
           onDatabaseClick={handleDatabaseButtonClick}
           userName={userName}
@@ -63,7 +88,6 @@ export default function HomePage({ onLogout, userName }) {
           onClose={() => setIsDatabaseModalOpen(false)}
           onConnected={() => {
             setIsConnected(true);
-            setIsDatabaseModalOpen(false);
           }}
           connect={connect}
           loading={loading}
