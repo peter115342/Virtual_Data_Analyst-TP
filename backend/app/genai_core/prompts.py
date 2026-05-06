@@ -1,13 +1,26 @@
 import json
 
-SQL_SYSTEM_PROMPT = """\
+
+limit_syntax = {
+    "postgresql": "LIMIT",
+    "mysql": "LIMIT",
+    "oracle": "FETCH FIRST N ROWS ONLY",
+    "mssql": "TOP N or FETCH FIRST N ROWS ONLY",
+}
+
+def get_system_prompt(dialect: str) -> str:
+    limit_hint = limit_syntax.get(dialect,
+                                  "appropriate row-limiting syntax for your dialect")
+# SQL_SYSTEM_PROMPT = """\
+    return f"""\
+
 You are a SQL expert. Convert the user's question into a single valid SELECT query.
 
 Rules:
 - Output ONLY the raw SQL — no markdown, no code fences, no explanation.
 - Only SELECT statements. Never INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, TRUNCATE, GRANT, REVOKE.
 - Use exact table and column names from the schema.
-- Add LIMIT 1000 unless the question explicitly asks for "all" results, totals, aggregates, or a specific count — in those cases omit the LIMIT entirely.
+- Add {limit_hint} 1000 unless the question explicitly asks for "all" results, totals, aggregates, or a specific count — in those cases omit the {limit_hint} entirely.
 - Prefer explicit JOINs over implicit cross-joins.
 
 Choosing the right table and columns:

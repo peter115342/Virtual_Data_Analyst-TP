@@ -178,6 +178,7 @@ async def _get_cached_sql_query(
     schema: dict,
     generator: QueryGenerator,
     db_fp: str,
+    dialect: str,
 ) -> tuple[str, bool, str]:
     signature = _question_signature(question) or _normalize_question_text(question)
     cache_key = _nl2sql_cache_key(db_fp, signature)
@@ -190,7 +191,7 @@ async def _get_cached_sql_query(
 
     await _record_cache_metric("nl2sql", "miss")
 
-    sql_query = await generator.generate_query(question, schema)
+    sql_query = await generator.generate_query(question, schema, dialect)
     await redis_client.set_json(
         cache_key,
         {
@@ -437,7 +438,7 @@ class QueryResponse(BaseModel):
 
 class DatabaseConnectRequest(BaseModel):
     """
-    Postgres / MySQL database connect request
+    Postgres / MySQL / SQL server / OracleDB database connect request
     """
 
     db_type: str
@@ -472,12 +473,14 @@ async def generate_sql(
         db_fp = _db_fingerprint(db)
 
         schema, schema_hit = await _get_cached_schema(db, db_fp)
+        dialect = await db.get_db_dialect()
 
         sql_query, nl2sql_hit, question_signature = await _get_cached_sql_query(
             request.question,
             schema,
             generator,
             db_fp,
+            dialect,
         )
 
         response.headers["X-Cache-Schema"] = _cache_header_status(schema_hit)
@@ -570,12 +573,14 @@ async def ask(
         response.headers["X-Cache-QA-Semantic"] = "MISS"
 
         schema, schema_hit = await _get_cached_schema(db, db_fp)
+        dialect = await db.get_db_dialect()
 
         sql_query, nl2sql_hit, question_signature = await _get_cached_sql_query(
             request.question,
             schema,
             generator,
             db_fp,
+            dialect,
         )
 
         data, sql_results_hit = await _get_cached_query_results(db, sql_query, db_fp)

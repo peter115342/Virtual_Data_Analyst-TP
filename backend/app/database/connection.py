@@ -83,7 +83,10 @@ class DatabaseManager:
 
         with self.engine.connect() as conn:
             if self.readonly:
-                conn.execute(text("SET TRANSACTION READ ONLY"))
+                dialect = self.engine.dialect.name
+                if dialect in ("postgresql", "mysql", "oracle"):
+                    conn.execute(text("SET TRANSACTION READ ONLY"))
+                # mssql and sqlite — rely on regex guard only
 
             result = conn.execute(text(sql))
 
@@ -116,6 +119,16 @@ class DatabaseManager:
             ]
 
         return schema
+
+    async def get_db_dialect(self) -> str:
+        """
+        Get the dialect of connected database (type of database)
+        """
+        if not self.engine:
+            raise RuntimeError("Database not connected. Call connect() first.")
+
+        dialect_name = self.engine.dialect.name
+        return dialect_name
 
 
 db_manager: DatabaseManager | None = None

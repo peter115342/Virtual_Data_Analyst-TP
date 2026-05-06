@@ -3,7 +3,7 @@
 from openai import OpenAI
 
 from app.config import settings
-from app.genai_core.prompts import SQL_SYSTEM_PROMPT, format_schema, sql_user_prompt
+from app.genai_core.prompts import get_system_prompt, format_schema, sql_user_prompt
 
 
 class QueryGenerator:
@@ -11,13 +11,13 @@ class QueryGenerator:
         self.client = OpenAI(api_key=settings.api_key, base_url=settings.openai_base_url)
         self.model = "azure.gpt-4.1"
 
-    async def generate_query(self, question: str, schema: dict) -> str:
+    async def generate_query(self, question: str, schema: dict, dialect: str) -> str:
         schema_text = format_schema(schema)
 
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
-                {"role": "system", "content": SQL_SYSTEM_PROMPT},
+                {"role": "system", "content": get_system_prompt(dialect)},
                 {"role": "user", "content": sql_user_prompt(question, schema_text)},
             ],
             temperature=0.0,

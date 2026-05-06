@@ -51,6 +51,8 @@ export default function DatabaseModal({ onClose, onConnected, connect, loading, 
           >
             <option value="postgres">PostgreSQL</option>
             <option value="mysql">MySQL</option>
+            <option value="oracle">OracleDB</option>
+            <option value="sqlserver">SQLserver</option>
           </select>
           <InputDatabase value={host} onChange={setHost} placeholder="Database Host" />
           <InputDatabase value={port} onChange={setPort} placeholder="Database Port" />
