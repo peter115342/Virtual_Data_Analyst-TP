@@ -178,7 +178,7 @@ async def _get_cached_sql_query(
     schema: dict,
     generator: QueryGenerator,
     db_fp: str,
-    dialect: str = "postgresql",
+    dialect: str,
 ) -> tuple[str, bool, str]:
     signature = _question_signature(question) or _normalize_question_text(question)
     cache_key = _nl2sql_cache_key(db_fp, signature)
