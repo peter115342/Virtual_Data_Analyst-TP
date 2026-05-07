@@ -179,10 +179,7 @@ async def _get_cached_sql_query(
     generator: QueryGenerator,
     db_fp: str,
     dialect: str,
-    history_text: str = "",
-    previous_sql: str = "",
-    previous_question: str = "",
-    last_successful_sql: str = "",
+    history_context: dict,
 ) -> tuple[str, bool, str]:
     signature = _question_signature(question) or _normalize_question_text(question)
     cache_key = _nl2sql_cache_key(db_fp, signature)
@@ -199,10 +196,7 @@ async def _get_cached_sql_query(
         question=question,
         schema=schema,
         dialect=dialect,
-        history_text=history_text,
-        previous_sql=previous_sql,
-        previous_question=previous_question,
-        last_successful_sql=last_successful_sql,
+        chat_history_context=history_context,
     )
     await redis_client.set_json(
         cache_key,
@@ -493,8 +487,15 @@ async def get_chat_context(session_id: str | None):
             previous_sql = m.get("sql_query")
         if not last_successful_sql and m.get("sql_query") and m.get("success"):
             last_successful_sql = m.get("sql_query")
+
+    history_context = {
+        "history_text": history_text,
+        "previous_sql": previous_sql,
+        "previous_question": previous_question,
+        "last_successful_sql": last_successful_sql
+    }
             
-    return history_text, previous_sql, previous_question, last_successful_sql
+    return history_context
 
 
 @router.post("/new-chat")
@@ -540,7 +541,7 @@ async def generate_sql(
         dialect = await db.get_db_dialect()
 
         # Fetch chat context if session_id provided
-        history_text, previous_sql, previous_question, last_successful_sql = await get_chat_context(request.session_id)
+        history_context = await get_chat_context(request.session_id)
 
         sql_query, nl2sql_hit, question_signature = await _get_cached_sql_query(
             request.question,
@@ -548,10 +549,7 @@ async def generate_sql(
             generator,
             db_fp,
             dialect,
-            history_text=history_text,
-            previous_sql=previous_sql,
-            previous_question=previous_question,
-            last_successful_sql=last_successful_sql,
+            history_context=history_context,
         )
 
         response.headers["X-Cache-Schema"] = _cache_header_status(schema_hit)
@@ -665,7 +663,7 @@ async def ask(
         dialect = await db.get_db_dialect()
 
         # Fetch chat context if session_id provided
-        history_text, previous_sql, previous_question, last_successful_sql = await get_chat_context(request.session_id)
+        history_context = await get_chat_context(request.session_id)
 
         sql_query, nl2sql_hit, question_signature = await _get_cached_sql_query(
             request.question,
@@ -673,11 +671,7 @@ async def ask(
             generator,
             db_fp,
             dialect,
-            history_text=history_text,
-            previous_sql=previous_sql,
-            previous_question=previous_question,
-            last_successful_sql=last_successful_sql,
-        )
+            history_context=history_context)
 
         data, sql_results_hit = await _get_cached_query_results(db, sql_query, db_fp)
         row_count = len(data)
