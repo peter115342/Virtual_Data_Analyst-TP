@@ -1,21 +1,31 @@
 import { useEffect, useState } from "react";
 import ButtonDatabase from "./ButtonDatabase.jsx";
-import crossOrange from '../assets/cross-orange.svg';
+import crossOrange from "../assets/cross-orange.svg";
 import filterOrange from "../assets/filter-orange.svg";
 import HistoryBox from "./HistoryBox.jsx";
 import logo from "../assets/VDA_logo.png";
-import { listSessions } from "../services/databaseService";
+import { listMongoSessions } from "../services/databaseService";
 
-export default function SideBar({ isOpenS, toggle, onOpenDatabase, isConnected, onLogout, userName, onSelectSession, activeSessionId }) {
-
+export default function SideBar({
+  isOpenS,
+  toggle,
+  onOpenDatabase,
+  isConnected,
+  onLogout,
+  userName,
+  onSelectSession,
+  activeSessionId,
+}) {
   const [sessions, setSessions] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchSessions = async () => {
       try {
-        const data = await listSessions();
-         console.log("SESSIONS:", data.sessions);
+        const data = await listMongoSessions();
+
+        console.log("SESSIONS:", data.sessions);
+
         setSessions(data.sessions || []);
       } catch (err) {
         console.error("Failed to load sessions:", err);
@@ -26,20 +36,42 @@ export default function SideBar({ isOpenS, toggle, onOpenDatabase, isConnected, 
     fetchSessions();
   }, []);
 
-  const chats = sessions.map((s) => ({
-    id: s.session_id,  
-    title: s.db_name || "Unknown DB",
-    description: s.connected_at
-      ? new Date(s.connected_at).toLocaleString()
-      : "No date"
-  }));
+  const chats = sessions.map((s) => {
+    const firstUserMessage = s.messages?.find(
+      (m) => m.role === "user"
+    );
+
+    const shortPreview = firstUserMessage?.content
+      ?.split(" ")
+      .slice(0, 4)
+      .join(" ");
+
+    return {
+      id: s.session_id,
+
+      title: s.db_name || "Unknown DB",
+
+      description: shortPreview
+        ? `${shortPreview}...`
+        : "No messages yet",
+
+      date: s.connected_at
+        ? new Date(s.connected_at).toLocaleString()
+        : "No date",
+    };
+  });
 
   return (
     <div className="h-full min-h-0 p-1 flex flex-col bg-[#E8E8E8]">
-
+      
+      {/* HEADER */}
       <div className="flex items-center justify-between">
         {isOpenS && (
-          <img src={logo} alt="Logo" className="w-18" />
+          <img
+            src={logo}
+            alt="Logo"
+            className="w-18"
+          />
         )}
 
         <button
@@ -56,32 +88,35 @@ export default function SideBar({ isOpenS, toggle, onOpenDatabase, isConnected, 
 
       {isOpenS && (
         <div className="flex flex-col items-center gap-4 flex-1 min-h-0 bg-[#E8E8E8]">
+          
           {error && (
             <div className="text-red-500 text-xs w-full px-2">
               {error}
             </div>
           )}
 
-          <div className="flex-1 w-full overflow-y-auto mt-2 space-y-1 pr-1 custom-scrollbar min-h-0">            {chats.length === 0 && !error && (
+          <div className="flex-1 w-full overflow-y-auto mt-2 space-y-1 pr-1 custom-scrollbar min-h-0">
+            
+            {chats.length === 0 && !error && (
               <div className="text-gray-500 text-sm px-2">
                 No sessions yet
               </div>
             )}
 
-            {chats.map(chat => (
-              <HistoryBox 
+            {chats.map((chat) => (
+              <HistoryBox
                 key={chat.id}
                 title={chat.title}
                 description={chat.description}
+                date={chat.date}
                 onClick={() => {
-                  console.log("CLICK:", chat.id);
                   onSelectSession(chat.id);
                 }}
                 isActive={chat.id === activeSessionId}
               />
             ))}
-          </div>
 
+          </div>
         </div>
       )}
     </div>

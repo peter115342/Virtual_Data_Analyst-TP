@@ -416,6 +416,8 @@ async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
         db = get_db()
         collection = db["sessions"]
         user_id = _claims.get("sub", "anonymous")
+
+        # Zoradené od najnovšej po najstaršiu
         cursor = collection.find(
             {"user_id": user_id},
             {
@@ -441,17 +443,29 @@ async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
             }
 
         sessions = []
+        is_first = True  # Pomocná premenná na identifikáciu najnovšej session
+
         async for doc in cursor:
             doc["_id"] = str(doc["_id"])
             raw_messages = doc.get("messages", [])
-            doc["messages"] = [format_message(m) for m in raw_messages if m]
-            sessions.append(doc)
+            
+            # Formátovanie správ
+            formatted_messages = [format_message(m) for m in raw_messages if m]
+            
+            # LOGIKA FILTROVANIA:
+            # Ak má session správy ALEBO ak je to úplne prvá (najnovšia) v poradí
+            if len(formatted_messages) > 0 or is_first:
+                doc["messages"] = formatted_messages
+                sessions.append(doc)
+            
+            # Po spracovaní prvého dokumentu nastavíme is_first na False
+            is_first = False
 
         return {
             "status": "success",
             "user_id": user_id,
             "count": len(sessions),
-            "sessions": sessions
+            "sessions": sessions,
         }
 
     except Exception as e:
@@ -459,7 +473,6 @@ async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
             status_code=500,
             detail=f"Mongo sessions fetch failed: {str(e)}"
         )
-    
 
 
 @router.get("/database/status")
