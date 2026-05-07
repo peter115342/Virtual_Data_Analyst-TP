@@ -745,6 +745,7 @@ async def ask(
         except Exception as cache_err:
             print(f"Warning: semantic cache store failed: {cache_err}")
 
+
         return AskResponse(
             status="success",
             question=request.question,
