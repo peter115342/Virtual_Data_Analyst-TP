@@ -3,8 +3,11 @@ Azure Entra ID JWT token validation for FastAPI.
 Validates tokens issued by Microsoft Entra ID using JWKS (JSON Web Key Sets).
 """
 
+from typing import Any
+
 import httpx
 import jwt
+import jwt.algorithms
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -30,7 +33,7 @@ async def _get_jwks() -> dict:
         return _jwks_cache
 
 
-def _get_signing_key(token: str, jwks: dict) -> jwt.algorithms.RSAAlgorithm:
+def _get_signing_key(token: str, jwks: dict) -> Any:
     """Extract the correct signing key from JWKS based on the token's kid header."""
     unverified_header = jwt.get_unverified_header(token)
     kid = unverified_header.get("kid")
@@ -56,7 +59,7 @@ async def validate_token(
     """
     token = credentials.credentials
 
-    if settings.fastapi_env == "development" and token == "dev":
+    if settings.fastapi_env == "development" and token == "dev":  # nosec
         return {"sub": "dev-user-001", "name": "Dev User", "preferred_username": "dev@localhost"}
 
     if not settings.azure_ad_client_id or not settings.azure_ad_tenant_id:

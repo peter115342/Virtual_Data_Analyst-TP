@@ -11,11 +11,10 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 
-from app.cache import redis_client
-from app.cache import semantic_qa_cache
 from app.auth.entra import validate_token
+from app.cache import redis_client, semantic_qa_cache
 from app.config import settings
-from app.database import connection, chat_history
+from app.database import chat_history, connection
 from app.database.connection import get_db_manager
 from app.database.mongo import get_db
 from app.database.utils import build_db_connection_url
@@ -85,7 +84,9 @@ def _normalize_sql(sql_query: str) -> str:
 
 def _normalize_question_text(question: str) -> str:
     lowered = question.strip().lower()
-    ascii_question = unicodedata.normalize("NFKD", lowered).encode("ascii", "ignore").decode("ascii")
+    ascii_question = (
+        unicodedata.normalize("NFKD", lowered).encode("ascii", "ignore").decode("ascii")
+    )
     cleaned = re.sub(r"[^a-z0-9\s]", " ", ascii_question)
     return re.sub(r"\s+", " ", cleaned).strip()
 
@@ -95,9 +96,7 @@ def _question_signature(question: str) -> str:
     tokens = [
         token
         for token in normalized.split(" ")
-        if token
-        and token not in QUESTION_STOPWORDS
-        and (token.isdigit() or len(token) > 1)
+        if token and token not in QUESTION_STOPWORDS and (token.isdigit() or len(token) > 1)
     ]
 
     if not tokens:
@@ -487,8 +486,7 @@ async def generate_sql(
         response.headers["X-Cache-NL2SQL"] = _cache_header_status(nl2sql_hit)
         response.headers["X-Cache-NL2SQL-Signature-Hash"] = _short_hash(question_signature)
         response.headers["X-Cache-Trace"] = (
-            f"schema={_cache_header_status(schema_hit)};"
-            f"nl2sql={_cache_header_status(nl2sql_hit)}"
+            f"schema={_cache_header_status(schema_hit)};nl2sql={_cache_header_status(nl2sql_hit)}"
         )
 
         return GenerateSQLResponse(status="success", sql_query=sql_query)
@@ -521,7 +519,9 @@ async def ask(
             response.headers["X-Cache-QA-Semantic-Best-Similarity"] = (
                 f"{semantic_probe.best_similarity:.4f}"
             )
-        response.headers["X-Cache-QA-Semantic-Threshold"] = f"{settings.semantic_cache_threshold:.4f}"
+        response.headers["X-Cache-QA-Semantic-Threshold"] = (
+            f"{settings.semantic_cache_threshold:.4f}"
+        )
 
         semantic_hit = semantic_probe.hit
         if semantic_hit is not None:
@@ -648,7 +648,6 @@ async def ask(
         except Exception as cache_err:
             print(f"Warning: semantic cache store failed: {cache_err}")
 
-
         return AskResponse(
             status="success",
             question=request.question,
@@ -723,8 +722,7 @@ async def connect_database(
     db_type = request.db_type
 
     if db_type not in valid_db_types:
-        raise HTTPException(status_code=400,
-                            detail=f"Invalid database type: {db_type}")
+        raise HTTPException(status_code=400, detail=f"Invalid database type: {db_type}")
 
     try:
         database_url = build_db_connection_url(
@@ -779,7 +777,7 @@ class DisconnectRequest(BaseModel):
 
 @router.post("/disconnect-database")
 async def disconnect_database(
-    request: DisconnectRequest = None,
+    request: DisconnectRequest | None = None,
     _claims: dict = Depends(validate_token),
 ):
     """
@@ -917,6 +915,7 @@ async def list_sessions(_claims: dict = Depends(validate_token)):
     sessions = await chat_history.list_user_sessions(user_id)
     return {"sessions": sessions}
 
+
 @router.get("/mongo/sessions")
 async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
     try:
@@ -935,7 +934,7 @@ async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
                 "connected_at": 1,
                 "disconnected_at": 1,
                 "messages": 1,
-            }
+            },
         ).sort("connected_at", -1)
 
         def format_message(msg: dict) -> dict:
@@ -958,11 +957,8 @@ async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
             "status": "success",
             "user_id": user_id,
             "count": len(sessions),
-            "sessions": sessions
+            "sessions": sessions,
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Mongo sessions fetch failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Mongo sessions fetch failed: {str(e)}")

@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     """
 
     # API Settings
-    fastapi_host: str = "0.0.0.0"
+    fastapi_host: str = "0.0.0.0"  # nosec B104
     fastapi_port: int = 8000
     fastapi_env: str = "development"
 

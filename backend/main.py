@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
 from app.cache import redis_client
 from app.config import settings
-from app.database import connection, mongo, chat_history
+from app.database import chat_history, connection, mongo
 
 
 @asynccontextmanager
