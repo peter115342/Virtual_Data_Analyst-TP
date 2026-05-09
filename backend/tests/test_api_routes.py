@@ -1,3 +1,5 @@
+from typing import cast
+
 import pytest
 
 from app.api import routes
@@ -22,6 +24,9 @@ class FakeDbManager:
 
     async def execute_query(self, sql):
         return self.data
+
+    async def get_db_dialect(self):
+        return "postgresql"
 
 
 class FakeCursor:
@@ -83,7 +88,7 @@ async def test_health_not_connected(client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_generate_sql_success(client, monkeypatch):
-    async def fake_generate_query(_self, _question, _schema):
+    async def fake_generate_query(_self, _question, _schema, _dialect):
         return "SELECT 1"
 
     class FakeGenerator:
@@ -100,7 +105,7 @@ async def test_generate_sql_success(client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_ask_success_with_history(client, monkeypatch):
-    async def fake_generate_query(_self, _question, _schema):
+    async def fake_generate_query(_self, _question, _schema, _dialect):
         return "SELECT 2"
 
     async def fake_summarize(_self, sql_query, data, context):
@@ -124,9 +129,7 @@ async def test_ask_success_with_history(client, monkeypatch):
     monkeypatch.setattr(routes, "ResponseSummarizer", FakeSummarizer)
     monkeypatch.setattr(routes.chat_history, "add_message", fake_add_message)
 
-    response = await client.post(
-        "/api/ask", json={"question": "question", "session_id": "s-1"}
-    )
+    response = await client.post("/api/ask", json={"question": "question", "session_id": "s-1"})
 
     assert response.status_code == 200
     body = response.json()
@@ -162,7 +165,7 @@ async def test_query_and_summarize_success(client, monkeypatch):
 @pytest.mark.asyncio
 async def test_query_and_summarize_value_error(client, monkeypatch):
     class BadDbManager(FakeDbManager):
-        async def execute_query(self, _sql):
+        async def execute_query(self, sql):
             raise ValueError("bad query")
 
     monkeypatch.setattr(routes, "get_db_manager", lambda: BadDbManager())
@@ -253,13 +256,11 @@ async def test_disconnect_database_success(client, monkeypatch):
         closed["called"] = True
 
     fake_manager = FakeManager()
-    connection.db_manager = fake_manager
+    connection.db_manager = cast(connection.DatabaseManager, fake_manager)
 
     monkeypatch.setattr(routes.chat_history, "close_session", fake_close_session)
 
-    response = await client.post(
-        "/api/disconnect-database", json={"session_id": "s-1"}
-    )
+    response = await client.post("/api/disconnect-database", json={"session_id": "s-1"})
 
     assert response.status_code == 200
     assert response.json()["status"] == "success"
@@ -280,7 +281,7 @@ async def test_schema_not_connected(client):
 @pytest.mark.asyncio
 async def test_schema_connected(client):
     fake_manager = FakeDbManager(schema={"t": [{"column": "id", "type": "int", "nullable": False}]})
-    connection.db_manager = fake_manager
+    connection.db_manager = cast(connection.DatabaseManager, fake_manager)
 
     response = await client.get("/api/schema")
 

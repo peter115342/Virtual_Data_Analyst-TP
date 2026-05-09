@@ -1,12 +1,13 @@
 # connection urls
 
+
 def build_db_connection_url(
-        type: str,
-        username: str,
-        password: str,
-        host: str,
-        port: int,
-        db_name: str,
+    type: str,
+    username: str,
+    password: str,
+    host: str,
+    port: int,
+    db_name: str,
 ) -> str:
     if type == "postgres":
         return f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{db_name}"

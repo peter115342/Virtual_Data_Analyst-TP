@@ -3,7 +3,7 @@
 from openai import OpenAI
 
 from app.config import settings
-from app.genai_core.prompts import get_system_prompt, format_schema, sql_user_prompt
+from app.genai_core.prompts import format_schema, get_system_prompt, sql_user_prompt
 
 
 class QueryGenerator:
@@ -23,7 +23,11 @@ class QueryGenerator:
             temperature=0.0,
         )
 
-        sql = response.choices[0].message.content.strip()
+        content = response.choices[0].message.content
+        if not content:
+            raise ValueError("LLM response did not include SQL content")
+
+        sql = content.strip()
 
         if sql.startswith("```"):
             lines = sql.split("\n")
