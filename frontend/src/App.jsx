@@ -7,6 +7,7 @@ import HomePage from "./pages/HomePage.jsx"
 export default function App() {
   const { instance, accounts } = useMsal()
   const [devMode, setDevMode] = useState(false)
+  const devAuthEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEV_AUTH_BYPASS === "true"
 
   const handleLogin = () => {
     instance.loginRedirect(loginRequest)
@@ -20,8 +21,8 @@ export default function App() {
     instance.logoutRedirect()
   }
 
-  // Dev bypass — skip Entra ID entirely
-  if (devMode) {
+  // Dev bypass - skip Entra ID entirely
+  if (devMode && devAuthEnabled) {
     return <HomePage onLogout={handleLogout} userName="Dev User" />
   }
 
@@ -37,12 +38,14 @@ export default function App() {
           >
             Sign in with Microsoft
           </button>
-          <button
-            onClick={() => setDevMode(true)}
-            className="text-gray-500 hover:text-gray-300 text-sm underline transition"
-          >
-            Skip auth (dev mode)
-          </button>
+          {devAuthEnabled && (
+            <button
+              onClick={() => setDevMode(true)}
+              className="text-gray-500 hover:text-gray-300 text-sm underline transition"
+            >
+              Skip auth (dev mode)
+            </button>
+          )}
         </div>
       </UnauthenticatedTemplate>
 
