@@ -7,7 +7,6 @@ from openai import OpenAI
 from app.config import settings
 from app.genai_core.prompts import CHART_INTENT_SYSTEM_PROMPT, chart_intent_user_prompt
 
-
 _DEFAULT_INTENT = {
     "requested": False,
     "chart_type": "none",

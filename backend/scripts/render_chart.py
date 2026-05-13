@@ -5,7 +5,6 @@ from typing import Any
 import matplotlib.pyplot as plt
 import requests
 
-
 DEFAULT_API_URL = "http://localhost:8000/api/ask"
 DEFAULT_OUTPUT = "chart_output.png"
 

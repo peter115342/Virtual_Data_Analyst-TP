@@ -1,4 +1,5 @@
 import axios from "axios";
+import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { apiTokenRequest, loginRequest, msalInstance } from "../auth/msalConfig";
 
 const api = axios.create({
@@ -9,6 +10,19 @@ const api = axios.create({
 });
 
 const devAuthEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEV_AUTH_BYPASS === "true";
+const tokenMode = import.meta.env.VITE_AZURE_AD_TOKEN_MODE || "access_token";
+const useIdToken = tokenMode === "id_token";
+
+const authTokenRequest = useIdToken ? loginRequest : apiTokenRequest;
+const tokenTypeLabel = useIdToken ? "ID token" : "API access token";
+
+const getBearerToken = (response) => {
+  const token = useIdToken ? response.idToken : response.accessToken;
+  if (!token) {
+    throw new Error(`Azure AD did not return an ${tokenTypeLabel}`);
+  }
+  return token;
+};
 
 // Attach an Azure AD access token to every request, or a static token in local development.
 api.interceptors.request.use(async (config) => {
@@ -16,16 +30,17 @@ api.interceptors.request.use(async (config) => {
   if (accounts.length > 0) {
     try {
       const response = await msalInstance.acquireTokenSilent({
-        ...apiTokenRequest,
+        ...authTokenRequest,
         account: accounts[0],
       });
-      if (!response.accessToken) {
-        throw new Error("Azure AD did not return an API access token");
+      config.headers.Authorization = `Bearer ${getBearerToken(response)}`;
+    } catch (error) {
+      if (!(error instanceof InteractionRequiredAuthError)) {
+        throw error;
       }
-      config.headers.Authorization = `Bearer ${response.accessToken}`;
-    } catch {
-      await msalInstance.acquireTokenRedirect(apiTokenRequest);
-      throw new Error("Redirecting to Azure AD for API token acquisition");
+
+      const response = await msalInstance.acquireTokenPopup(authTokenRequest);
+      config.headers.Authorization = `Bearer ${getBearerToken(response)}`;
     }
   } else if (devAuthEnabled) {
     config.headers.Authorization = "Bearer dev";

@@ -4,7 +4,6 @@ from typing import Any
 import matplotlib
 import matplotlib.pyplot as plt
 
-
 matplotlib.use("Agg")
 
 

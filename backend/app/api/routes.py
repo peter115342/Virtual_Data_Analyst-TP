@@ -3,6 +3,7 @@ Main API Routes
 TODO: Implement API endpoints according to architecture
 """
 
+import base64
 import hashlib
 import re
 import unicodedata
@@ -147,6 +148,15 @@ def _hit_rate_percent(hits: int, misses: int) -> float | None:
 
 def _cache_header_status(is_hit: bool) -> str:
     return "HIT" if is_hit else "MISS"
+
+
+def _render_chart_data_uri(chart_data: list[dict] | None, chart_intent: dict | None) -> str | None:
+    if not chart_data:
+        return None
+
+    png_bytes = render_chart_png(chart_data, chart_intent)
+    encoded_png = base64.b64encode(png_bytes).decode("ascii")
+    return f"data:image/png;base64,{encoded_png}"
 
 
 async def _record_cache_metric(bucket: str, outcome: str) -> None:
@@ -418,6 +428,7 @@ class AskResponse(BaseModel):
     chart_sql: str | None = None
     chart_intent: dict | None = None
     chart_data: list[dict] | None = None
+    chart_image: str | None = None
     session_id: str | None = None
 
 
@@ -567,6 +578,7 @@ async def ask(
         - chart_sql: SQL used to generate chart data
         - chart_intent: Chart metadata if a chart was requested
         - chart_data: Chart-ready data if a chart was requested
+        - chart_image: Rendered PNG chart as a data URI if a chart was requested
     """
     try:
         db = get_db_manager()
@@ -597,6 +609,7 @@ async def ask(
 
             chart_data = None
             chart_sql = None
+            chart_image = None
             row_count = semantic_hit.row_count
             if chart_requested:
                 schema, schema_hit = await _get_cached_schema(db, db_fp)
@@ -618,6 +631,7 @@ async def ask(
                     f"schema={_cache_header_status(schema_hit)};"
                     f"chart_results={_cache_header_status(chart_results_hit)}"
                 )
+                chart_image = _render_chart_data_uri(chart_data, response_chart_intent)
 
             if request.session_id:
                 try:
@@ -658,6 +672,7 @@ async def ask(
                 chart_sql=chart_sql,
                 chart_intent=response_chart_intent,
                 chart_data=chart_data,
+                chart_image=chart_image,
                 session_id=request.session_id,
             )
 
@@ -701,6 +716,7 @@ async def ask(
 
         chart_data = None
         chart_sql = None
+        chart_image = None
         if chart_requested:
             chart_sql = await generator.generate_chart_query(
                 request.question,
@@ -721,6 +737,7 @@ async def ask(
                 f"summary={_cache_header_status(summary_hit)};"
                 f"chart_results={_cache_header_status(chart_results_hit)}"
             )
+            chart_image = _render_chart_data_uri(chart_data, response_chart_intent)
 
         if request.session_id:
             try:
@@ -772,6 +789,7 @@ async def ask(
             chart_sql=chart_sql,
             chart_intent=response_chart_intent,
             chart_data=chart_data,
+            chart_image=chart_image,
             session_id=request.session_id,
         )
 

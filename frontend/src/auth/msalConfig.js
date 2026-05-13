@@ -3,6 +3,7 @@ import { PublicClientApplication } from "@azure/msal-browser";
 const clientId = import.meta.env.VITE_AZURE_AD_CLIENT_ID;
 const tenantId = import.meta.env.VITE_AZURE_AD_TENANT_ID;
 const defaultApiScope = clientId ? `api://${clientId}/access_as_user` : "";
+const apiScope = import.meta.env.VITE_AZURE_AD_API_SCOPE || defaultApiScope;
 const authorityTenant = import.meta.env.VITE_AZURE_AD_AUTHORITY || tenantId;
 const authority = authorityTenant?.startsWith("https://")
   ? authorityTenant
@@ -26,7 +27,7 @@ export const loginRequest = {
 };
 
 export const apiTokenRequest = {
-  scopes: [import.meta.env.VITE_AZURE_AD_API_SCOPE || defaultApiScope],
+  scopes: apiScope ? [apiScope] : [],
 };
 
 export const msalInstance = new PublicClientApplication(msalConfig);

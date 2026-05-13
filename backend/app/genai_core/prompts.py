@@ -93,7 +93,7 @@ Rules:
 - If a chart is requested but details are missing, make a best guess and leave unknown fields empty.
 - Use only information from the question. Do not invent schema.
 - Output JSON only, no extra text.
-"""
+"""  # noqa: E501
 
 
 def summarizer_user_prompt(question: str, sql_query: str, data: list[dict], row_count: int) -> str:
