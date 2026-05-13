@@ -5,13 +5,7 @@ import json
 from openai import OpenAI
 
 from app.config import settings
-from app.genai_core.prompts import (
-    chart_sql_user_prompt,
-    format_schema,
-    get_chart_system_prompt,
-    get_system_prompt,
-    sql_user_prompt,
-)
+from app.genai_core.prompts import get_system_prompt, format_schema, sql_user_prompt
 
 
 class QueryGenerator:
