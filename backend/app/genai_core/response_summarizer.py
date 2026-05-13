@@ -29,4 +29,8 @@ class ResponseSummarizer:
             temperature=0.3,
         )
 
-        return response.choices[0].message.content
+        content = response.choices[0].message.content
+        if not content:
+            raise ValueError("LLM response did not include summary content")
+
+        return content

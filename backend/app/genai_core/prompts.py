@@ -1,6 +1,5 @@
 import json
 
-
 limit_syntax = {
     "postgresql": "LIMIT",
     "mysql": "LIMIT",
@@ -8,11 +7,12 @@ limit_syntax = {
     "mssql": "TOP N or FETCH FIRST N ROWS ONLY",
 }
 
+
 def get_system_prompt(dialect: str) -> str:
-    limit_hint = limit_syntax.get(dialect,
-                                  "appropriate row-limiting syntax for your dialect")
-# SQL_SYSTEM_PROMPT = """\
-    return f"""\
+    limit_hint = limit_syntax.get(dialect, "appropriate row-limiting syntax for your dialect")
+    # SQL_SYSTEM_PROMPT = """\
+    return (
+        f"""\
 
 You are a SQL expert. Convert the user's question into a single valid SELECT query.
 
@@ -30,6 +30,7 @@ Choosing the right table and columns:
 - If names are only available via a JOIN between schema tables, do the JOIN — never return raw IDs when the user asked for names.
 - Never return only ID columns (columns ending in _id) when the user asked for names or descriptions, unless IDs are truly the only data in the schema. In that case, add a SQL comment explaining the limitation.\
 """  # noqa: E501
+    )
 
 
 def get_chart_system_prompt(dialect: str) -> str:

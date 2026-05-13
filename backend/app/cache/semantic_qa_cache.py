@@ -253,15 +253,20 @@ async def probe_similar_answer(db_fp: str, question: str) -> SemanticQACacheProb
 
         try:
             emb_vec = [float(x) for x in emb]
-        except Exception:
+        except (TypeError, ValueError):
             continue
 
         score = _cosine_similarity(query_vec, emb_vec)
         if score > best_score:
-            cached_question = payload.get("question") if isinstance(payload.get("question"), str) else ""
-            sql_query = payload.get("sql_query") if isinstance(payload.get("sql_query"), str) else ""
-            summary = payload.get("summary") if isinstance(payload.get("summary"), str) else ""
-            row_count = payload.get("row_count") if isinstance(payload.get("row_count"), int) else 0
+            question_value = payload.get("question")
+            sql_value = payload.get("sql_query")
+            summary_value = payload.get("summary")
+            row_count_value = payload.get("row_count")
+
+            cached_question = question_value if isinstance(question_value, str) else ""
+            sql_query = sql_value if isinstance(sql_value, str) else ""
+            summary = summary_value if isinstance(summary_value, str) else ""
+            row_count = row_count_value if isinstance(row_count_value, int) else 0
             cached_quantity_signature = _quantity_signature(cached_question)
             cached_keywords = _keyword_signature(cached_question)
             keyword_sim = _keyword_similarity(query_keywords, cached_keywords)
@@ -291,10 +296,14 @@ async def probe_similar_answer(db_fp: str, question: str) -> SemanticQACacheProb
 
     best_similarity = None if best_score < 0 else float(best_score)
     if best is None:
-        return SemanticQACacheProbe(hit=None, best_similarity=best_similarity, best_entry_id=best_id)
+        return SemanticQACacheProbe(
+            hit=None, best_similarity=best_similarity, best_entry_id=best_id
+        )
 
     if best.similarity < float(settings.semantic_cache_threshold):
-        return SemanticQACacheProbe(hit=None, best_similarity=best_similarity, best_entry_id=best_id)
+        return SemanticQACacheProbe(
+            hit=None, best_similarity=best_similarity, best_entry_id=best_id
+        )
 
     return SemanticQACacheProbe(hit=best, best_similarity=best_similarity, best_entry_id=best_id)
 
@@ -349,4 +358,3 @@ async def store_answer(
     max_entries = int(settings.semantic_cache_max_entries)
     if max_entries > 0:
         await redis_client.zremrangebyrank(index_key, 0, -(max_entries + 1))
-
