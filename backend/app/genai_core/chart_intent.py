@@ -37,7 +37,11 @@ class ChartIntentDetector:
             temperature=0.0,
         )
 
-        raw = response.choices[0].message.content.strip()
+        content = response.choices[0].message.content
+        if not content:
+            return dict(_DEFAULT_INTENT)
+
+        raw = content.strip()
         if raw.startswith("```"):
             lines = raw.split("\n")
             raw = "\n".join(lines[1:-1]).strip()

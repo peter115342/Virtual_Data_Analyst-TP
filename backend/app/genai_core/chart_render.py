@@ -26,6 +26,12 @@ def _coerce_number(value: Any) -> float | None:
     return None
 
 
+def _label(value: Any) -> str:
+    if value is None:
+        return ""
+    return str(value)
+
+
 def _resolve_xy(chart_intent: dict | None, rows: list[dict]) -> tuple[str | None, str | None]:
     if not rows:
         return None, None
@@ -54,9 +60,8 @@ def render_chart_png(chart_data: list[dict], chart_intent: dict | None) -> bytes
     if not chart_data:
         raise ValueError("No chart data to render.")
 
-    chart_type = (chart_intent or {}).get("chart_type") or "bar"
-    chart_type = chart_type.lower()
-    title = (chart_intent or {}).get("title") or "Chart"
+    chart_type = str((chart_intent or {}).get("chart_type") or "bar").lower()
+    title = str((chart_intent or {}).get("title") or "Chart")
 
     x_field, y_field = _resolve_xy(chart_intent, chart_data)
     if not x_field or not y_field:
@@ -65,27 +70,29 @@ def render_chart_png(chart_data: list[dict], chart_intent: dict | None) -> bytes
     x_label = _axis_label((chart_intent or {}).get("x"), x_field)
     y_label = _axis_label((chart_intent or {}).get("y"), y_field)
 
-    x_values = [row.get(x_field) for row in chart_data]
-    y_values = [_coerce_number(row.get(y_field)) for row in chart_data]
-
-    if any(v is None for v in y_values):
-        raise ValueError("Y values are not numeric.")
+    x_labels = [_label(row.get(x_field)) for row in chart_data]
+    x_positions = list(range(len(x_labels)))
+    y_values: list[float] = []
+    for row in chart_data:
+        y_value = _coerce_number(row.get(y_field))
+        if y_value is None:
+            raise ValueError("Y values are not numeric.")
+        y_values.append(y_value)
 
     plt.figure(figsize=(10, 5))
     if chart_type in {"line", "area"}:
-        plt.plot(x_values, y_values, marker="o")
+        plt.plot(x_positions, y_values, marker="o")
         if chart_type == "area":
-            plt.fill_between(range(len(y_values)), y_values, alpha=0.3)
-            plt.xticks(range(len(x_values)), x_values, rotation=45, ha="right")
+            plt.fill_between(x_positions, y_values, alpha=0.3)
+        plt.xticks(x_positions, x_labels, rotation=45, ha="right")
     elif chart_type == "scatter":
-        plt.scatter(x_values, y_values)
+        plt.scatter(x_positions, y_values)
+        plt.xticks(x_positions, x_labels, rotation=45, ha="right")
     elif chart_type == "pie":
-        plt.pie(y_values, labels=x_values, autopct="%1.1f%%")
+        plt.pie(y_values, labels=x_labels, autopct="%1.1f%%")
     else:
-        x_labels = [str(v) for v in x_values]
-        x_pos = range(len(x_labels))
-        plt.bar(x_pos, y_values)
-        plt.xticks(x_pos, x_labels, rotation=45, ha="right")
+        plt.bar(x_positions, y_values)
+        plt.xticks(x_positions, x_labels, rotation=45, ha="right")
 
     if chart_type != "pie":
         plt.xlabel(x_label)
