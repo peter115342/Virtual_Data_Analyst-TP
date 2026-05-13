@@ -253,4 +253,6 @@ db/init_db_ecommerce/*.csv
 db/init_db_sqlserver/csv/*.csv
 db/init_oracle/data/*.csv
 
+chart.png
+
 .vscode/

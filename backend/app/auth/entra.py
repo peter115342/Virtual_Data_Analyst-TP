@@ -1,6 +1,6 @@
 """
 Azure Entra ID JWT token validation for FastAPI.
-Validates API access tokens issued by Microsoft Entra ID.
+Validates bearer tokens issued by Microsoft Entra ID.
 """
 
 from typing import Any
@@ -169,7 +169,7 @@ async def validate_token(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> dict[str, Any]:
     """
-    FastAPI dependency that validates an Azure Entra ID API access token.
+    FastAPI dependency that validates an Azure Entra ID bearer token.
 
     Returns the decoded token payload (claims) if valid.
     Raises HTTPException 401/403 if invalid.

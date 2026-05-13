@@ -17,6 +17,7 @@ services:
       - VITE_AZURE_AD_TENANT_ID=${AZURE_AD_TENANT_ID}
       - VITE_AZURE_AD_AUTHORITY=${AZURE_AD_AUTHORITY:-}
       - VITE_AZURE_AD_API_SCOPE=${AZURE_AD_API_SCOPE:-}
+      - VITE_AZURE_AD_TOKEN_MODE=${AZURE_AD_TOKEN_MODE:-id_token}
     depends_on:
       - backend
 
@@ -38,7 +39,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - AZURE_AD_ALLOWED_TENANTS=${AZURE_AD_ALLOWED_TENANTS:-}
       - AZURE_AD_ALLOWED_AUDIENCES=${AZURE_AD_ALLOWED_AUDIENCES:-}
-      - AZURE_AD_REQUIRED_SCOPE=${AZURE_AD_REQUIRED_SCOPE:-access_as_user}
+      - AZURE_AD_REQUIRED_SCOPE=${AZURE_AD_REQUIRED_SCOPE:-}
       # SSH tunnel maps VM MongoDB to host:27017; containers reach host via host.docker.internal
       - MONGODB_URL=mongodb://host.docker.internal:27017
     extra_hosts:

@@ -140,6 +140,59 @@ async def test_ask_success_with_history(client, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_ask_returns_chart_image_when_chart_requested(client, monkeypatch):
+    chart_rows = [{"category": "A", "total": 2}, {"category": "B", "total": 3}]
+
+    async def fake_generate_query(_self, _question, _schema, _dialect):
+        return "SELECT category, total FROM sales"
+
+    async def fake_generate_chart_query(_self, _question, _intent, _schema, _dialect, _base_sql):
+        return "SELECT category, total FROM sales GROUP BY category"
+
+    async def fake_summarize(_self, sql_query, data, context):
+        assert sql_query == "SELECT category, total FROM sales"
+        assert data == chart_rows
+        assert context == "plot sales by category"
+        return "summary"
+
+    async def fake_detect_intent(_self, _question):
+        return {
+            "requested": True,
+            "chart_type": "bar",
+            "x": "category",
+            "y": "total",
+            "aggregation": "sum",
+            "time_bucket": "none",
+            "filters": [],
+            "title": "Sales by category",
+        }
+
+    class FakeGenerator:
+        generate_query = fake_generate_query
+        generate_chart_query = fake_generate_chart_query
+
+    class FakeSummarizer:
+        summarize_query_results = fake_summarize
+
+    class FakeChartDetector:
+        detect_intent = fake_detect_intent
+
+    monkeypatch.setattr(routes, "get_db_manager", lambda: FakeDbManager(data=chart_rows))
+    monkeypatch.setattr(routes, "QueryGenerator", FakeGenerator)
+    monkeypatch.setattr(routes, "ResponseSummarizer", FakeSummarizer)
+    monkeypatch.setattr(routes, "ChartIntentDetector", FakeChartDetector)
+
+    response = await client.post("/api/ask", json={"question": "plot sales by category"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["summary"] == "summary"
+    assert body["chart_sql"] == "SELECT category, total FROM sales GROUP BY category"
+    assert body["chart_data"] == chart_rows
+    assert body["chart_image"].startswith("data:image/png;base64,")
+
+
+@pytest.mark.asyncio
 async def test_query_and_summarize_success(client, monkeypatch):
     async def fake_summarize(_self, sql_query, data, context):
         assert sql_query == "SELECT 3"
