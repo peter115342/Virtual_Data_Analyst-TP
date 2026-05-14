@@ -44,14 +44,17 @@ def sql_user_prompt(question: str, chat_history_context: dict, schema_text: str)
     {schema_text}
 """)
 
-    sections.append(f"""
+    sections.append("""
     ### COLUMN MATCHING
     If the user asks for something not literally in the schema:
     - Scan ALL tables and columns for the closest semantic match
-    - If multiple columns together describe what was asked (e.g. brand + category), SELECT all of them
-    - If a JOIN is needed to get descriptive data instead of raw IDs, do the JOIN
+    - If multiple columns together describe what was asked
+      (e.g. brand + category), SELECT all of them
+    - If a JOIN is needed to get descriptive data instead of raw IDs,
+      do the JOIN
     - Never return only ID columns when user asked for names or descriptions
-    - If truly no match exists anywhere in schema, return simplest valid SELECT with a SQL comment explaining the limitation
+    - If truly no match exists anywhere in schema, return simplest valid
+      SELECT with a SQL comment explaining the limitation
 """)
 
     sections.append("""
