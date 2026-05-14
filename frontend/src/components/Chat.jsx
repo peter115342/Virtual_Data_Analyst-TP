@@ -26,6 +26,8 @@ export default function Chat({ sessionId }) {
                         fromUser: false,
                         sql: result.sql_query,
                         rowCount: result.row_count,
+                        chartImage: result.chart_image,
+                        chartTitle: result.chart_intent?.title,
                     },
                 ];
             });
@@ -36,7 +38,7 @@ export default function Chat({ sessionId }) {
                 return [
                     ...messagesWithoutThinking,
                     {
-                        text: "❌ Failed to get response from server.",
+                        text: "Failed to get response from server.",
                         fromUser: false,
                     },
                 ];
@@ -55,6 +57,8 @@ export default function Chat({ sessionId }) {
                     key={i}
                     context={msg.text}
                     isUser={msg.fromUser}
+                    chartImage={msg.chartImage}
+                    chartTitle={msg.chartTitle}
                 />
                 ))}
             </div>
