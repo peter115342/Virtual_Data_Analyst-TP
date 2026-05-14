@@ -80,9 +80,11 @@ def sql_user_prompt(question: str, chat_history_context: dict, schema_text: str)
 
     sections.append("""
     ### HARD RULES
-    - Only SELECT statements — never INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, TRUNCATE, GRANT, REVOKE
+    - Only SELECT statements — never INSERT, UPDATE, DELETE, DROP, CREATE,
+      ALTER, TRUNCATE, GRANT, REVOKE
     - Use exact table and column names from schema (no inventing columns)
-    - Return only raw SQL — no markdown, no explanation, no comments (except the limitation case above)
+    - Return only raw SQL — no markdown, no explanation,
+      no comments (except the limitation case above)
 """)
 
     if chat_history_context["history_text"]:
