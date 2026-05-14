@@ -53,7 +53,6 @@ export default function Chat({ sessionId, isConnected, onDatabaseClick, userName
 
             try {
             const data = await getSessionHistory(sessionId);
-            console.log("HISTORY DATA:", data);
             const formatted = data.messages.map((msg) => ({
                 text: msg.content,
                 fromUser: msg.role === "user",
@@ -68,9 +67,7 @@ export default function Chat({ sessionId, isConnected, onDatabaseClick, userName
         loadHistory();
         }, [sessionId]);
 
-    useEffect(() => {
-        console.log("SESSION CHANGED:", sessionId);
-        }, [sessionId]);
+
 
 
 return (

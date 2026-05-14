@@ -9,28 +9,26 @@ export default function HomePage({ onLogout, userName }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [activeSessionId, setActiveSessionId] = useState(null);
-
+  
   const { connect, disconnect, loading, error, sessionId } = useDatabase();
+  const [activeSessionId, setActiveSessionId] = useState(null);
 
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const res = await getDatabaseStatus();
-        setIsConnected(res.connected);
-        console.log("Database status:", res);
+        const res = await getDatabaseStatus(); // Zavolá tvoj opravený endpoint
+        setIsConnected(res.connected); // Tu sa nastaví pravda (true/false)
+        
+        console.log(res.connected ? "[DB] Online ✅" : "[DB] Offline ❌");
       } catch (err) {
-        console.log("Status check failed", err);
         setIsConnected(false);
       }
     };
-
     checkConnection();
   }, []);
 
   const handleSelectSession = (id) => {
     setActiveSessionId(id);
-    console.log("ACTIVE SESSION:", activeSessionId);
   };
 
   const handleDatabaseButtonClick = async () => {
@@ -48,10 +46,10 @@ export default function HomePage({ onLogout, userName }) {
   };
 
   useEffect(() => {
-    if (isConnected) {
-      setIsDatabaseModalOpen(false);
+    if (sessionId) {
+      setActiveSessionId(sessionId);
     }
-  }, [isConnected]);
+  }, [sessionId]);
 
   return (
     <div className="h-screen flex bg-[#eeeeee] relative">

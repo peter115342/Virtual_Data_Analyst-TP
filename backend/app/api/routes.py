@@ -208,6 +208,15 @@ async def ask(request: AskRequest, _claims: dict = Depends(validate_token)):
         - row_count: Number of rows returned
     """
     try:
+        manager = get_db_manager()
+        if manager.engine is None:
+            raise ValueError("Engine is None")
+    except Exception:
+        raise HTTPException(
+            status_code=400, 
+            detail="Database not connected. Please connect first."
+        )
+    try:
         db = get_db_manager()
         generator = QueryGenerator()
         summarizer = ResponseSummarizer()
@@ -417,73 +426,63 @@ async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
         collection = db["sessions"]
         user_id = _claims.get("sub", "anonymous")
 
-        # Zoradené od najnovšej po najstaršiu
+        # Získame všetky sessions používateľa zoradené od najnovšej
         cursor = collection.find(
             {"user_id": user_id},
-            {
-                "_id": 1,
-                "session_id": 1,
-                "user_id": 1,
-                "db_type": 1,
-                "db_host": 1,
-                "db_name": 1,
-                "connected_at": 1,
-                "disconnected_at": 1,
-                "messages": 1,
-            }
+            {"_id": 1, "session_id": 1, "db_name": 1, "connected_at": 1, "messages": 1}
         ).sort("connected_at", -1)
 
-        def format_message(msg: dict) -> dict:
-            return {
-                "role": msg.get("role"),
-                "content": msg.get("content"),
-                "sql_query": msg.get("sql_query"),
-                "row_count": msg.get("row_count"),
-                "timestamp": msg.get("timestamp"),
-            }
-
         sessions = []
-        is_first = True  # Pomocná premenná na identifikáciu najnovšej session
-
+        index = 0
         async for doc in cursor:
             doc["_id"] = str(doc["_id"])
-            raw_messages = doc.get("messages", [])
+            raw_messages = doc.get("messages", []) or []
             
             # Formátovanie správ
-            formatted_messages = [format_message(m) for m in raw_messages if m]
-            
-            # LOGIKA FILTROVANIA:
-            # Ak má session správy ALEBO ak je to úplne prvá (najnovšia) v poradí
-            if len(formatted_messages) > 0 or is_first:
+            formatted_messages = [
+                {
+                    "role": m.get("role"),
+                    "content": m.get("content"),
+                    "sql_query": m.get("sql_query"),
+                    "row_count": m.get("row_count"),
+                    "timestamp": m.get("timestamp"),
+                } for m in raw_messages if m
+            ]
+
+            # PODMIENKA: Pridáme session ak:
+            # 1. Je to úplne najnovšia session (index 0), aj keď nemá správy
+            # 2. Má aspoň jednu správu
+            if index == 0 or len(formatted_messages) > 0:
                 doc["messages"] = formatted_messages
                 sessions.append(doc)
             
-            # Po spracovaní prvého dokumentu nastavíme is_first na False
-            is_first = False
+            index += 1
 
         return {
             "status": "success",
-            "user_id": user_id,
             "count": len(sessions),
             "sessions": sessions,
         }
-
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Mongo sessions fetch failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
+
+from app.database.connection import get_db_manager
 
 @router.get("/database/status")
 def get_database_status():
-    if db_manager is None or db_manager.engine is None:
-        return {"connected": False}
-
     try:
-        with db_manager.engine.connect() as conn:
+        manager = get_db_manager()
+        
+        if manager.engine is None:
+            return {"connected": False}
+        with manager.engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         return {"connected": True}
-    except:
+        
+    except RuntimeError:
+        return {"connected": False}
+    except Exception as e:
+        print(f"Status check failed: {e}")
         return {"connected": False}
 

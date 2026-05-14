@@ -23,9 +23,6 @@ export default function SideBar({
     const fetchSessions = async () => {
       try {
         const data = await listMongoSessions();
-
-        console.log("SESSIONS:", data.sessions);
-
         setSessions(data.sessions || []);
       } catch (err) {
         console.error("Failed to load sessions:", err);
@@ -34,7 +31,7 @@ export default function SideBar({
     };
 
     fetchSessions();
-  }, []);
+  }, [isConnected, activeSessionId]);
 
   const chats = sessions.map((s) => {
     const firstUserMessage = s.messages?.find(
