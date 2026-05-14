@@ -482,7 +482,14 @@ async def ask_chart(
 
         schema, schema_hit = await _get_cached_schema(db, db_fp)
         dialect = await db.get_db_dialect()
-        base_sql = await generator.generate_query(request.question, schema, dialect)
+        history_context = await get_chat_context(request.session_id)
+
+        base_sql = await generator.generate_query(
+            request.question,
+            schema,
+            dialect,
+            chat_history_context=history_context
+        )
         chart_sql = await generator.generate_chart_query(
             request.question,
             chart_intent,
@@ -568,7 +575,12 @@ async def new_chat(_claims: dict = Depends(validate_token)):
     """
     user_id = _claims.get("sub", "anonymous")
 
-    session_id = await chat_history.create_session(user_id=user_id)
+    session_id = await chat_history.create_session(
+        user_id=user_id,
+        db_type="",
+        db_host="",
+        db_name=""
+    )
 
     return {
         "status": "success",
