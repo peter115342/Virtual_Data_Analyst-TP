@@ -73,7 +73,6 @@ async def add_message(
     content: str,
     sql_query: str | None = None,
     row_count: int | None = None,
-    success: bool | None = None,
 ):
     msg = {
         "role": role,
@@ -81,7 +80,6 @@ async def add_message(
         "sql_query": sql_query,
         "row_count": row_count,
         "timestamp": datetime.now(timezone.utc),
-        "success": success,
     }
     col = get_db()[COLLECTION]
     await col.update_one(

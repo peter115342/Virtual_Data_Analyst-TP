@@ -38,52 +38,32 @@ Choosing the right table and columns:
 def sql_user_prompt(question: str, chat_history_context: dict, schema_text: str) -> str:
 
     sections = []
-    sections.append("""
-    ### ROLE
-    You are a deterministic SQL query generator.
-    You only translate schema into SQL.
-    You must not interpret meaning.
-    """)
-
-    sections.append("""
-    ### STRICT SEMANTIC BOUNDARY (CRITICAL)
-    Do not interpret natural language into business logic.
-    If a term is not in schema, treat it as UNKNOWN.
-    Do not infer filters, metrics, time logic, or categories.
-    """)
-
-    sections.append("""
-    ### HARD RULES
-    - Use only schema tables and columns
-    - Never invent columns or logic
-    - Never assume meaning of words (active, sales, users, top, etc.)
-    - Current question is the only source of logic
-    - If missing info, return minimal valid SQL
-    """)
-
-    sections.append("""
-    ### OUTPUT FORMAT
-    Return only raw SQL.
-    No markdown.
-    No explanation.
-    No comments.
-    """)
 
     sections.append(f"""
     ### SCHEMA
     {schema_text}
     """)
 
+    sections.append(f"""
+    ### COLUMN MATCHING
+    If the user asks for something not literally in the schema:
+    - Scan ALL tables and columns for the closest semantic match
+    - If multiple columns together describe what was asked (e.g. brand + category), SELECT all of them
+    - If a JOIN is needed to get descriptive data instead of raw IDs, do the JOIN
+    - Never return only ID columns when user asked for names or descriptions
+    - If truly no match exists anywhere in schema, return simplest valid SELECT with a SQL comment explaining the limitation
+""")
+
     sections.append("""
-    ### SAFE RULES
-    Do not map natural language to business logic.
-    Do not infer meaning of words.
-    Do not assume aggregations or filters.
+    ### HARD RULES
+    - Only SELECT statements — never INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, TRUNCATE, GRANT, REVOKE
+    - Use exact table and column names from schema (no inventing columns)
+    - Return only raw SQL — no markdown, no explanation, no comments (except the limitation case above)
     """)
 
     if chat_history_context["history_text"]:
         sections.append(f"""
-    ### HISTORY (CONTEXT ONLY)
+    ### CONVERSATION HISTORY (CONTEXT ONLY)
     {chat_history_context["history_text"]}
     """)
 
@@ -93,23 +73,17 @@ def sql_user_prompt(question: str, chat_history_context: dict, schema_text: str)
     {chat_history_context["previous_sql"]}
     """)
 
-    if chat_history_context["last_successful_sql"]:
+    if chat_history_context["previous_question"]:
         sections.append(f"""
-    ### LAST SUCCESSFUL SQL (REFERENCE ONLY)
-    {chat_history_context["last_successful_sql"]}
+    ### PREVIOUS QUESTION (REFERENCE ONLY)
+    {chat_history_context["previous_question"]}
     """)
 
     sections.append(f"""
-    ### CURRENT QUESTION
+    ### QUESTION
     {question}
     """)
 
-    sections.append("""
-    ### FINAL RULE
-    Verify all columns exist in schema.
-    Remove any inferred logic.
-    If uncertain, return simplest SELECT.
-    """)
     user_prompt = "\n\n".join(sections)
 
     return user_prompt

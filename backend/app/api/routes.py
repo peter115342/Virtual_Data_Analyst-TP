@@ -478,21 +478,17 @@ async def get_chat_context(session_id: str | None):
 
     previous_sql = ""
     previous_question = ""
-    last_successful_sql = ""
     
     for m in reversed(messages):
         if not previous_question and m.get("role") == "user":
             previous_question = m.get("content")
         if not previous_sql and m.get("sql_query"):
             previous_sql = m.get("sql_query")
-        if not last_successful_sql and m.get("sql_query") and m.get("success"):
-            last_successful_sql = m.get("sql_query")
 
     history_context = {
         "history_text": history_text,
         "previous_sql": previous_sql,
-        "previous_question": previous_question,
-        "last_successful_sql": last_successful_sql
+        "previous_question": previous_question
     }
             
     return history_context
@@ -572,8 +568,7 @@ async def generate_sql(
                     session_id=request.session_id,
                     role="assistant",
                     content="Generating SQL...",
-                    sql_query=sql_query,
-                    success=None  
+                    sql_query=sql_query
                 )
             except Exception as hist_err:
                 print(f"Warning: failed to save chat history in generate-sql: {hist_err}")
@@ -710,7 +705,6 @@ async def ask(
                     content=summary,
                     sql_query=sql_query,
                     row_count=row_count,
-                    success=True,
                 )
 
                 await _append_chat_cache(
