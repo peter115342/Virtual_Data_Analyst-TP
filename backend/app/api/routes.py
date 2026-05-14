@@ -536,7 +536,6 @@ async def generate_sql(
         schema, schema_hit = await _get_cached_schema(db, db_fp)
         dialect = await db.get_db_dialect()
 
-        # Fetch chat context if session_id provided
         history_context = await get_chat_context(request.session_id)
 
         sql_query, nl2sql_hit, question_signature = await _get_cached_sql_query(
@@ -545,7 +544,7 @@ async def generate_sql(
             generator,
             db_fp,
             dialect,
-            history_context=history_context,
+            history_context=history_context
         )
 
         response.headers["X-Cache-Schema"] = _cache_header_status(schema_hit)
@@ -556,7 +555,6 @@ async def generate_sql(
             f"nl2sql={_cache_header_status(nl2sql_hit)}"
         )
 
-        # Save to chat history if session_id provided
         if request.session_id:
             try:
                 await chat_history.add_message(

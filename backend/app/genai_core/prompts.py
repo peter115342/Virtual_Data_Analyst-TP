@@ -42,7 +42,7 @@ def sql_user_prompt(question: str, chat_history_context: dict, schema_text: str)
     sections.append(f"""
     ### SCHEMA
     {schema_text}
-    """)
+""")
 
     sections.append(f"""
     ### COLUMN MATCHING
@@ -59,30 +59,30 @@ def sql_user_prompt(question: str, chat_history_context: dict, schema_text: str)
     - Only SELECT statements — never INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, TRUNCATE, GRANT, REVOKE
     - Use exact table and column names from schema (no inventing columns)
     - Return only raw SQL — no markdown, no explanation, no comments (except the limitation case above)
-    """)
+""")
 
     if chat_history_context["history_text"]:
         sections.append(f"""
     ### CONVERSATION HISTORY (CONTEXT ONLY)
     {chat_history_context["history_text"]}
-    """)
+""")
 
     if chat_history_context["previous_sql"]:
         sections.append(f"""
     ### PREVIOUS SQL (REFERENCE ONLY)
     {chat_history_context["previous_sql"]}
-    """)
+""")
 
     if chat_history_context["previous_question"]:
         sections.append(f"""
     ### PREVIOUS QUESTION (REFERENCE ONLY)
     {chat_history_context["previous_question"]}
-    """)
+""")
 
     sections.append(f"""
     ### QUESTION
     {question}
-    """)
+""")
 
     user_prompt = "\n\n".join(sections)
 

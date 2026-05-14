@@ -3,7 +3,7 @@
 from openai import OpenAI
 
 from app.config import settings
-from app.genai_core.prompts import get_system_prompt, format_schema, sql_user_prompt
+from app.genai_core.prompts import format_schema, get_system_prompt, sql_user_prompt
 
 
 class QueryGenerator:
@@ -22,7 +22,8 @@ class QueryGenerator:
             model=self.model,
             messages=[
                 {"role": "system", "content": get_system_prompt(dialect)},
-                {"role": "user", "content": sql_user_prompt(question, chat_history_context, schema_text)},
+                {"role": "user", "content": sql_user_prompt(question, chat_history_context,
+                                                            schema_text)},
             ],
             temperature=0.0,
         )
