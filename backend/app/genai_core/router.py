@@ -15,4 +15,4 @@ class Router:
         TODO: Implement LLM call with system prompt
         TODO: Return decision: {"path": "data_tools"|"database", "reasoning": "..."}
         """
-        pass
+        raise NotImplementedError("Router.route_request is not implemented yet")

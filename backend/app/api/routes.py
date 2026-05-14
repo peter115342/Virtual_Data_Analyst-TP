@@ -3,6 +3,7 @@ Main API Routes
 TODO: Implement API endpoints according to architecture
 """
 
+import base64
 import hashlib
 import re
 import unicodedata
@@ -11,14 +12,15 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 
-from app.cache import redis_client
-from app.cache import semantic_qa_cache
 from app.auth.entra import validate_token
+from app.cache import redis_client, semantic_qa_cache
 from app.config import settings
-from app.database import connection, chat_history
+from app.database import chat_history, connection
 from app.database.connection import get_db_manager
 from app.database.mongo import get_db
 from app.database.utils import build_db_connection_url
+from app.genai_core.chart_intent import ChartIntentDetector
+from app.genai_core.chart_render import render_chart_png
 from app.genai_core.query_generator import QueryGenerator
 from app.genai_core.response_summarizer import ResponseSummarizer
 
@@ -85,7 +87,9 @@ def _normalize_sql(sql_query: str) -> str:
 
 def _normalize_question_text(question: str) -> str:
     lowered = question.strip().lower()
-    ascii_question = unicodedata.normalize("NFKD", lowered).encode("ascii", "ignore").decode("ascii")
+    ascii_question = (
+        unicodedata.normalize("NFKD", lowered).encode("ascii", "ignore").decode("ascii")
+    )
     cleaned = re.sub(r"[^a-z0-9\s]", " ", ascii_question)
     return re.sub(r"\s+", " ", cleaned).strip()
 
@@ -95,9 +99,7 @@ def _question_signature(question: str) -> str:
     tokens = [
         token
         for token in normalized.split(" ")
-        if token
-        and token not in QUESTION_STOPWORDS
-        and (token.isdigit() or len(token) > 1)
+        if token and token not in QUESTION_STOPWORDS and (token.isdigit() or len(token) > 1)
     ]
 
     if not tokens:
@@ -146,6 +148,15 @@ def _hit_rate_percent(hits: int, misses: int) -> float | None:
 
 def _cache_header_status(is_hit: bool) -> str:
     return "HIT" if is_hit else "MISS"
+
+
+def _render_chart_data_uri(chart_data: list[dict] | None, chart_intent: dict | None) -> str | None:
+    if not chart_data:
+        return None
+
+    png_bytes = render_chart_png(chart_data, chart_intent)
+    encoded_png = base64.b64encode(png_bytes).decode("ascii")
+    return f"data:image/png;base64,{encoded_png}"
 
 
 async def _record_cache_metric(bucket: str, outcome: str) -> None:
@@ -421,6 +432,10 @@ class AskResponse(BaseModel):
     sql_query: str
     summary: str
     row_count: int
+    chart_sql: str | None = None
+    chart_intent: dict | None = None
+    chart_data: list[dict] | None = None
+    chart_image: str | None = None
     session_id: str | None = None
 
 
@@ -441,6 +456,58 @@ class QueryResponse(BaseModel):
     status: str
     summary: str
     row_count: int
+
+
+@router.post("/ask-chart")
+async def ask_chart(
+    request: AskRequest,
+    response: Response,
+    _claims: dict = Depends(validate_token),
+):
+    """
+    Render a chart as a PNG image based on the user's question.
+
+    Returns:
+        - image/png response
+    """
+    try:
+        db = get_db_manager()
+        generator = QueryGenerator()
+        chart_detector = ChartIntentDetector()
+        db_fp = _db_fingerprint(db)
+
+        chart_intent = await chart_detector.detect_intent(request.question)
+        if not chart_intent.get("requested"):
+            raise HTTPException(status_code=400, detail="Question does not request a chart.")
+
+        schema, schema_hit = await _get_cached_schema(db, db_fp)
+        dialect = await db.get_db_dialect()
+        base_sql = await generator.generate_query(request.question, schema, dialect)
+        chart_sql = await generator.generate_chart_query(
+            request.question,
+            chart_intent,
+            schema,
+            dialect,
+            base_sql,
+        )
+        chart_data, chart_results_hit = await _get_cached_query_results(db, chart_sql, db_fp)
+
+        response.headers["X-Cache-Schema"] = _cache_header_status(schema_hit)
+        response.headers["X-Cache-Chart-Results"] = _cache_header_status(chart_results_hit)
+        response.headers["X-Cache-Trace"] = (
+            f"schema={_cache_header_status(schema_hit)};"
+            f"chart_results={_cache_header_status(chart_results_hit)}"
+        )
+
+        png_bytes = render_chart_png(chart_data, chart_intent)
+        return Response(content=png_bytes, media_type="image/png")
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error rendering chart: {str(e)}")
 
 
 class DatabaseConnectRequest(BaseModel):
@@ -551,8 +618,7 @@ async def generate_sql(
         response.headers["X-Cache-NL2SQL"] = _cache_header_status(nl2sql_hit)
         response.headers["X-Cache-NL2SQL-Signature-Hash"] = _short_hash(question_signature)
         response.headers["X-Cache-Trace"] = (
-            f"schema={_cache_header_status(schema_hit)};"
-            f"nl2sql={_cache_header_status(nl2sql_hit)}"
+            f"schema={_cache_header_status(schema_hit)};nl2sql={_cache_header_status(nl2sql_hit)}"
         )
 
         if request.session_id:
@@ -589,19 +655,30 @@ async def ask(
         - sql_query: The generated SQL query
         - summary: Natural language summary of results
         - row_count: Number of rows returned
+        - chart_sql: SQL used to generate chart data
+        - chart_intent: Chart metadata if a chart was requested
+        - chart_data: Chart-ready data if a chart was requested
+        - chart_image: Rendered PNG chart as a data URI if a chart was requested
     """
     try:
         db = get_db_manager()
         generator = QueryGenerator()
         summarizer = ResponseSummarizer()
+        chart_detector = ChartIntentDetector()
         db_fp = _db_fingerprint(db)
+
+        chart_intent = await chart_detector.detect_intent(request.question)
+        chart_requested = bool(chart_intent.get("requested"))
+        response_chart_intent = chart_intent if chart_requested else None
 
         semantic_probe = await semantic_qa_cache.probe_similar_answer(db_fp, request.question)
         if semantic_probe.best_similarity is not None:
             response.headers["X-Cache-QA-Semantic-Best-Similarity"] = (
                 f"{semantic_probe.best_similarity:.4f}"
             )
-        response.headers["X-Cache-QA-Semantic-Threshold"] = f"{settings.semantic_cache_threshold:.4f}"
+        response.headers["X-Cache-QA-Semantic-Threshold"] = (
+            f"{settings.semantic_cache_threshold:.4f}"
+        )
 
         semantic_hit = semantic_probe.hit
         if semantic_hit is not None:
@@ -609,6 +686,32 @@ async def ask(
             response.headers["X-Cache-QA-Semantic"] = "HIT"
             response.headers["X-Cache-QA-Semantic-Similarity"] = f"{semantic_hit.similarity:.4f}"
             response.headers["X-Cache-Trace"] = "qa_semantic=HIT"
+
+            chart_data = None
+            chart_sql = None
+            chart_image = None
+            row_count = semantic_hit.row_count
+            if chart_requested:
+                schema, schema_hit = await _get_cached_schema(db, db_fp)
+                dialect = await db.get_db_dialect()
+                chart_sql = await generator.generate_chart_query(
+                    request.question,
+                    chart_intent,
+                    schema,
+                    dialect,
+                    semantic_hit.sql_query,
+                )
+                chart_data, chart_results_hit = await _get_cached_query_results(
+                    db, chart_sql, db_fp
+                )
+                response.headers["X-Cache-Schema"] = _cache_header_status(schema_hit)
+                response.headers["X-Cache-Chart-Results"] = _cache_header_status(chart_results_hit)
+                response.headers["X-Cache-Trace"] = (
+                    f"qa_semantic=HIT;"
+                    f"schema={_cache_header_status(schema_hit)};"
+                    f"chart_results={_cache_header_status(chart_results_hit)}"
+                )
+                chart_image = _render_chart_data_uri(chart_data, response_chart_intent)
 
             if request.session_id:
                 try:
@@ -645,7 +748,11 @@ async def ask(
                 question=request.question,
                 sql_query=semantic_hit.sql_query,
                 summary=semantic_hit.summary,
-                row_count=semantic_hit.row_count,
+                row_count=row_count,
+                chart_sql=chart_sql,
+                chart_intent=response_chart_intent,
+                chart_data=chart_data,
+                chart_image=chart_image,
                 session_id=request.session_id,
             )
 
@@ -690,6 +797,31 @@ async def ask(
             f"summary={_cache_header_status(summary_hit)}"
         )
 
+        chart_data = None
+        chart_sql = None
+        chart_image = None
+        if chart_requested:
+            chart_sql = await generator.generate_chart_query(
+                request.question,
+                chart_intent,
+                schema,
+                dialect,
+                sql_query,
+            )
+            chart_data, chart_results_hit = await _get_cached_query_results(
+                db, chart_sql, db_fp
+            )
+            response.headers["X-Cache-Chart-Results"] = _cache_header_status(chart_results_hit)
+            response.headers["X-Cache-Trace"] = (
+                f"qa_semantic=MISS;"
+                f"schema={_cache_header_status(schema_hit)};"
+                f"nl2sql={_cache_header_status(nl2sql_hit)};"
+                f"sql_results={_cache_header_status(sql_results_hit)};"
+                f"summary={_cache_header_status(summary_hit)};"
+                f"chart_results={_cache_header_status(chart_results_hit)}"
+            )
+            chart_image = _render_chart_data_uri(chart_data, response_chart_intent)
+
         if request.session_id:
             try:
                 await chat_history.add_message(
@@ -731,13 +863,16 @@ async def ask(
         except Exception as cache_err:
             print(f"Warning: semantic cache store failed: {cache_err}")
 
-
         return AskResponse(
             status="success",
             question=request.question,
             sql_query=sql_query,
             summary=summary,
             row_count=row_count,
+            chart_sql=chart_sql,
+            chart_intent=response_chart_intent,
+            chart_data=chart_data,
+            chart_image=chart_image,
             session_id=request.session_id,
         )
 
@@ -806,8 +941,7 @@ async def connect_database(
     db_type = request.db_type
 
     if db_type not in valid_db_types:
-        raise HTTPException(status_code=400,
-                            detail=f"Invalid database type: {db_type}")
+        raise HTTPException(status_code=400, detail=f"Invalid database type: {db_type}")
 
     try:
         database_url = build_db_connection_url(
@@ -862,7 +996,7 @@ class DisconnectRequest(BaseModel):
 
 @router.post("/disconnect-database")
 async def disconnect_database(
-    request: DisconnectRequest = None,
+    request: DisconnectRequest | None = None,
     _claims: dict = Depends(validate_token),
 ):
     """
@@ -1000,6 +1134,7 @@ async def list_sessions(_claims: dict = Depends(validate_token)):
     sessions = await chat_history.list_user_sessions(user_id)
     return {"sessions": sessions}
 
+
 @router.get("/mongo/sessions")
 async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
     try:
@@ -1018,7 +1153,7 @@ async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
                 "connected_at": 1,
                 "disconnected_at": 1,
                 "messages": 1,
-            }
+            },
         ).sort("connected_at", -1)
 
         def format_message(msg: dict) -> dict:
@@ -1041,11 +1176,8 @@ async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
             "status": "success",
             "user_id": user_id,
             "count": len(sessions),
-            "sessions": sessions
+            "sessions": sessions,
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Mongo sessions fetch failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Mongo sessions fetch failed: {str(e)}")

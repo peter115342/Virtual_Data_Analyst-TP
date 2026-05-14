@@ -3,7 +3,7 @@
 
 import re
 
-from sqlalchemy import create_engine, text, inspect, select, literal
+from sqlalchemy import create_engine, inspect, literal, select, text
 from sqlalchemy.orm import sessionmaker
 
 
@@ -34,8 +34,7 @@ class DatabaseManager:
                 dialect = self.engine.dialect.name
 
                 if dialect == "postgresql":
-                    conn.execute(text(
-                        "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY"))
+                    conn.execute(text("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY"))
                 elif dialect == "mysql":
                     conn.execute(text("SET SESSION TRANSACTION READ ONLY"))
                 elif dialect == "mssql":

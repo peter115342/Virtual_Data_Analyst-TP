@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi[standard]>=0.115.0",
     "uvicorn[standard]>=0.32.0",
+    "matplotlib>=3.9.0",
     "redis>=5.2.0",
     "sqlalchemy>=2.0.36",
     "psycopg2-binary>=2.9.10",
@@ -49,3 +50,6 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
 ignore = []
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
