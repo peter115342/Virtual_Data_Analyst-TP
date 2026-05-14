@@ -537,15 +537,15 @@ async def get_chat_context(session_id: str | None):
         return "", "", "", ""
 
     messages = session["messages"]
-    
+
     history_text = "\n".join(
         f"{m.get('role', '').upper()}: {m.get('content', '')}"
-        for m in messages[-12:] 
+        for m in messages[-12:]
     )
 
     previous_sql = ""
     previous_question = ""
-    
+
     for m in reversed(messages):
         if not previous_question and m.get("role") == "user":
             previous_question = m.get("content")
@@ -557,7 +557,7 @@ async def get_chat_context(session_id: str | None):
         "previous_sql": previous_sql,
         "previous_question": previous_question
     }
-            
+
     return history_context
 
 
