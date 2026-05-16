@@ -19,14 +19,19 @@ class QueryGenerator:
         self.client = OpenAI(api_key=settings.api_key, base_url=settings.openai_base_url)
         self.model = "azure.gpt-4.1"
 
-    async def generate_query(self, question: str, schema: dict, dialect: str) -> str:
+    async def generate_query(self, question: str,
+        schema: dict,
+        dialect: str,
+        chat_history_context: dict) -> str:
+
         schema_text = format_schema(schema)
 
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
                 {"role": "system", "content": get_system_prompt(dialect)},
-                {"role": "user", "content": sql_user_prompt(question, schema_text)},
+                {"role": "user", "content": sql_user_prompt(question, chat_history_context,
+                                                            schema_text)},
             ],
             temperature=0.0,
         )

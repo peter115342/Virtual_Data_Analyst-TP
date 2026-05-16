@@ -1,13 +1,24 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import InputQuestion from "./InputQuestion"
 import UserMessage from "./UserMessage"
-import { askQuestion } from "../services/databaseService";
+import { askQuestion, getSessionHistory } from "../services/databaseService";
 import ChatHeader from "./ChatHeader";
-import { getSessionHistory } from "../services/databaseService";
-import { useEffect } from "react";
 
-export default function Chat({ sessionId, isConnected, onDatabaseClick, userName, onLogout }) {
+export default function Chat({
+    sessionId,
+    onSessionIdChange,
+    isConnected,
+    onDatabaseClick,
+    userName,
+    onLogout,
+}) {
     const [messages, setMessages] = useState([])
+    const [currentSessionId, setCurrentSessionId] = useState(sessionId)
+    const skipNextHistoryLoadRef = useRef(null)
+
+    useEffect(() => {
+        setCurrentSessionId(sessionId)
+    }, [sessionId])
 
     const handleSend = async (text) => {
         setMessages((prev) => [
@@ -17,7 +28,13 @@ export default function Chat({ sessionId, isConnected, onDatabaseClick, userName
         ]);
 
         try {
-            const result = await askQuestion(text, sessionId);
+            const result = await askQuestion(text, currentSessionId);
+
+            if (result.session_id && result.session_id !== currentSessionId) {
+                skipNextHistoryLoadRef.current = result.session_id
+                setCurrentSessionId(result.session_id)
+                onSessionIdChange?.(result.session_id)
+            }
 
             setMessages((prev) => {
                 const messagesWithoutThinking = prev.slice(0, -1);
@@ -52,12 +69,20 @@ export default function Chat({ sessionId, isConnected, onDatabaseClick, userName
     useEffect(() => {
         const loadHistory = async () => {
             if (!sessionId) return;
+            if (skipNextHistoryLoadRef.current === sessionId) {
+                skipNextHistoryLoadRef.current = null
+                return
+            }
 
             try {
             const data = await getSessionHistory(sessionId);
             const formatted = data.messages.map((msg) => ({
-                text: msg.content,
+                text: msg.role === "assistant" && msg.sql_query
+                    ? `${msg.content}\n\nSQL Query: ${msg.sql_query}`
+                    : msg.content,
                 fromUser: msg.role === "user",
+                sql: msg.sql_query,
+                rowCount: msg.row_count,
             }));
 
             setMessages(formatted);

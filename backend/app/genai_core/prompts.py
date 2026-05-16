@@ -53,8 +53,66 @@ If a base SQL query is provided, preserve its table selection and filters.
 """  # noqa: E501
 
 
-def sql_user_prompt(question: str, schema_text: str) -> str:
-    return f"{schema_text}\nQuestion: {question}"
+# def sql_user_prompt(question: str, schema_text: str) -> str:
+#     return f"{schema_text}\nQuestion: {question}"
+
+def sql_user_prompt(question: str, chat_history_context: dict, schema_text: str) -> str:
+
+    sections = []
+
+    sections.append(f"""
+    ### SCHEMA
+    {schema_text}
+""")
+
+    sections.append("""
+    ### COLUMN MATCHING
+    If the user asks for something not literally in the schema:
+    - Scan ALL tables and columns for the closest semantic match
+    - If multiple columns together describe what was asked
+      (e.g. brand + category), SELECT all of them
+    - If a JOIN is needed to get descriptive data instead of raw IDs,
+      do the JOIN
+    - Never return only ID columns when user asked for names or descriptions
+    - If truly no match exists anywhere in schema, return simplest valid
+      SELECT with a SQL comment explaining the limitation
+""")
+
+    sections.append("""
+    ### HARD RULES
+    - Only SELECT statements — never INSERT, UPDATE, DELETE, DROP, CREATE,
+      ALTER, TRUNCATE, GRANT, REVOKE
+    - Use exact table and column names from schema (no inventing columns)
+    - Return only raw SQL — no markdown, no explanation,
+      no comments (except the limitation case above)
+""")
+
+    if chat_history_context["history_text"]:
+        sections.append(f"""
+    ### CONVERSATION HISTORY (CONTEXT ONLY)
+    {chat_history_context["history_text"]}
+""")
+
+    if chat_history_context["previous_sql"]:
+        sections.append(f"""
+    ### PREVIOUS SQL (REFERENCE ONLY)
+    {chat_history_context["previous_sql"]}
+""")
+
+    if chat_history_context["previous_question"]:
+        sections.append(f"""
+    ### PREVIOUS QUESTION (REFERENCE ONLY)
+    {chat_history_context["previous_question"]}
+""")
+
+    sections.append(f"""
+    ### QUESTION
+    {question}
+""")
+
+    user_prompt = "\n\n".join(sections)
+
+    return user_prompt
 
 
 def format_schema(schema: dict) -> str:

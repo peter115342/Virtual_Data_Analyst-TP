@@ -118,8 +118,38 @@ def _schema_cache_key(db_fp: str) -> str:
     return f"{CACHE_PREFIX}:schema:{db_fp}"
 
 
-def _nl2sql_cache_key(db_fp: str, question_signature: str) -> str:
-    return f"{CACHE_PREFIX}:nl2sql:{db_fp}:{_short_hash(question_signature)}"
+def _has_chat_context(history_context: dict | None) -> bool:
+    if not history_context:
+        return False
+
+    return any(
+        bool(str(history_context.get(key, "")).strip())
+        for key in ("history_text", "previous_sql", "previous_question")
+    )
+
+
+def _chat_context_signature(history_context: dict | None) -> str:
+    if not _has_chat_context(history_context):
+        return "no-context"
+
+    context = history_context or {}
+    context_text = "\n".join(
+        str(context.get(key, "")).strip()
+        for key in ("previous_question", "previous_sql", "history_text")
+    )
+    return _short_hash(context_text)
+
+
+def _nl2sql_cache_key(
+    db_fp: str,
+    question_signature: str,
+    history_context: dict | None = None,
+) -> str:
+    context_signature = _chat_context_signature(history_context)
+    return (
+        f"{CACHE_PREFIX}:nl2sql:{db_fp}:"
+        f"{_short_hash(question_signature)}:{context_signature}"
+    )
 
 
 def _sql_result_cache_key(db_fp: str, sql_query: str) -> str:
@@ -191,9 +221,10 @@ async def _get_cached_sql_query(
     generator: QueryGenerator,
     db_fp: str,
     dialect: str,
+    history_context: dict,
 ) -> tuple[str, bool, str]:
     signature = _question_signature(question) or _normalize_question_text(question)
-    cache_key = _nl2sql_cache_key(db_fp, signature)
+    cache_key = _nl2sql_cache_key(db_fp, signature, history_context)
     cached_payload = await redis_client.get_json(cache_key)
     if isinstance(cached_payload, dict):
         cached_sql = cached_payload.get("sql_query")
@@ -203,12 +234,18 @@ async def _get_cached_sql_query(
 
     await _record_cache_metric("nl2sql", "miss")
 
-    sql_query = await generator.generate_query(question, schema, dialect)
+    sql_query = await generator.generate_query(
+        question=question,
+        schema=schema,
+        dialect=dialect,
+        chat_history_context=history_context,
+    )
     await redis_client.set_json(
         cache_key,
         {
             "sql_query": sql_query,
             "question_signature": signature,
+            "chat_context_signature": _chat_context_signature(history_context),
             "source_question": question,
         },
         ttl_seconds=settings.cache_nl2sql_ttl_seconds,
@@ -396,6 +433,7 @@ class GenerateSQLRequest(BaseModel):
     """
 
     question: str
+    session_id: str | None = None
 
 
 class GenerateSQLResponse(BaseModel):
@@ -476,7 +514,14 @@ async def ask_chart(
 
         schema, schema_hit = await _get_cached_schema(db, db_fp)
         dialect = await db.get_db_dialect()
-        base_sql = await generator.generate_query(request.question, schema, dialect)
+        history_context = await get_chat_context(request.session_id)
+
+        base_sql = await generator.generate_query(
+            request.question,
+            schema,
+            dialect,
+            chat_history_context=history_context
+        )
         chart_sql = await generator.generate_chart_query(
             request.question,
             chart_intent,
@@ -518,6 +563,94 @@ class DatabaseConnectRequest(BaseModel):
     user_id: str | None = None
 
 
+def _empty_chat_context() -> dict[str, str]:
+    return {
+        "history_text": "",
+        "previous_sql": "",
+        "previous_question": "",
+    }
+
+
+def _chat_session_metadata(
+    db_manager: connection.DatabaseManager | None = None,
+) -> dict[str, str]:
+    engine = getattr(db_manager, "engine", None)
+    url = getattr(engine, "url", None)
+    dialect = getattr(getattr(engine, "dialect", None), "name", "") or ""
+
+    return {
+        "db_type": dialect,
+        "db_host": getattr(url, "host", "") or "",
+        "db_name": getattr(url, "database", "") or "",
+    }
+
+
+async def _create_chat_session(
+    claims: dict,
+    db_manager: connection.DatabaseManager | None = None,
+) -> str:
+    return await chat_history.create_session(
+        user_id=claims.get("sub", "anonymous"),
+        **_chat_session_metadata(db_manager),
+    )
+
+
+async def get_chat_context(session_id: str | None):
+    """
+    Fetch chat history context for SQL generation
+    Returns a dict with history_text, previous_sql, and previous_question.
+    """
+    if not session_id:
+        return _empty_chat_context()
+
+    session = await chat_history.get_session(session_id)
+    if not session or "messages" not in session:
+        return _empty_chat_context()
+
+    messages = session["messages"]
+
+    history_text = "\n".join(
+        f"{m.get('role', '').upper()}: {m.get('content', '')}"
+        for m in messages[-12:]
+    )
+
+    previous_sql = ""
+    previous_question = ""
+
+    for m in reversed(messages):
+        if not previous_question and m.get("role") == "user":
+            previous_question = m.get("content")
+        if not previous_sql and m.get("sql_query"):
+            previous_sql = m.get("sql_query")
+
+    history_context = {
+        "history_text": history_text,
+        "previous_sql": previous_sql,
+        "previous_question": previous_question,
+    }
+
+    return history_context
+
+
+@router.post("/new-chat")
+async def new_chat(_claims: dict = Depends(validate_token)):
+    """
+    Create a new chat session
+    """
+    try:
+        db = get_db_manager()
+    except RuntimeError:
+        db = None
+
+    session_id = await _create_chat_session(_claims, db)
+
+    return {
+        "status": "success",
+        "session_id": session_id,
+        "message": "Chat session created",
+    }
+
+
 @router.post("/generate-sql", response_model=GenerateSQLResponse)
 async def generate_sql(
     request: GenerateSQLRequest,
@@ -531,6 +664,7 @@ async def generate_sql(
     1. Takes a natural language question
     2. Retrieves the database schema
     3. Uses GPT-4.1 to generate a valid SQL query
+    4. Optionally saves to chat history if session_id provided
 
     Returns:
         - sql_query: The generated SQL query string
@@ -543,12 +677,15 @@ async def generate_sql(
         schema, schema_hit = await _get_cached_schema(db, db_fp)
         dialect = await db.get_db_dialect()
 
+        history_context = await get_chat_context(request.session_id)
+
         sql_query, nl2sql_hit, question_signature = await _get_cached_sql_query(
             request.question,
             schema,
             generator,
             db_fp,
             dialect,
+            history_context=history_context
         )
 
         response.headers["X-Cache-Schema"] = _cache_header_status(schema_hit)
@@ -557,6 +694,22 @@ async def generate_sql(
         response.headers["X-Cache-Trace"] = (
             f"schema={_cache_header_status(schema_hit)};nl2sql={_cache_header_status(nl2sql_hit)}"
         )
+
+        if request.session_id:
+            try:
+                await chat_history.add_message(
+                    session_id=request.session_id,
+                    role="user",
+                    content=request.question,
+                )
+                await chat_history.add_message(
+                    session_id=request.session_id,
+                    role="assistant",
+                    content="Generating SQL...",
+                    sql_query=sql_query
+                )
+            except Exception as hist_err:
+                print(f"Warning: failed to save chat history in generate-sql: {hist_err}")
 
         return GenerateSQLResponse(status="success", sql_query=sql_query)
 
@@ -596,21 +749,36 @@ async def ask(
         summarizer = ResponseSummarizer()
         chart_detector = ChartIntentDetector()
         db_fp = _db_fingerprint(db)
+        session_id = request.session_id
+
+        if not session_id:
+            try:
+                session_id = await _create_chat_session(_claims, db)
+            except Exception as hist_err:
+                print(f"Warning: failed to create chat session: {hist_err}")
+
+        history_context = await get_chat_context(session_id)
+        semantic_cache_bypassed = _has_chat_context(history_context)
 
         chart_intent = await chart_detector.detect_intent(request.question)
         chart_requested = bool(chart_intent.get("requested"))
         response_chart_intent = chart_intent if chart_requested else None
 
-        semantic_probe = await semantic_qa_cache.probe_similar_answer(db_fp, request.question)
-        if semantic_probe.best_similarity is not None:
-            response.headers["X-Cache-QA-Semantic-Best-Similarity"] = (
-                f"{semantic_probe.best_similarity:.4f}"
+        semantic_hit = None
+        if semantic_cache_bypassed:
+            response.headers["X-Cache-QA-Semantic"] = "BYPASS"
+            response.headers["X-Cache-QA-Semantic-Reason"] = "chat_history_context"
+        else:
+            semantic_probe = await semantic_qa_cache.probe_similar_answer(db_fp, request.question)
+            if semantic_probe.best_similarity is not None:
+                response.headers["X-Cache-QA-Semantic-Best-Similarity"] = (
+                    f"{semantic_probe.best_similarity:.4f}"
+                )
+            response.headers["X-Cache-QA-Semantic-Threshold"] = (
+                f"{settings.semantic_cache_threshold:.4f}"
             )
-        response.headers["X-Cache-QA-Semantic-Threshold"] = (
-            f"{settings.semantic_cache_threshold:.4f}"
-        )
+            semantic_hit = semantic_probe.hit
 
-        semantic_hit = semantic_probe.hit
         if semantic_hit is not None:
             await _record_cache_metric("qa_semantic", "hit")
             response.headers["X-Cache-QA-Semantic"] = "HIT"
@@ -643,15 +811,15 @@ async def ask(
                 )
                 chart_image = _render_chart_data_uri(chart_data, response_chart_intent)
 
-            if request.session_id:
+            if session_id:
                 try:
                     await chat_history.add_message(
-                        session_id=request.session_id,
+                        session_id=session_id,
                         role="user",
                         content=request.question,
                     )
                     await chat_history.add_message(
-                        session_id=request.session_id,
+                        session_id=session_id,
                         role="assistant",
                         content=semantic_hit.summary,
                         sql_query=semantic_hit.sql_query,
@@ -659,12 +827,12 @@ async def ask(
                     )
 
                     await _append_chat_cache(
-                        session_id=request.session_id,
+                        session_id=session_id,
                         role="user",
                         content=request.question,
                     )
                     await _append_chat_cache(
-                        session_id=request.session_id,
+                        session_id=session_id,
                         role="assistant",
                         content=semantic_hit.summary,
                         sql_query=semantic_hit.sql_query,
@@ -683,11 +851,13 @@ async def ask(
                 chart_intent=response_chart_intent,
                 chart_data=chart_data,
                 chart_image=chart_image,
-                session_id=request.session_id,
+                session_id=session_id,
             )
 
-        await _record_cache_metric("qa_semantic", "miss")
-        response.headers["X-Cache-QA-Semantic"] = "MISS"
+        if not semantic_cache_bypassed:
+            await _record_cache_metric("qa_semantic", "miss")
+            response.headers["X-Cache-QA-Semantic"] = "MISS"
+        qa_semantic_status = "BYPASS" if semantic_cache_bypassed else "MISS"
 
         schema, schema_hit = await _get_cached_schema(db, db_fp)
         dialect = await db.get_db_dialect()
@@ -698,6 +868,7 @@ async def ask(
             generator,
             db_fp,
             dialect,
+            history_context=history_context,
         )
 
         data, sql_results_hit = await _get_cached_query_results(db, sql_query, db_fp)
@@ -717,7 +888,7 @@ async def ask(
         response.headers["X-Cache-Summary"] = _cache_header_status(summary_hit)
         response.headers["X-Cache-NL2SQL-Signature-Hash"] = _short_hash(question_signature)
         response.headers["X-Cache-Trace"] = (
-            f"qa_semantic=MISS;"
+            f"qa_semantic={qa_semantic_status};"
             f"schema={_cache_header_status(schema_hit)};"
             f"nl2sql={_cache_header_status(nl2sql_hit)};"
             f"sql_results={_cache_header_status(sql_results_hit)};"
@@ -740,7 +911,7 @@ async def ask(
             )
             response.headers["X-Cache-Chart-Results"] = _cache_header_status(chart_results_hit)
             response.headers["X-Cache-Trace"] = (
-                f"qa_semantic=MISS;"
+                f"qa_semantic={qa_semantic_status};"
                 f"schema={_cache_header_status(schema_hit)};"
                 f"nl2sql={_cache_header_status(nl2sql_hit)};"
                 f"sql_results={_cache_header_status(sql_results_hit)};"
@@ -749,15 +920,15 @@ async def ask(
             )
             chart_image = _render_chart_data_uri(chart_data, response_chart_intent)
 
-        if request.session_id:
+        if session_id:
             try:
                 await chat_history.add_message(
-                    session_id=request.session_id,
+                    session_id=session_id,
                     role="user",
                     content=request.question,
                 )
                 await chat_history.add_message(
-                    session_id=request.session_id,
+                    session_id=session_id,
                     role="assistant",
                     content=summary,
                     sql_query=sql_query,
@@ -765,12 +936,12 @@ async def ask(
                 )
 
                 await _append_chat_cache(
-                    session_id=request.session_id,
+                    session_id=session_id,
                     role="user",
                     content=request.question,
                 )
                 await _append_chat_cache(
-                    session_id=request.session_id,
+                    session_id=session_id,
                     role="assistant",
                     content=summary,
                     sql_query=sql_query,
@@ -779,16 +950,17 @@ async def ask(
             except Exception as hist_err:
                 print(f"Warning: failed to save chat history: {hist_err}")
 
-        try:
-            await semantic_qa_cache.store_answer(
-                db_fp=db_fp,
-                question=request.question,
-                sql_query=sql_query,
-                summary=summary,
-                row_count=row_count,
-            )
-        except Exception as cache_err:
-            print(f"Warning: semantic cache store failed: {cache_err}")
+        if not semantic_cache_bypassed:
+            try:
+                await semantic_qa_cache.store_answer(
+                    db_fp=db_fp,
+                    question=request.question,
+                    sql_query=sql_query,
+                    summary=summary,
+                    row_count=row_count,
+                )
+            except Exception as cache_err:
+                print(f"Warning: semantic cache store failed: {cache_err}")
 
         return AskResponse(
             status="success",
@@ -800,7 +972,7 @@ async def ask(
             chart_intent=response_chart_intent,
             chart_data=chart_data,
             chart_image=chart_image,
-            session_id=request.session_id,
+            session_id=session_id,
         )
 
     except ValueError as e:
