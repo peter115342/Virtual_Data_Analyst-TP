@@ -64,6 +64,14 @@ class FakeMongoDb:
         return FakeCollection(self._docs)
 
 
+def assert_empty_chat_context(chat_history_context):
+    assert chat_history_context == {
+        "history_text": "",
+        "previous_sql": "",
+        "previous_question": "",
+    }
+
+
 @pytest.mark.asyncio
 async def test_root_ok(client):
     response = await client.get("/")
@@ -88,7 +96,11 @@ async def test_health_not_connected(client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_generate_sql_success(client, monkeypatch):
-    async def fake_generate_query(_self, _question, _schema, _dialect, _chat_history_context=None):
+    async def fake_generate_query(_self, question, schema, dialect, chat_history_context):
+        assert question == "test"
+        assert schema
+        assert dialect == "postgresql"
+        assert_empty_chat_context(chat_history_context)
         return "SELECT 1"
 
     class FakeGenerator:
@@ -105,7 +117,11 @@ async def test_generate_sql_success(client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_ask_success_with_history(client, monkeypatch):
-    async def fake_generate_query(_self, _question, _schema, _dialect, _chat_history_context=None):
+    async def fake_generate_query(_self, question, schema, dialect, chat_history_context):
+        assert question == "question"
+        assert schema
+        assert dialect == "postgresql"
+        assert_empty_chat_context(chat_history_context)
         return "SELECT 2"
 
     async def fake_summarize(_self, sql_query, data, context):
@@ -143,7 +159,11 @@ async def test_ask_success_with_history(client, monkeypatch):
 async def test_ask_returns_chart_image_when_chart_requested(client, monkeypatch):
     chart_rows = [{"category": "A", "total": 2}, {"category": "B", "total": 3}]
 
-    async def fake_generate_query(_self, _question, _schema, _dialect, _chat_history_context=None):
+    async def fake_generate_query(_self, question, schema, dialect, chat_history_context):
+        assert question == "plot sales by category"
+        assert schema
+        assert dialect == "postgresql"
+        assert_empty_chat_context(chat_history_context)
         return "SELECT category, total FROM sales"
 
     async def fake_generate_chart_query(_self, _question, _intent, _schema, _dialect, _base_sql):
@@ -190,6 +210,72 @@ async def test_ask_returns_chart_image_when_chart_requested(client, monkeypatch)
     assert body["chart_sql"] == "SELECT category, total FROM sales GROUP BY category"
     assert body["chart_data"] == chart_rows
     assert body["chart_image"].startswith("data:image/png;base64,")
+    assert body["session_id"] == "session-1"
+
+
+@pytest.mark.asyncio
+async def test_ask_uses_chat_history_context_and_bypasses_semantic_cache(client, monkeypatch):
+    async def fake_get_session(session_id):
+        assert session_id == "s-ctx"
+        return {
+            "messages": [
+                {"role": "user", "content": "show me the latest events"},
+                {
+                    "role": "assistant",
+                    "content": "summary",
+                    "sql_query": "SELECT * FROM events ORDER BY event_time DESC LIMIT 20",
+                    "row_count": 20,
+                },
+            ]
+        }
+
+    async def fail_semantic_probe(*_args, **_kwargs):
+        pytest.fail("semantic cache should be bypassed when chat context exists")
+
+    async def fail_semantic_store(*_args, **_kwargs):
+        pytest.fail("context-dependent follow-up answers should not be stored semantically")
+
+    async def fake_generate_query(_self, question, schema, dialect, chat_history_context):
+        assert question == "no, just top 10"
+        assert schema
+        assert dialect == "postgresql"
+        assert "USER: show me the latest events" in chat_history_context["history_text"]
+        assert chat_history_context["previous_question"] == "show me the latest events"
+        assert chat_history_context["previous_sql"] == (
+            "SELECT * FROM events ORDER BY event_time DESC LIMIT 20"
+        )
+        return "SELECT * FROM events ORDER BY event_time DESC LIMIT 10"
+
+    async def fake_summarize(_self, sql_query, data, context):
+        assert sql_query == "SELECT * FROM events ORDER BY event_time DESC LIMIT 10"
+        assert context == "no, just top 10"
+        return "summary"
+
+    class FakeGenerator:
+        generate_query = fake_generate_query
+
+    class FakeSummarizer:
+        summarize_query_results = fake_summarize
+
+    monkeypatch.setattr(routes, "get_db_manager", lambda: FakeDbManager())
+    monkeypatch.setattr(routes.chat_history, "get_session", fake_get_session)
+    monkeypatch.setattr(routes.semantic_qa_cache, "probe_similar_answer", fail_semantic_probe)
+    monkeypatch.setattr(routes.semantic_qa_cache, "store_answer", fail_semantic_store)
+    monkeypatch.setattr(routes, "QueryGenerator", FakeGenerator)
+    monkeypatch.setattr(routes, "ResponseSummarizer", FakeSummarizer)
+
+    response = await client.post(
+        "/api/ask",
+        json={"question": "no, just top 10", "session_id": "s-ctx"},
+    )
+
+    assert response.status_code == 200
+    assert response.headers["X-Cache-QA-Semantic"] == "BYPASS"
+    assert response.headers["X-Cache-QA-Semantic-Reason"] == "chat_history_context"
+    assert "qa_semantic=BYPASS" in response.headers["X-Cache-Trace"]
+    body = response.json()
+    assert body["session_id"] == "s-ctx"
+    assert body["sql_query"] == "SELECT * FROM events ORDER BY event_time DESC LIMIT 10"
 
 
 @pytest.mark.asyncio

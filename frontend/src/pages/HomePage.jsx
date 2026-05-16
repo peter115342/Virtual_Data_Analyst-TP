@@ -10,7 +10,7 @@ export default function HomePage({ onLogout, userName }) {
   const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   
-  const { connect, disconnect, loading, error, sessionId } = useDatabase();
+  const { connect, disconnect, saveSessionId, loading, error, sessionId } = useDatabase();
   const [activeSessionId, setActiveSessionId] = useState(null);
 
   useEffect(() => {
@@ -28,6 +28,11 @@ export default function HomePage({ onLogout, userName }) {
   }, []);
 
   const handleSelectSession = (id) => {
+    setActiveSessionId(id);
+  };
+
+  const handleSessionIdChange = (id) => {
+    saveSessionId(id);
     setActiveSessionId(id);
   };
 
@@ -74,6 +79,7 @@ export default function HomePage({ onLogout, userName }) {
       <div className="flex-1">
         <Chat
           sessionId={activeSessionId || sessionId}
+          onSessionIdChange={handleSessionIdChange}
           isConnected={isConnected}
           onDatabaseClick={handleDatabaseButtonClick}
           userName={userName}

@@ -54,12 +54,20 @@ def patch_infrastructure(monkeypatch):
     async def fake_add_message(**_kwargs):
         pass
 
+    async def fake_create_session(**_kwargs):
+        return "session-1"
+
     monkeypatch.setattr(routes.chat_history, "get_session", fake_get_session)
     monkeypatch.setattr(routes.chat_history, "add_message", fake_add_message)
+    monkeypatch.setattr(routes.chat_history, "create_session", fake_create_session)
 
     # Semantic cache
     async def fake_probe(_db_fp, _question):
-        return semantic_qa_cache.SemanticQACacheProbe(hit=None, best_similarity=None, best_entry_id=None)
+        return semantic_qa_cache.SemanticQACacheProbe(
+            hit=None,
+            best_similarity=None,
+            best_entry_id=None,
+        )
 
     async def fake_store(**_kwargs):
         pass
