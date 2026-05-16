@@ -132,8 +132,9 @@ def _chat_context_signature(history_context: dict | None) -> str:
     if not _has_chat_context(history_context):
         return "no-context"
 
+    context = history_context or {}
     context_text = "\n".join(
-        str(history_context.get(key, "")).strip()
+        str(context.get(key, "")).strip()
         for key in ("previous_question", "previous_sql", "history_text")
     )
     return _short_hash(context_text)
