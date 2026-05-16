@@ -88,7 +88,7 @@ async def test_health_not_connected(client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_generate_sql_success(client, monkeypatch):
-    async def fake_generate_query(_self, _question, _schema, _dialect):
+    async def fake_generate_query(_self, _question, _schema, _dialect, _chat_history_context=None):
         return "SELECT 1"
 
     class FakeGenerator:
@@ -105,7 +105,7 @@ async def test_generate_sql_success(client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_ask_success_with_history(client, monkeypatch):
-    async def fake_generate_query(_self, _question, _schema, _dialect):
+    async def fake_generate_query(_self, _question, _schema, _dialect, _chat_history_context=None):
         return "SELECT 2"
 
     async def fake_summarize(_self, sql_query, data, context):
@@ -143,7 +143,7 @@ async def test_ask_success_with_history(client, monkeypatch):
 async def test_ask_returns_chart_image_when_chart_requested(client, monkeypatch):
     chart_rows = [{"category": "A", "total": 2}, {"category": "B", "total": 3}]
 
-    async def fake_generate_query(_self, _question, _schema, _dialect):
+    async def fake_generate_query(_self, _question, _schema, _dialect, _chat_history_context=None):
         return "SELECT category, total FROM sales"
 
     async def fake_generate_chart_query(_self, _question, _intent, _schema, _dialect, _base_sql):
