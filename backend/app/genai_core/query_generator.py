@@ -1,82 +1,88 @@
 # LLM-based SQL query generation
 
+import json
+
 from openai import OpenAI
 
 from app.config import settings
+from app.genai_core.prompts import (
+    chart_sql_user_prompt,
+    format_schema,
+    get_chart_system_prompt,
+    get_system_prompt,
+    sql_user_prompt,
+)
 
 
 class QueryGenerator:
     def __init__(self):
-        """Initialize LLM client for SQL generation"""
         self.client = OpenAI(api_key=settings.api_key, base_url=settings.openai_base_url)
         self.model = "azure.gpt-4.1"
 
-    def _format_schema_for_prompt(self, schema: dict) -> str:
-        """
-        Convert schema dict to a readable text format for the LLM
-
-        Args:
-            schema: Dictionary with table names as keys and column info as values
-
-        Returns:
-            Formatted schema string
-        """
-        schema_text = "Database Schema:\n\n"
-        for table_name, columns in schema.items():
-            schema_text += f"Table: {table_name}\n"
-            for col in columns:
-                nullable = "NULL" if col["nullable"] else "NOT NULL"
-                schema_text += f"  - {col['column']} ({col['type']}) {nullable}\n"
-            schema_text += "\n"
-        return schema_text
-
-    async def generate_query(self, question: str, schema: dict) -> str:
-        """
-        Generate SQL query from natural language question using LLM
-
-        Args:
-            question: Natural language question from the user
-            schema: Database schema dictionary
-
-        Returns:
-            Generated SQL query string
-        """
-        schema_text = self._format_schema_for_prompt(schema)
-
-        system_prompt = """You are a PostgreSQL expert. Your task is to convert natural language questions into valid SQL queries.
-
-IMPORTANT RULES:
-1. Generate ONLY SELECT queries (read-only access)
-2. NEVER use INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, TRUNCATE, GRANT, or REVOKE
-3. Return ONLY the raw SQL query - no explanations, no markdown formatting, no code blocks
-4. Use proper PostgreSQL syntax
-5. Include appropriate WHERE clauses, JOINs, GROUP BY, ORDER BY as needed
-6. Add LIMIT clauses when appropriate to avoid returning too much data
-7. Use table and column names exactly as they appear in the schema
-"""
-
-        user_prompt = f"""{schema_text}
-User Question: {question}
-
-Generate a SQL query that answers this question. Return ONLY the SQL query, nothing else."""
+    async def generate_query(self, question: str, schema: dict, dialect: str) -> str:
+        schema_text = format_schema(schema)
 
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
+                {"role": "system", "content": get_system_prompt(dialect)},
+                {"role": "user", "content": sql_user_prompt(question, schema_text)},
             ],
-            temperature=0.1,
+            temperature=0.0,
         )
 
-        sql_query = response.choices[0].message.content.strip()
+        content = response.choices[0].message.content
+        if not content:
+            raise ValueError("LLM response did not include SQL content")
 
-        if sql_query.startswith("```"):
-            lines = sql_query.split("\n")
-            sql_query = "\n".join(lines[1:-1]) if len(lines) > 2 else sql_query
-            sql_query = sql_query.strip()
+        sql = content.strip()
 
-        if sql_query.lower().startswith("sql"):
-            sql_query = sql_query[3:].strip()
+        if sql.startswith("```"):
+            lines = sql.split("\n")
+            sql = "\n".join(lines[1:-1]).strip()
+        if sql.lower().startswith("sql"):
+            sql = sql[3:].strip()
 
-        return sql_query
+        return sql
+
+    async def generate_chart_query(
+        self,
+        question: str,
+        chart_intent: dict,
+        schema: dict,
+        dialect: str,
+        base_sql: str,
+    ) -> str:
+        schema_text = format_schema(schema)
+        intent_json = json.dumps(chart_intent, ensure_ascii=True)
+
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": get_chart_system_prompt(dialect)},
+                {
+                    "role": "user",
+                    "content": chart_sql_user_prompt(
+                        question,
+                        schema_text,
+                        intent_json,
+                        base_sql,
+                    ),
+                },
+            ],
+            temperature=0.0,
+        )
+
+        content = response.choices[0].message.content
+        if not content:
+            raise ValueError("LLM response did not include chart SQL content")
+
+        sql = content.strip()
+
+        if sql.startswith("```"):
+            lines = sql.split("\n")
+            sql = "\n".join(lines[1:-1]).strip()
+        if sql.lower().startswith("sql"):
+            sql = sql[3:].strip()
+
+        return sql

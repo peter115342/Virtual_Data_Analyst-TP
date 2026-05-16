@@ -67,6 +67,8 @@ export default function DatabaseModal({ onClose, onConnected, connect, loading, 
             >
               <option value="postgres">PostgreSQL</option>
               <option value="mysql">MySQL</option>
+              <option value="oracle">OracleDB</option>
+              <option value="sqlserver">SQLserver</option>
             </select>
 
             <img

@@ -29,6 +29,8 @@ export default function Chat({ sessionId, isConnected, onDatabaseClick, userName
                         fromUser: false,
                         sql: result.sql_query,
                         rowCount: result.row_count,
+                        chartImage: result.chart_image,
+                        chartTitle: result.chart_intent?.title,
                     },
                 ];
             });
@@ -69,30 +71,32 @@ export default function Chat({ sessionId, isConnected, onDatabaseClick, userName
 
 
 
+    return (
+        <div className="h-full flex flex-col relative">
+            <ChatHeader
+                isConnected={isConnected}
+                onDatabaseClick={onDatabaseClick}
+                userName={userName}
+                onLogout={onLogout}
+            />
 
-return (
-  <div className="h-full flex flex-col relative">
+            <div className="flex-1 flex flex-col min-h-0">
+                <div className="flex-1 pt-20 overflow-y-auto p-4 flex flex-col gap-2">
+                    {messages.map((msg, i) => (
+                        <UserMessage
+                            key={i}
+                            context={msg.text}
+                            isUser={msg.fromUser}
+                            chartImage={msg.chartImage}
+                            chartTitle={msg.chartTitle}
+                        />
+                    ))}
+                </div>
 
-    <ChatHeader
-      isConnected={isConnected}
-      onDatabaseClick={onDatabaseClick}
-      userName={userName}
-      onLogout={onLogout}
-    />
-
-    <div className="flex-1 flex flex-col min-h-0">
-
-      <div className="flex-1 pt-20 overflow-y-auto p-4 flex flex-col gap-2">
-        {messages.map((msg, i) => (
-          <UserMessage key={i} context={msg.text} isUser={msg.fromUser} />
-        ))}
-      </div>
-
-      <div className="p-4 flex justify-center sticky bottom-0">
-        <InputQuestion onSend={handleSend} />
-      </div>
-
-    </div>
-  </div>
-);
+                <div className="p-4 flex justify-center sticky bottom-0">
+                    <InputQuestion onSend={handleSend} />
+                </div>
+            </div>
+        </div>
+    )
 }

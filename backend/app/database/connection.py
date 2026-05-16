@@ -3,7 +3,7 @@
 
 import re
 
-from sqlalchemy import create_engine, text, inspect
+from sqlalchemy import create_engine, inspect, literal, select, text
 from sqlalchemy.orm import sessionmaker
 
 
@@ -34,14 +34,19 @@ class DatabaseManager:
                 dialect = self.engine.dialect.name
 
                 if dialect == "postgresql":
-                    conn.execute(text(
-                        "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY"))
+                    conn.execute(text("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY"))
                 elif dialect == "mysql":
                     conn.execute(text("SET SESSION TRANSACTION READ ONLY"))
+                elif dialect == "mssql":
+                    # TODO Read-only is not fully implemented
+                    pass
+                elif dialect == "oracle":
+                    conn.execute(text("SET TRANSACTION READ ONLY"))
                 else:
-                    raise ValueError(f"Unsupported database dialect{dialect}")
+                    raise ValueError(f"Unsupported database dialect {dialect}")
 
-            conn.execute(text("SELECT 1"))
+            # conn.execute(text("SELECT 1"))
+            conn.execute(select(literal(1)))
 
     async def disconnect(self):
         """
@@ -77,7 +82,10 @@ class DatabaseManager:
 
         with self.engine.connect() as conn:
             if self.readonly:
-                conn.execute(text("SET TRANSACTION READ ONLY"))
+                dialect = self.engine.dialect.name
+                if dialect in ("postgresql", "mysql", "oracle"):
+                    conn.execute(text("SET TRANSACTION READ ONLY"))
+                # mssql and sqlite — rely on regex guard only
 
             result = conn.execute(text(sql))
 
@@ -110,6 +118,16 @@ class DatabaseManager:
             ]
 
         return schema
+
+    async def get_db_dialect(self) -> str:
+        """
+        Get the dialect of connected database (type of database)
+        """
+        if not self.engine:
+            raise RuntimeError("Database not connected. Call connect() first.")
+
+        dialect_name = self.engine.dialect.name
+        return dialect_name
 
 
 db_manager: DatabaseManager | None = None

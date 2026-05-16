@@ -4,8 +4,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
+from app.cache import redis_client
 from app.config import settings
-from app.database import connection, mongo, chat_history
+from app.database import chat_history, connection, mongo
 
 
 @asynccontextmanager
@@ -26,6 +27,8 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"MongoDB connection failed: {e}")
 
+    await redis_client.connect()
+
     yield
 
     if connection.db_manager:
@@ -33,6 +36,7 @@ async def lifespan(app: FastAPI):
         print("Database disconnected")
 
     await mongo.disconnect()
+    await redis_client.disconnect()
 
 
 app = FastAPI(
@@ -73,4 +77,11 @@ async def health_check():
     except RuntimeError:
         mongo_status = "not connected"
 
-    return {"status": "healthy", "database": db_status, "mongodb": mongo_status}
+    redis_status = "connected" if redis_client.is_connected() else "not connected"
+
+    return {
+        "status": "healthy",
+        "database": db_status,
+        "mongodb": mongo_status,
+        "redis": redis_status,
+    }
