@@ -31,3 +31,19 @@ export const listSessions = async () => {
   const response = await api.get("/api/sessions");
   return response.data;
 };
+
+
+export const listMongoSessions = async () => {
+  const response = await api.get("/api/mongo/sessions");
+
+  if (!response.data) {
+    throw new Error("No data returned");
+  }
+
+  return response.data;
+};
+
+export const getDatabaseStatus = async () => {
+  const response = await api.get("/api/database/status");
+  return response.data;
+};

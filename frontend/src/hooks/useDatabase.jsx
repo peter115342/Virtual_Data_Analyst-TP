@@ -1,17 +1,27 @@
-import { useState } from "react";
+// useDatabase.jsx
+import { useState, useEffect } from "react";
 import { connectDatabase, disconnectDatabase } from "../services/databaseService";
 
 export default function useDatabase() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [sessionId, setSessionId] = useState(null);
+  
+  // Načítame pôvodné sessionId z localStorage pri štarte
+  const [sessionId, setSessionId] = useState(() => {
+    return localStorage.getItem("active_session_id");
+  });
 
   const connect = async (data) => {
     try {
       setLoading(true);
       setError(null);
       const result = await connectDatabase(data);
-      setSessionId(result.session_id || null);
+      const newSessionId = result.session_id || null;
+      
+      setSessionId(newSessionId);
+      if (newSessionId) {
+        localStorage.setItem("active_session_id", newSessionId);
+      }
       return result;
     } catch (err) {
       setError(err.response?.data?.message || "Connection failed");
@@ -22,9 +32,9 @@ export default function useDatabase() {
   };
 
   const disconnect = async () => {
-    const result = await disconnectDatabase(sessionId);
+    await disconnectDatabase(sessionId);
     setSessionId(null);
-    return result;
+    localStorage.removeItem("active_session_id"); // Vymažeme pri odpojení
   };
 
   return {
