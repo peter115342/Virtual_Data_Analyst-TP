@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
+from sqlalchemy import text
 
 from app.auth.entra import validate_token
 from app.cache import redis_client, semantic_qa_cache
@@ -673,6 +674,15 @@ async def ask(
         - chart_image: Rendered PNG chart as a data URI if a chart was requested
     """
     try:
+        manager = get_db_manager()
+        if getattr(manager, "engine", object()) is None:
+            raise ValueError("Engine is None")
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Database not connected. Please connect first."
+        )
+    try:
         db = get_db_manager()
         generator = QueryGenerator()
         summarizer = ResponseSummarizer()
@@ -1153,6 +1163,8 @@ async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
         db = get_db()
         collection = db["sessions"]
         user_id = _claims.get("sub", "anonymous")
+
+        # Získame všetky sessions používateľa zoradené od najnovšej
         cursor = collection.find(
             {"user_id": user_id},
             {
@@ -1168,28 +1180,54 @@ async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
             },
         ).sort("connected_at", -1)
 
-        def format_message(msg: dict) -> dict:
-            return {
-                "role": msg.get("role"),
-                "content": msg.get("content"),
-                "sql_query": msg.get("sql_query"),
-                "row_count": msg.get("row_count"),
-                "timestamp": msg.get("timestamp"),
-            }
-
         sessions = []
+        index = 0
         async for doc in cursor:
             doc["_id"] = str(doc["_id"])
-            raw_messages = doc.get("messages", [])
-            doc["messages"] = [format_message(m) for m in raw_messages if m]
-            sessions.append(doc)
+            raw_messages = doc.get("messages", []) or []
+
+            # Formátovanie správ
+            formatted_messages = [
+                {
+                    "role": m.get("role"),
+                    "content": m.get("content"),
+                    "sql_query": m.get("sql_query"),
+                    "row_count": m.get("row_count"),
+                    "timestamp": m.get("timestamp"),
+                } for m in raw_messages if m
+            ]
+
+            # PODMIENKA: Pridáme session ak:
+            # 1. Je to úplne najnovšia session (index 0), aj keď nemá správy
+            # 2. Má aspoň jednu správu
+            if index == 0 or len(formatted_messages) > 0:
+                doc["messages"] = formatted_messages
+                sessions.append(doc)
+
+            index += 1
 
         return {
             "status": "success",
-            "user_id": user_id,
             "count": len(sessions),
             "sessions": sessions,
         }
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Mongo sessions fetch failed: {str(e)}")
+
+
+@router.get("/database/status")
+def get_database_status(_claims: dict = Depends(validate_token)):
+    try:
+        manager = get_db_manager()
+
+        if manager.engine is None:
+            return {"connected": False}
+        with manager.engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"connected": True}
+
+    except RuntimeError:
+        return {"connected": False}
+    except Exception as e:
+        print(f"Status check failed: {e}")
+        return {"connected": False}

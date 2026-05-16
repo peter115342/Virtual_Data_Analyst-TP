@@ -44,17 +44,16 @@ export default function InputUser({ onSend }) {
   return (
     <div
       className={`
-        bg-gray-500
+        bg-[#E7E7E7]
         w-full
+        max-w-4xl
         flex
         items-end
         gap-2
-        transition-all
-        duration-150
-        px-2
+        px-3
         py-2
+        transition-all duration-150
         ${isExpanded ? "rounded-xl" : "rounded-full"}
-        
       `}
     >
       <textarea
@@ -75,7 +74,7 @@ export default function InputUser({ onSend }) {
           min-h-8
           max-h-30
           overflow-y-auto
-          text-white
+          text-black
         "
         value={text}
         onChange={(e) => setText(e.target.value)}
