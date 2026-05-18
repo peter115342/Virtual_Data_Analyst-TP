@@ -429,7 +429,15 @@ async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
         # Získame všetky sessions používateľa zoradené od najnovšej
         cursor = collection.find(
             {"user_id": user_id},
-            {"_id": 1, "session_id": 1, "db_name": 1, "connected_at": 1, "messages": 1}
+            {
+                "_id": 1, 
+                "session_id": 1, 
+                "db_name": 1, 
+                "db_type": 1, 
+                "db_host": 1, 
+                "connected_at": 1, 
+                "messages": 1
+            }
         ).sort("connected_at", -1)
 
         sessions = []

@@ -3,14 +3,13 @@ import InputDatabase from "./InputDatabase";
 import crossOrange from "../assets/cross-orange.svg";
 import arrowOrange from "../assets/triangle-down-orange.svg";
 
-export default function DatabaseModal({ onClose, onConnected, connect, loading, error }) {
-
-  const [host, setHost] = useState("");
+export default function DatabaseModal({ onClose, onConnected, connect, loading, error, prefillData }) {
+  const [host, setHost] = useState(prefillData?.db_host || "");
   const [port, setPort] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [dbName, setDbName] = useState("");
-  const [dbType, setDbType] = useState("postgres");
+  const [dbName, setDbName] = useState(prefillData?.db_name || "");
+  const [dbType, setDbType] = useState(prefillData?.db_type || "postgres");
 
   const handleConnect = async () => {
     try {
@@ -23,7 +22,9 @@ export default function DatabaseModal({ onClose, onConnected, connect, loading, 
         db_name: dbName,
       });
 
+      // 1. ÚPRAVA: Po úspešnom pripojení aktivujeme stav a hneď modal zavrieme
       onConnected();
+      onClose(); 
     } catch (e) {
       console.error(e);
     }
@@ -34,11 +35,16 @@ export default function DatabaseModal({ onClose, onConnected, connect, loading, 
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       onClick={onClose}
     >
-      <div
+      <form
+        onSubmit={(e) => {
+          e.preventDefault(); // Zabráni znovunačítaniu stránky
+          handleConnect();
+        }}
         className="bg-[#eeeeee] p-6 rounded-xl w-full max-w-md relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button
+          type="button" 
           onClick={onClose}
           className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full hover:brightness-85"
         >
@@ -75,6 +81,7 @@ export default function DatabaseModal({ onClose, onConnected, connect, loading, 
               className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-3 pointer-events-none "
             />
           </div>
+          
           <InputDatabase value={host} onChange={setHost} placeholder="Database Host" />
           <InputDatabase value={port} onChange={setPort} placeholder="Database Port" />
           <InputDatabase value={username} onChange={setUsername} placeholder="Username" />
@@ -86,7 +93,7 @@ export default function DatabaseModal({ onClose, onConnected, connect, loading, 
           )}
 
           <button
-            onClick={handleConnect}
+            type="submit"
             disabled={loading}
             className={`bg-[#F9730B] rounded-full py-3 text-white font-semibold hover:bg-[#E66400] transition
               ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -94,8 +101,7 @@ export default function DatabaseModal({ onClose, onConnected, connect, loading, 
             {loading ? "Connecting..." : "Connect"}
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
-

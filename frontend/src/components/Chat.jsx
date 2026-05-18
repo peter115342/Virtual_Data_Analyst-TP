@@ -82,7 +82,7 @@ return (
 
     <div className="flex-1 flex flex-col min-h-0">
 
-      <div className="flex-1 pt-20 overflow-y-auto p-4 flex flex-col gap-2">
+      <div className="flex-1 pt-25 overflow-y-auto p-4 flex flex-col gap-2">
         {messages.map((msg, i) => (
           <UserMessage key={i} context={msg.text} isUser={msg.fromUser} />
         ))}
