@@ -1,103 +1,132 @@
-import { useState, useEffect } from "react";
-import SideBar from "../components/SideBar.jsx";
-import Chat from "../components/Chat.jsx";
-import DatabaseModal from "../components/DatabaseModal.jsx";
-import DisconnectPromptModal from "../components/DisconnectPromptModal.jsx";
-import useDatabase from "../hooks/useDatabase";
-import { getDatabaseStatus } from "../services/databaseService.js";
+import { useCallback, useEffect, useState } from "react"
+import SideBar from "../components/SideBar.jsx"
+import Chat from "../components/Chat.jsx"
+import DatabaseModal from "../components/DatabaseModal.jsx"
+import DisconnectPromptModal from "../components/DisconnectPromptModal.jsx"
+import useDatabase from "../hooks/useDatabase"
+import { getDatabaseStatus } from "../services/databaseService.js"
 
 export default function HomePage({ onLogout, userName }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState(false);
-  const [isDisconnectPromptOpen, setIsDisconnectPromptOpen] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-  
-  const { connect, disconnect, loading, error, sessionId } = useDatabase();
-  const [activeSessionId, setActiveSessionId] = useState(null);
-  
-  const [sessionsList, setSessionsList] = useState([]); 
-  const [pendingSession, setPendingSession] = useState(null); // Tu bude uložený celý objekt chatu
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState(false)
+  const [isDisconnectPromptOpen, setIsDisconnectPromptOpen] = useState(false)
+  const [isConnected, setIsConnected] = useState(false)
+  const [activeSessionId, setActiveSessionId] = useState(null)
+  const [sessionsList, setSessionsList] = useState([])
+  const [pendingSession, setPendingSession] = useState(null)
+
+  const { connect, disconnect, saveSessionId, loading, error, sessionId } = useDatabase()
 
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const res = await getDatabaseStatus();
-        setIsConnected(res.connected);
+        const res = await getDatabaseStatus()
+        setIsConnected(res.connected)
       } catch (err) {
-        setIsConnected(false);
-      }
-    };
-    checkConnection();
-  }, []);
-
-  const handleSessionsFetched = (sessions) => {
-    setSessionsList(sessions);
-  };
-
-  const handleSelectSession = (clickedSession) => {
-    // clickedSession je teraz celá schránka dát z MongoDB (objekt)
-    if (!isConnected) {
-      // Ak nie sme pripojení, rovno otvoríme prihlasovací modal a predvyplníme ho
-      setPendingSession(clickedSession);
-      setIsDatabaseModalOpen(true);
-    } else {
-      // Sme pripojení, zistíme detaily o aktuálnej session z hooku
-      const currentSession = sessionsList.find((s) => s.session_id === sessionId);
-      
-      if (currentSession && clickedSession.db_name === currentSession.db_name) {
-        // Klikli sme na rovnakú databázu, iba prepneme chat
-        setActiveSessionId(clickedSession.session_id);
-      } else {
-        // Klikli sme na inú databázu -> otvoríme varovný prompt modal
-        setPendingSession(clickedSession);
-        setIsDisconnectPromptOpen(true);
+        console.error("Database status check failed", err)
+        setIsConnected(false)
       }
     }
-  };
+
+    checkConnection()
+  }, [])
+
+  useEffect(() => {
+    if (sessionId && !activeSessionId) {
+      setActiveSessionId(sessionId)
+    }
+  }, [sessionId, activeSessionId])
+
+  const handleSessionsFetched = useCallback((sessions) => {
+    setSessionsList(sessions)
+  }, [])
+
+  const handleSessionIdChange = (id) => {
+    saveSessionId(id)
+    setActiveSessionId(id)
+  }
+
+  const handleSelectSession = (clickedSession) => {
+    const selectedSession = typeof clickedSession === "string"
+      ? sessionsList.find((session) => session.session_id === clickedSession) || {
+        session_id: clickedSession,
+      }
+      : clickedSession
+
+    if (!selectedSession?.session_id) {
+      return
+    }
+
+    if (!isConnected) {
+      setPendingSession(selectedSession)
+      setIsDatabaseModalOpen(true)
+      return
+    }
+
+    const currentSession = sessionsList.find((session) => session.session_id === sessionId)
+    const sameDatabase =
+      !currentSession?.db_name ||
+      !selectedSession.db_name ||
+      selectedSession.db_name === currentSession.db_name
+
+    if (sameDatabase) {
+      setPendingSession(null)
+      saveSessionId(selectedSession.session_id)
+      setActiveSessionId(selectedSession.session_id)
+      return
+    }
+
+    setPendingSession(selectedSession)
+    setIsDisconnectPromptOpen(true)
+  }
 
   const handleConfirmDisconnectAndSwitch = async () => {
     try {
-      setIsDisconnectPromptOpen(false);
-      await disconnect(); // Odpojíme sa
-      setIsConnected(false);
-      setIsDatabaseModalOpen(true); // Otvoríme formulár s dátami z pendingSession
+      setIsDisconnectPromptOpen(false)
+      await disconnect()
+      setIsConnected(false)
+      setIsDatabaseModalOpen(true)
     } catch (err) {
-      console.error("Disconnect failed during session switch", err);
+      console.error("Disconnect failed during session switch", err)
     }
-  };
+  }
 
   const handleDatabaseButtonClick = async () => {
     if (isConnected) {
       try {
-        await disconnect();
-        setIsConnected(false);
+        await disconnect()
+        setIsConnected(false)
+        setActiveSessionId(null)
+        setPendingSession(null)
       } catch (err) {
-        console.error("Disconnect failed", err);
+        console.error("Disconnect failed", err)
       }
-    } else {
-      setPendingSession(null); // Čisté kliknutie (prázdny formulár)
-      setIsDatabaseModalOpen(true);
+      return
     }
-  };
 
-  useEffect(() => {
-    if (sessionId) {
-      setActiveSessionId(sessionId);
+    setPendingSession(null)
+    setIsDatabaseModalOpen(true)
+  }
+
+  const handleDatabaseConnected = (result) => {
+    setIsConnected(true)
+    if (pendingSession?.session_id) {
+      setActiveSessionId(pendingSession.session_id)
+    } else if (result?.session_id) {
+      setActiveSessionId(result.session_id)
     }
-  }, [sessionId]);
+    setPendingSession(null)
+  }
 
   return (
     <div className="h-screen flex bg-[#eeeeee] relative">
-      <div className={` ${isSidebarOpen ? "w-72" : "w-14"} transition-all duration-300 ease-in-out `}>
+      <div className={`${isSidebarOpen ? "w-72" : "w-14"} transition-all duration-300 ease-in-out`}>
         <SideBar
           onSelectSession={handleSelectSession}
           onSessionsFetched={handleSessionsFetched}
           isOpenS={isSidebarOpen}
           toggle={() => setIsSidebarOpen(!isSidebarOpen)}
-          onOpenDatabase={handleDatabaseButtonClick}
           isConnected={isConnected}
-          onLogout={onLogout}
-          userName={userName}
           activeSessionId={activeSessionId}
         />
       </div>
@@ -105,6 +134,7 @@ export default function HomePage({ onLogout, userName }) {
       <div className="flex-1">
         <Chat
           sessionId={activeSessionId || sessionId}
+          onSessionIdChange={handleSessionIdChange}
           isConnected={isConnected}
           onDatabaseClick={handleDatabaseButtonClick}
           userName={userName}
@@ -122,13 +152,13 @@ export default function HomePage({ onLogout, userName }) {
       {isDatabaseModalOpen && (
         <DatabaseModal
           onClose={() => setIsDatabaseModalOpen(false)}
-          onConnected={() => setIsConnected(true)}
+          onConnected={handleDatabaseConnected}
           connect={connect}
           loading={loading}
           error={error}
-          prefillData={pendingSession} 
+          prefillData={pendingSession}
         />
       )}
     </div>
-  );
+  )
 }

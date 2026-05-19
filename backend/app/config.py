@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     """
 
     # API Settings
-    fastapi_host: str = "0.0.0.0"
+    fastapi_host: str = "0.0.0.0"  # nosec B104
     fastapi_port: int = 8000
     fastapi_env: str = "development"
 
@@ -25,20 +25,49 @@ class Settings(BaseSettings):
     # Azure Entra ID Settings
     azure_ad_client_id: str = ""
     azure_ad_tenant_id: str = ""
+    azure_ad_allowed_tenants: str | list[str] = ""
+    azure_ad_allowed_audiences: str | list[str] = ""
+    azure_ad_required_scope: str = "access_as_user"
 
     # MongoDB Settings
     mongodb_url: str = "mongodb://localhost:27017"
     mongodb_db_name: str = "vda"
 
+    # Redis Settings
+    redis_url: str = "redis://localhost:6379/0"
+
+    # Cache Settings (seconds)
+    cache_schema_ttl_seconds: int = 3600
+    cache_nl2sql_ttl_seconds: int = 604800
+    cache_sql_results_ttl_seconds: int = 900
+    cache_summary_ttl_seconds: int = 900
+    cache_chat_ttl_seconds: int = 86400
+    cache_max_rows: int = 2000
+
+    # Semantic Q&A Cache (Redis) Settings
+    semantic_cache_enabled: bool = True
+    semantic_cache_ttl_seconds: int = 604800  # 7 days
+    semantic_cache_threshold: float = 0.70
+    semantic_cache_keyword_threshold: float = 0.25
+    semantic_cache_keyword_weight: float = 0.25
+    semantic_cache_max_candidates: int = 200
+    semantic_cache_max_entries: int = 5000
+    semantic_cache_embedding_model: str = "azure.text-embedding-3-small"
+
     # CORS Settings
     cors_origins: str | list[str] = "http://localhost:5173"
 
-    @field_validator("cors_origins", mode="before")
+    @field_validator(
+        "cors_origins",
+        "azure_ad_allowed_audiences",
+        "azure_ad_allowed_tenants",
+        mode="before",
+    )
     @classmethod
-    def parse_cors_origins(cls, v):
-        """Parse comma-separated CORS origins from .env file"""
+    def parse_csv_values(cls, v):
+        """Parse comma-separated values from .env file"""
         if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
+            return [item.strip() for item in v.split(",") if item.strip()]
         return v
 
     class Config:
