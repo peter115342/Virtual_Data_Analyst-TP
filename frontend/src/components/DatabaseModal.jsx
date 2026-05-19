@@ -1,44 +1,56 @@
-import { useState } from "react";
-import InputDatabase from "./InputDatabase";
-import crossOrange from "../assets/cross-orange.svg";
-import arrowOrange from "../assets/triangle-down-orange.svg";
+import { useState } from "react"
+import InputDatabase from "./InputDatabase"
+import crossOrange from "../assets/cross-orange.svg"
+import arrowOrange from "../assets/triangle-down-orange.svg"
 
-export default function DatabaseModal({ onClose, onConnected, connect, loading, error }) {
-
-  const [host, setHost] = useState("");
-  const [port, setPort] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [dbName, setDbName] = useState("");
-  const [dbType, setDbType] = useState("postgres");
+export default function DatabaseModal({
+  onClose,
+  onConnected,
+  connect,
+  loading,
+  error,
+  prefillData,
+}) {
+  const [host, setHost] = useState(prefillData?.db_host || "")
+  const [port, setPort] = useState(prefillData?.db_port || "")
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [dbName, setDbName] = useState(prefillData?.db_name || "")
+  const [dbType, setDbType] = useState(prefillData?.db_type || "postgres")
 
   const handleConnect = async () => {
     try {
-      await connect({
+      const result = await connect({
         db_type: dbType,
         host,
         port: Number(port),
         username,
         password,
         db_name: dbName,
-      });
+      })
 
-      onConnected();
+      onConnected(result)
+      onClose()
     } catch (e) {
-      console.error(e);
+      console.error(e)
     }
-  };
-  
+  }
+
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       onClick={onClose}
     >
-      <div
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          handleConnect()
+        }}
         className="bg-[#eeeeee] p-6 rounded-xl w-full max-w-md relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button
+          type="button"
           onClick={onClose}
           className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full hover:brightness-85"
         >
@@ -68,15 +80,16 @@ export default function DatabaseModal({ onClose, onConnected, connect, loading, 
               <option value="postgres">PostgreSQL</option>
               <option value="mysql">MySQL</option>
               <option value="oracle">OracleDB</option>
-              <option value="sqlserver">SQLserver</option>
+              <option value="sqlserver">SQL Server</option>
             </select>
 
             <img
               src={arrowOrange}
               alt=""
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-3 pointer-events-none "
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-3 pointer-events-none"
             />
           </div>
+
           <InputDatabase value={host} onChange={setHost} placeholder="Database Host" />
           <InputDatabase value={port} onChange={setPort} placeholder="Database Port" />
           <InputDatabase value={username} onChange={setUsername} placeholder="Username" />
@@ -88,7 +101,7 @@ export default function DatabaseModal({ onClose, onConnected, connect, loading, 
           )}
 
           <button
-            onClick={handleConnect}
+            type="submit"
             disabled={loading}
             className={`bg-[#F9730B] rounded-full py-3 text-white font-semibold hover:bg-[#E66400] transition
               ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -96,8 +109,7 @@ export default function DatabaseModal({ onClose, onConnected, connect, loading, 
             {loading ? "Connecting..." : "Connect"}
           </button>
         </div>
-      </div>
+      </form>
     </div>
-  );
+  )
 }
-

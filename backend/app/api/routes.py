@@ -1262,7 +1262,6 @@ async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
         async for doc in cursor:
             doc["_id"] = str(doc["_id"])
             raw_messages = doc.get("messages", []) or []
-
             # Formátovanie správ
             formatted_messages = [
                 {
@@ -1280,7 +1279,6 @@ async def get_mongo_sessions(_claims: dict = Depends(validate_token)):
             if index == 0 or len(formatted_messages) > 0:
                 doc["messages"] = formatted_messages
                 sessions.append(doc)
-
             index += 1
 
         return {

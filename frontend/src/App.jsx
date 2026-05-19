@@ -1,14 +1,14 @@
 import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react"
 import { loginRequest } from "./auth/msalConfig"
 import { useState } from "react"
-import "./App.css";
+import "./App.css"
 import HomePage from "./pages/HomePage.jsx"
-
 
 export default function App() {
   const { instance, accounts } = useMsal()
   const [devMode, setDevMode] = useState(false)
-  const devAuthEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEV_AUTH_BYPASS === "true"
+  const devAuthEnabled =
+    import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEV_AUTH_BYPASS === "true"
 
   const handleLogin = () => {
     instance.loginRedirect(loginRequest)
@@ -22,7 +22,6 @@ export default function App() {
     instance.logoutRedirect()
   }
 
-  // Dev bypass - skip Entra ID entirely
   if (devMode && devAuthEnabled) {
     return <HomePage onLogout={handleLogout} userName="Dev User" />
   }
@@ -54,7 +53,6 @@ export default function App() {
               Skip auth (dev mode)
             </button>
           )}
-
         </div>
       </UnauthenticatedTemplate>
 
