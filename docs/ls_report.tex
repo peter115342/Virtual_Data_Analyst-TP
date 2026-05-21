@@ -348,31 +348,65 @@ Na základe testovania sme sa rozhodli pre kombináciu:
 
 \subsection{Backend technológie}
 
-\begin{itemize}
-    \item \textbf{Python 3.12+} -- Hlavný programovací jazyk
-    \item \textbf{FastAPI} -- Moderný, asynchrónny webový framework
-    \item \textbf{SQLAlchemy} -- ORM a~databázové pripojenie
-    \item \textbf{OpenAI SDK} -- Klient pre LLM API (GPT-4.1, Gemini)
-    \item \textbf{Pydantic} -- Validácia dát a~schémy
-    \item \textbf{uv} -- Moderný Python package manager
-\end{itemize}
+\subsubsection*{Python 3.12+}
+
+Hlavný programovací jazyk aplikácie. Python je interpretovaný, vysokoúrovňový jazyk so silným ekosystémom knižníc pre dátovú vedu, strojové učenie a~webový vývoj. Verzia 3.12 prináša výrazné zlepšenia výkonu interprétera a~rozšírenú podporu asynchrónneho programovania. Vďaka jednoduchej syntaxi a~rozsiahlej komunite je Python de facto štandardom pre aplikácie využívajúce LLM modely a~AI integrácie. Jeho dynamická typovosť je dopĺňaná nástrojmi pre statickú analýzu, čo umožňuje kombináciu rýchlosti vývoja so spoľahlivosťou kódu.
+
+\subsubsection*{FastAPI}
+
+Moderný, asynchrónny webový framework pre budovanie REST API v~Pythone. FastAPI je postavený na štandarde ASGI a~knižnici Starlette, čo mu umožňuje natívne spracovávať asynchrónne požiadavky s~vysokou priepustnosťou. Automaticky generuje OpenAPI dokumentáciu na základe typových anotácií, čím výrazne znižuje objem manuálnej dokumentácie. Integrácia s~knižnicou Pydantic zabezpečuje automatickú validáciu vstupných a~výstupných dát. FastAPI patrí medzi najrýchlejšie Python frameworky pre webové API, čo ho robí vhodným pre aplikácie s~požiadavkami na nízku latenciu.
+
+\subsubsection*{SQLAlchemy}
+
+Komplexná knižnica pre prácu s~relačnými databázami v~Pythone, fungujúca ako ORM (Object-Relational Mapping) aj ako nástroj pre priame SQL operácie. Poskytuje jednotné rozhranie pre komunikáciu s~rôznymi databázovými systémami -- PostgreSQL, MySQL, MSSQL, Oracle a~ďalšími -- prostredníctvom systému dialektov. SQLAlchemy Inspector umožňuje introspekciu databázových metadát, čo aplikácia využíva na dynamické načítavanie schémy. Connection pooling zabudovaný v~SQLAlchemy efektívne spravuje životný cyklus databázových spojení a~znižuje réžiu pri opakovaných pripojeniach.
+
+\subsubsection*{OpenAI SDK}
+
+Oficiálna klientská knižnica pre komunikáciu s~OpenAI API a~kompatibilnými LLM endpointami. SDK poskytuje jednoduché rozhranie pre volanie modelov cez štandardizované Chat Completions API, pričom podporuje synchronné aj asynchrónne volania. Knižnica zabezpečuje správu HTTP spojení, serializáciu požiadaviek a~deserializáciu odpovedí vrátane štruktúrovaných výstupov. V~projekte sa používa nielen pre OpenAI modely (GPT-4.1), ale aj pre prístup k~modelom Google Gemini cez kompatibilný endpoint, čo umožňuje jednotné rozhranie pre viacero poskytovateľov LLM.
+
+\subsubsection*{Pydantic}
+
+Knižnica pre validáciu dát a~správu nastavení v~Pythone, postavená na typových anotáciách. Pydantic automaticky overuje typy, formáty a~obmedzenia vstupných dát pri ich spracovaní, čím predchádza chybám spôsobeným neplatnými vstupmi. V~kombinácii s~FastAPI definuje schémy pre API požiadavky a~odpovede, ktoré slúžia aj ako podklad pre automatickú OpenAPI dokumentáciu. Verzia 2 priniesla výrazné zlepšenie výkonu validácie a~rozšírenú podporu pre komplexné dátové modely. Pydantic Settings poskytuje typovo-bezpečné načítanie konfigurácie z~premenných prostredia.
+
+\subsubsection*{uv}
+
+Moderný správca Python balíčkov a~virtuálnych prostredí implementovaný v~jazyku Rust. Na rozdiel od tradičného nástroja pip je uv výrazne rýchlejší pri inštalácii závislostí vďaka paralelizácii a~agresívnemu cachovaniu. Podporuje správu závislostí cez súbor \texttt{pyproject.toml} a~deterministické zamykanie verzií cez \texttt{uv.lock}, čo zaručuje reprodukovateľné prostredie vo vývoji aj v~CI/CD pipeline. uv tiež zjednodušuje správu Python verzií a~virtuálnych prostredí v~jednom nástroji.
+
 
 \subsection{Frontend technológie}
 
-\begin{itemize}
-    \item \textbf{React} -- JavaScript knižnica pre UI
-    \item \textbf{Vite} -- Rýchly build nástroj
-    \item \textbf{Tailwind CSS} -- Utility-first CSS framework
-    \item \textbf{Axios} -- HTTP klient pre API volania
-\end{itemize}
+
+\subsubsection*{React}
+
+JavaScriptová knižnica pre budovanie používateľských rozhraní. React zavádza komponentový model vývoja, kde sa UI skladá z~nezávislých, znovupoužiteľných komponentov s~vlastným stavom a~logikou. Virtuálny DOM zabezpečuje efektívne aktualizácie rozhrania tým, že minimalizuje priame manipulácie s~reálnym DOM stromom. Systém hookov (\texttt{useState}, \texttt{useEffect} a~ďalšie) umožňuje správu stavu a~vedľajších efektov vo funkcionálnych komponentoch bez potreby tried. React je v~súčasnosti jednou z~najrozšírenejších knižníc pre tvorbu webových aplikácií s~rozsiahlym ekosystémom doplnkov.
+
+\subsubsection*{Vite}
+
+Moderný build nástroj a~vývojový server pre JavaScript aplikácie. Vite využíva natívne ES moduly prehliadača počas vývoja, čo eliminuje potrebu bundlovania a~dramaticky skracuje čas štartu vývojového servera. Pre produkčné buildy používa Rollup, ktorý generuje optimalizované a~minifikované výstupy. Hot Module Replacement (HMR) v~prostredí Vite funguje takmer okamžite aj pri veľkých projektoch, čo výrazne zrýchľuje iteračný vývoj. Vite je navrhnutý ako nástupca starších nástrojov ako webpack a~Create React App.
+
+\subsubsection*{Tailwind CSS}
+
+Utility-first CSS framework, ktorý namiesto preddefinovaných komponentov poskytuje nízkoúrovňové CSS triedy aplikovateľné priamo v~HTML. Tento prístup eliminuje potrebu písania vlastných CSS súborov pre väčšinu prípadov a~vedie k~konzistentnejšiemu vizuálnemu dizajnu. Tailwind obsahuje rozsiahly systém designových tokenov pre farby, medzery, typografiu a~ďalšie vlastnosti. Produkčný build automaticky odstraňuje nepoužívané CSS triedy (tree-shaking), čím minimalizuje veľkosť výsledného CSS súboru. Responzívny dizajn je riešený pomocou prefixov breakpointov priamo v~triede.
+
+\subsubsection*{Axios}
+
+HTTP klientská knižnica pre JavaScript podporujúca požiadavky z~prehliadača aj z~prostredia Node.js. Axios poskytuje jednotné Promise-based API pre vykonávanie HTTP požiadaviek s~automatickou serializáciou JSON dát. Podporuje interceptory pre globálne spracovanie požiadaviek a~odpovedí, čo uľahčuje implementáciu autentifikácie a~centralizovaného spracovania chýb. Na rozdiel od natívneho \texttt{fetch} API automaticky odmietne Promise pri HTTP chybových stavoch (4xx, 5xx) a~poskytuje detailnejšie chybové objekty. V~projekte je nakonfigurovaný centrálny Axios klient so základnou URL adresou backendu a~spoločnými hlavičkami.
+
 
 \subsection{Infraštruktúra}
 
-\begin{itemize}
-    \item \textbf{Docker} -- Kontajnerizácia aplikácií
-    \item \textbf{Docker Compose} -- Orchestrácia multi-kontajnerových aplikácií
-    \item \textbf{Redis} -- In-memory cache
-\end{itemize}
+
+\subsubsection*{Docker}
+
+Platforma pre kontajnerizáciu aplikácií, ktorá zabaľuje aplikáciu a~všetky jej závislosti do izolovaného, prenosného kontajnera. Kontajnery zdieľajú jadro operačného systému hostiteľa, čo ich robí oveľa ľahšími ako tradičné virtuálne stroje. Dockerfile definuje sériu inštrukción pre zostavenie obrazu, čím zabezpečuje plne reprodukovateľné prostredie nezávislé od konfigurácie hostiteľského systému. Docker eliminuje problém „funguje to iba u~mňa" a~zjednodušuje nasadenie aplikácií na rôzne infraštruktúry. Je základným stavebným kameňom moderných CI/CD pipeline a~cloudových nasadení.
+
+\subsubsection*{Docker Compose}
+
+Nástroj pre definovanie a~spúšťanie viacerých Docker kontajnerov ako jednej aplikácie pomocou YAML konfiguračného súboru. Docker Compose umožňuje deklaratívne definovať služby, siete a~volumes, čo zjednodušuje orchestráciu komplexných aplikácií skladajúcich sa z~viacerých komponentov (backend, frontend, databáza, cache). Príkazom \texttt{docker compose up} sa spustia všetky služby s~ich závislosťami v~správnom poradí. V~projekte sa Docker Compose využíva nielen pre hlavnú aplikáciu, ale aj pre správu rôznych testovacích databáz, pričom každý databázový systém má vlastný konfiguračný súbor.
+
+\subsubsection*{Redis}
+
+In-memory databáza a~cache systém s~otvorených zdrojovým kódom, optimalizovaná pre extrémne rýchly prístup k~dátam. Redis ukladá dáta primárne v~operačnej pamäti, čo umožňuje časy odozvy v~rádoch mikrosekúnd. Podporuje rôzne dátové štruktúry -- reťazce, zoznamy, množiny, zoradené množiny a~hashe -- čo ho robí vhodným pre široké spektrum prípadov použitia od cachovania po správu frontov. TTL (Time-To-Live) mechanizmus umožňuje automatické vypršanie uložených dát, čo je kľúčové pre udržiavanie aktuálnosti cache. V~projekte Redis slúži pre štyri úrovne cachovania a~pre ukladanie sémantických embeddingov.
 
 \subsection{AI/ML modely}
 
@@ -382,138 +416,198 @@ Na základe testovania sme sa rozhodli pre kombináciu:
 \end{itemize}
 
 \clearpage
+
 \section{Databázová vrstva}
-Databázová vrstva predstavuje jednu zo základných súčastí navrhovanej aplikácie, keďže zabezpečuje ukladanie, spracovanie a poskytovanie dát pre ostatné komponenty systému. 
 
-\subsection{Počiatočný návrh databázovej vrstvy}
+Databázová vrstva predstavuje jednu zo základných súčastí aplikácie. Zabezpečuje pripojenie k~používateľovým SQL databázam, vynucovanie read-only prístupu, získavanie schémy a~vykonávanie dotazov. Okrem toho systém využíva dve ďalšie databázové technológie -- MongoDB pre perzistentnú históriu chatových relácií a~Redis pre viacúrovňové cachovanie.
 
-Databázovú časť sme v úvodnej fáze vývoja navrhli tak, aby poskytovala dostatočný základ pre testovanie aplikácie a prácu s dátami. 
-Použili sme kontajnerové riešenie, vďaka ktorému bolo možné databázu rýchlo spustiť a jednoducho integrovať do vývojového prostredia. 
-Kontajner umožnil opakovateľné nasadenie rovnakého databázového prostredia, čo výrazne uľahčilo overovanie správnej funkcionality prepojenia s backendom.
+\subsection{Podporované databázové systémy}
 
-Ako prvú databázu sme zvolili PostgreSQL, ktorá je stabilná a široko používaná relačná databáza. 
-Štruktúra databázy vychádzala z verejne dostupného datasetu z platformy  \textbf{Kaggle}, ktorý obsahuje údaje o správaní zákazníkov v e-commerce prostredí.\newline 
-
-Pred samotným použitím sme dataset upravili tak, aby bolo možné dáta efektívne využívať počas vývoja a testovania aplikácie. 
-Konkrétne sme vykonali nasledujúce úpravy:
+Aplikácia podporuje pripojenie k~nasledujúcim relačným databázovým systémom:
 
 \begin{itemize}
-    \item odstránili sme neúplné záznamy, ktoré by mohli negatívne ovplyvniť testovanie,
-    \item zjednotili sme dátové typy pre zjednodušenie importu a spracovania dát,
-    \item pripravili sme dataset na automatický import do databázy.\newline
+    \item \textbf{PostgreSQL} -- primárne testovaná a~podporovaná databáza,
+    \item \textbf{MySQL} -- podpora cez pymysql konektor,
+    \item \textbf{Microsoft SQL Server} -- podpora cez pyodbc a~odbc driver,
+    \item \textbf{Oracle Database} -- podpora cez python-oracledb.
 \end{itemize}
 
-\noindent 
-V inicializačnom SQL skripte sme vytvorili tabuľku \texttt{events}, ktorá obsahuje kľúčové stĺpce:
+Typ databázy používateľ zadáva pri pripájaní. Backend na základe neho zostaví správny connection string a~zvolí príslušný SQLAlchemy dialekt. Aplikácia zároveň automaticky konfiguruje bezpečnostné mechanizmy špecifické pre daný dialekt.
 
-\begin{itemize}
-    \item \texttt{event\_id} – jedinečný identifikátor udalosti,
-    \item \texttt{event\_time} – čas vzniku udalosti,
-    \item \texttt{event\_type} – typ udalosti,
-    \item \texttt{product\_id}, \texttt{category\_id},
-    \item \texttt{category\_code}, \texttt{brand},
-    \item \texttt{price}, \texttt{user\_id},
-    \item \texttt{user\_session}.\newline
-\end{itemize}
+\subsection{Správa databázového pripojenia}
 
-Súčasťou skriptu bolo aj vytvorenie indexov pre rýchle vyhľadávanie podľa času udalosti, typu udalosti, produktu a používateľa. 
-Tento prístup umožňuje efektívnu prácu s databázou aj pri väčších objemoch dát. 
-Dáta sa automaticky načítavali zo súboru CSV pri štarte databázového kontajnera, takže boli hneď pripravené na testovanie.
-Takto pripravená databáza umožnila overiť správnu komunikáciu backendu s databázou, testovať základné operácie s dátami a kontrolovať korektnosť ich spracovania. 
-Napriek tomu, že nešlo o finálnu databázovú vrstvu, predstavovala vhodný základ pre ďalší vývoj aplikácie.\clearpage
-V tejto fáze bola databáza súčasťou rovnakého projektu \texttt{Docker Compose} ako backend a frontend, čo umožňovalo spúšťanie všetkých služieb naraz a výrazne zjednodušovalo integráciu a úvodné testovanie aplikácie.
+Správa pripojenia je centralizovaná v~samostatnej komponente \texttt{DatabaseManager}, ktorá zapuzdruje celý životný cyklus spojenia -- od inicializácie až po odpojenie. Komponenta je postavená na SQLAlchemy ORM a~všetky jej operácie sú implementované asynchrónne, čo umožňuje paralelné spracovanie viacerých požiadaviek bez blokovania aplikácie.
 
-S postupujúcim vývojom aplikácie sme sa rozhodli databázu oddeliť do samostatného súboru \texttt{Docker Compose}. 
-Toto riešenie umožňuje databázu spúšťať a spravovať nezávisle od backendu a frontendu, zjednodušuje jej samostatné testovanie a poskytuje väčšiu kontrolu nad konfiguráciou databázového prostredia, napríklad pri zmene verzie databázy. 
-Oddelenie databázy zároveň vytvára priestor pre ďalšie úpravy a plánované rozšírenia aplikácie o podporu rôznych typov databáz.
+Pre efektívne využívanie zdrojov je použitý \textbf{connection pool} -- sada trvalých pripojení udržiavaných na pozadí. Pool zabezpečuje automatické obnovenie zlyhajúcich spojení a~obmedzuje počet súbežných pripojení k~databáze. Pred každým použitím spojenia sa overuje jeho platnosť, čím sa predchádza chybám pri výpadkoch siete.
 
-\subsection{Pripájanie na databázu}
+\subsubsection{Získavanie schémy}
 
-Po vytvorení a inicializácii databázového prostredia bolo ďalším krokom návrh a implementácia aplikačnej vrstvy, ktorá umožňuje backendu dynamicky sa pripájať k databáze.
+Po pripojení systém načíta štruktúru databázy priamo z~jej systémových metadát. Pre každú tabuľku získa zoznam stĺpcov vrátane ich názvov, dátových typov a~informácie o~tom, či stĺpec môže obsahovať prázdnu hodnotu. Takto získaná schéma slúži ako kontext pre LLM model -- model dostane úplný prehľad tabuliek a~stĺpcov, aby mohol generovať syntakticky a~sémanticky správne dotazy.
 
-Databázový konektor bol navrhnutý ako samostatná logická súčasť backendu, ktorá sprostredkúva komunikáciu medzi aplikáciou a databázou PostgreSQL. 
-Cieľom bolo umožniť flexibilné pripojenie k rôznym databázovým inštanciám bez nutnosti meniť kód aplikácie.
-Hlavné vlastnosti konektora:
+\subsubsection{Vykonávanie dotazov}
 
-\begin{itemize}
-    \item bol implementovaný ako modul vo FastAPI,
-    \item využíva štandardné PostgreSQL knižnice na nadväzovanie spojenia,
-    \item podporuje dynamické vytváranie pripojenia na základe vstupov používateľa,
-    \item uchováva informáciu o aktívnom pripojení počas behu aplikácie.
-\end{itemize}
+Dotazy sa vykonávajú výhradne v~read-only režime. Bezpečnosť je zaistená na troch úrovniach, ktoré sú popísané v~nasledujúcej podsekcii. Výsledky dotazu sú vrátené ako štruktúrovaný zoznam záznamov, kde každý záznam obsahuje hodnoty stĺpcov pod ich názvami.
 
-\subsubsection{API endpointy pre správu pripojenia}
+\subsection{READ-ONLY prístup a~bezpečnosť}
 
-Na ovládanie databázového spojenia sme vytvorili dva samostatné API endpointy:
+Jeden z~najdôležitejších aspektov databázovej vrstvy je garantovaný read-only prístup. Ochrana je implementovaná na troch nezávislých úrovniach:
 
 \begin{enumerate}
-    \item Endpoint na pripojenie k databáze
-    \begin{itemize}
-        \item umožňuje používateľovi nadviazať spojenie s databázou,
-        \item prijíma prihlasovacie údaje v tele požiadavky,
-        \item po úspešnom pripojení vracia potvrdenie o nadviazaní spojenia.
-    \end{itemize}
-    \item Endpoint na odpojenie od databázy
-    \begin{itemize}
-        \item slúži na bezpečné ukončenie aktívneho pripojenia,
-        \item používateľ ho aktivuje jednoduchým kliknutím (alebo volaním endpointu),
-        \item zabezpečuje uvoľnenie zdrojov na strane backendu.\newline
-    \end{itemize}
+    \item \textbf{Úroveň jazykového modelu} -- systémový prompt pre SQL generátor výslovne zakazuje generovanie akýchkoľvek modifikačných príkazov a~povoľuje výlučne príkazy SELECT,
+    \item \textbf{Úroveň regulárnych výrazov} -- pred vykonaním sa každý dotaz skontroluje na prítomnosť nebezpečných kľúčových slov (INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, TRUNCATE, GRANT, REVOKE); detekcia je nezávislá od veľkosti písmen a~pri nájdení zakázaného slova sa dotaz odmietne,
+    \item \textbf{Úroveň databázovej transakcie} -- pre podporované databázové systémy sa read-only mód nastaví priamo na úrovni databázovej transakcie pomocou databázo-špecifického príkazu.
 \end{enumerate}
+
+Tento trojúrovňový prístup zabezpečuje, že ani pri kompromitácii jednej vrstvy nedôjde k~nežiaducim zmenám v~databáze.
+
+\subsection{Parametrizácia pripojenia}
+
+Aplikácia umožňuje dynamické pripojenie na ľubovoľnú databázu bez zmeny kódu. Používateľ zadáva nasledujúce parametre:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Popis} \\
+\midrule
+Typ databázy & Dialekt (PostgreSQL, MySQL, SQL Server, Oracle) \\
+Host & Hostname alebo IP adresa servera \\
+Port & Port, na ktorom databázový server počúva \\
+Používateľské meno & Prihlasovacie meno \\
+Heslo & Prístupové heslo \\
+Názov databázy & Meno databázy alebo service name (Oracle) \\
+\bottomrule
+\end{tabular}
+\caption{Parametre pre pripojenie k~databáze}
+\end{table}
+
+Backend tieto parametre skombinuje do connection stringu kompatibilného s~príslušným dialektom, inicializuje databázové pripojenie a~zároveň vytvorí novú reláciu v~MongoDB pre históriu chatu. Pri odpojení sa uzavrie databázové spojenie aj MongoDB session.
+
+\subsection{API endpointy pre správu pripojenia}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Endpoint} & \textbf{Metóda} & \textbf{Popis} \\
+\midrule
+\texttt{/api/connect-database} & POST & Pripojenie k~databáze, vytvorenie MongoDB session \\
+\texttt{/api/disconnect-database} & POST & Odpojenie, uzavretie session, vyčistenie cache \\
+\texttt{/api/schema} & GET & Vrátenie aktuálnej schémy databázy \\
+\bottomrule
+\end{tabular}
+\caption{Endpointy pre správu databázového pripojenia}
+\end{table}
+
+\subsection{Testovacie databázy a~Docker Compose}
+
+Pre vývoj a~testovanie aplikácie je pripravených niekoľko samostatných Docker Compose konfigurácií, každá so svojím datasetom:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Konfigurácia} & \textbf{Obsah} \\
+\midrule
+PostgreSQL -- e-commerce & Zákaznícke správanie v~e-commerce prostredí \\
+PostgreSQL -- bike store & Predajné dáta obchodu s~bicyklami \\
+MySQL -- e-commerce & E-commerce analýza v~MySQL dialekte \\
+Microsoft SQL Server & Testovacia databáza pre enterprise prostredie \\
+Oracle Database & Testovacia databáza pre korporátne prostredie \\
+\bottomrule
+\end{tabular}
+\caption{Testovacie databázy pre vývoj}
+\end{table}
+
+Každá konfigurácia obsahuje health check pre monitorovanie dostupnosti, automatickú inicializáciu dát zo SQL skriptov a~CSV súborov a~persistentné volumes pre ukladanie dát medzi reštartmi kontajnera.
+
+\subsection{MongoDB -- história chatových relácií}
+
+Pre perzistentnú históriu konverzácií systém využíva MongoDB. Každá databázová session má vlastný dokument obsahujúci metadáta o~pripojení (typ databázy, host, názov databázy, čas pripojenia a~odpojenia) a~pole správ konverzácie. Každá správa uchováva rolu (používateľ alebo asistent), textový obsah, prípadný SQL dotaz, počet vrátených riadkov a~časovú pečiatku.
+
+\begin{lstlisting}[language=Python, caption={štruktúra MongoDB session}]
+{
+  "session_id": "uuid",
+  "user_id": "...",
+  "db_type": "postgresql",
+  "db_host": "...",
+  "db_name": "...",
+  "connected_at": "datetime",
+  "disconnected_at": None,
+  "messages": [
+    {
+      "role": "user" | "assistant",
+      "content": "...",
+      "sql_query": "...",
+      "row_count": 42,
+      "success": True,
+      "timestamp": "datetime"
+    }
+  ]
+}
+\end{lstlisting}
+
+Pre rýchly prístup sú vytvorené indexy na identifikátor session a~na kombináciu identifikátora používateľa s~časom pripojenia, čo umožňuje efektívne načítanie zoznamu relácií zoradených od najnovšej.
+
+História relácií sa využíva v~dvoch smeroch: frontend ju zobrazuje používateľovi v~sidebare, a~backend z~nej extrahuje kontext pre LLM model pri generovaní SQL dotazov.
+
+\subsubsection{Kontext pre SQL generátor}
+
+Pri každom dopyte systém načíta históriu aktuálnej relácie a~pripraví z~nej kontext pozostávajúci z troch zložiek: 
+
+ \begin{itemize}
+     \item textová reprezentácia posledných správ konverzácie
+     \item posledný vygenerovaný SQL dotaz
+     \item osledná otázka používateľa
+ \end{itemize} 
+
+Tento kontext je odovzdaný SQL generátoru, ktorý ho zahrnie do promptu. Vďaka tomu model rozumie nadväzujúcim otázkam -- napríklad ak používateľ najprv spýta „ukáž posledné objednávky" a~následne „teraz len top 10", model vie o~predchádzajúcom dotaze a~sformuluje správny SQL.
+
+\subsection{Redis -- cachovanie}
+
+Pre zrýchlenie opakovaných operácií systém využíva Redis ako in-memory cache. Implementované sú štyri úrovne cachovania:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lp{5.5cm}p{4cm}}
+\toprule
+\textbf{Cache} & \textbf{Obsah} & \textbf{Kľúč} \\
+\midrule
+Schéma & Štruktúra databázy (tabuľky a~stĺpce) & prefix + odtlačok databázy \\
+NL2SQL & Vygenerovaný SQL pre danú otázku & prefix + odtlačok DB + hash signatúry otázky \\
+Výsledky SQL & Výsledky vykonaného dotazu & prefix + odtlačok DB + hash SQL \\
+Sumarizácia & Textová sumarizácia výsledkov & prefix + odtlačok DB + hash SQL + hash otázky \\
+\bottomrule
+\end{tabular}
+\caption{Úrovne Redis cache}
+\end{table}
+
+Každá cache vrstva funguje na princípe \textbf{cache-aside}: najprv sa pokúsi načítať dáta z~Redisu, pri cache miss vykoná skutočnú operáciu (volanie databázy alebo LLM) a~výsledok uloží do Redisu s~nastaveným TTL. Cache kľúče obsahujú krátky hash connection stringu databázy, čo zabezpečuje, že cache z~jednej databázy sa nikdy nepoužije pre inú.
+
+\subsubsection{Sémantická Q\&A cache}
+
+Nad štandardným cachovaním je implementovaná sémantická cache pre celé dvojice otázka-odpoveď. Pri každom úspešnom spracovaní otázky sa uloží vektorová reprezentácia (embedding) otázky spolu s~SQL dotazom, sumarizáciou a~počtom riadkov.
+
+Pri ďalšom dopyte systém porovná embedding novej otázky s~uloženými pomocou cosine similarity. Ak podobnosť prekročí nakonfigurovaný prah, vráti uloženú odpoveď okamžite -- bez volania LLM modelu ani databázy. Sémantická cache navyše overuje zhodu kľúčových slov a~číselných hodnôt v~otázke, aby zabránila falošným hitom pri otázkach s~rôznymi filtrami alebo hodnotami.
+
+\subsubsection{Cache metriky a~diagnostika}
+
+Systém sleduje počty cache hitov a~missov pre každú vrstvu v~Redise. Každá odpoveď z~API obsahuje HTTP hlavičky s~informáciami o~stave cache:
+
+\begin{itemize}
+    \item \texttt{X-Cache-Schema} -- HIT alebo MISS pre schému databázy,
+    \item \texttt{X-Cache-NL2SQL} -- HIT alebo MISS pre SQL generovanie,
+    \item \texttt{X-Cache-SQL-Results} -- HIT alebo MISS pre výsledky dotazu,
+    \item \texttt{X-Cache-Summary} -- HIT alebo MISS pre sumarizáciu,
+    \item \texttt{X-Cache-QA-Semantic} -- HIT alebo MISS pre sémantickú cache,
+    \item \texttt{X-Cache-Trace} -- zhrnutie všetkých cache stavov v~jednej hlavičke.
+\end{itemize}
+
+Tieto hlavičky umožňujú rýchlu diagnostiku výkonu systému priamo z~HTTP klienta alebo vývojárskych nástrojov prehliadača.
+
 \clearpage
-\noindent
-Pri vytváraní spojenia používateľ zadáva nasledujúce parametre:
 
-\begin{itemize}
-    \item Host – adresa databázového servera,
-    \item User – meno databázového používateľa,
-    \item Password – prístupové heslo k databáze,
-    \item Database name – meno cieľovej databázy,
-    \item Port – port, na ktorom databáza počúva.
-\end{itemize}
-
-\noindent
-Tieto údaje sú zasielané backendu, ktorý ich následne spracuje.
-Na základe zadaných údajov aplikácia automaticky vytvorí tzv. connection string.
-Tento reťazec sa následne použije na inicializáciu spojenia s databázou prostredníctvom databázovej knižnice.
-
-\subsubsection*{Podporované typy pripojenia}
-
-Aplikácia umožňuje pripojenie na dva typy databázových prostredí:
-\begin{itemize}
-    \item Lokálnu databázu
-    \begin{itemize}
-        \item bežiacu priamo na počítači vývojára alebo serveri,
-        \item vhodnú najmä na vývoj a testovanie.
-    \end{itemize}
-    \item Databázu spustenú v Docker kontajneri
-    \begin{itemize}
-        \item bežiacu na pozadí ako samostatná služba,
-        \item prístupnú cez názov kontajnera alebo localhost,
-        \item využívanú najmä pri integrácii s ostatnými službami v Docker Compose.
-    \end{itemize}
-\end{itemize}
-
-\subsubsection*{Odpojenie databázy}
-
-Proces odpojenia je riešený jednoducho:
-\begin{itemize}
-    \item používateľ aktivuje endpoint na odpojenie,
-    \item backend uzavrie aktívne spojenie,
-    \item systém uvoľní pridelené zdroje,
-    \item aplikácia prejde do stavu „nepripojená“.
-    \item Tento mechanizmus zabraňuje zbytočnému držaniu otvorených spojení.
-\end{itemize}
-
-\noindent
-Po úspešnom pripojení k databáze aplikácia umožňuje:
-\begin{itemize}
-    \item načítať zoznam dostupných tabuliek,
-    \item zobraziť stĺpce vybranej tabuľky,
-    \item vypísať názvy stĺpcov spolu s ich dátovými typmi.
-\end{itemize}
-
-\clearpage
 \section{Frontendová časť aplikácie}
 
 \subsubsection{Štruktúra projektu}
@@ -707,6 +801,12 @@ Pri vypracovaní projektu sme využili nasledujúce AI nástroje ako podporné p
     
     \item Redis Documentation. (2025). \textit{Redis Documentation}. \\
     \url{https://redis.io/documentation}
+
+    \item Oracle Database Documentation. (2026). \textit{Oracle Database Documentation}.
+    \url{https://docs.oracle.com/en/database/}
+
+    \item Microsoft SQL server Documentation. (2026). \textit{SQL Server technical documentation}.
+    \url{https://learn.microsoft.com/en-us/sql/sql-server/?view=sql-server-ver17}
 
     \item Medium (2023). \textit{Building Fast and Robust APIs with FastAPI and SQL Databases}. \\
     \url{https://medium.com/towards-data-engineering/fastapi-with-sql-1c7852ccbf21}
