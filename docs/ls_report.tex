@@ -564,17 +564,42 @@ Pre rýchly prístup sú vytvorené indexy na identifikátor session a~na kombin
 
 História relácií sa využíva v~dvoch smeroch: frontend ju zobrazuje používateľovi v~sidebare, a~backend z~nej extrahuje kontext pre LLM model pri generovaní SQL dotazov.
 
+\subsection{Zachovanie kontextu medzi otázkami}
+
+Počas vývoja backendu sme riešili problém zachovania kontextu medzi používateľom a~LLM modelom. Model pôvodne spracovával každú otázku samostatne, čo spôsobovalo problémy pri nadväzujúcich otázkach. Preto bola do aplikácie doplnená funkcionalita pre prácu s~históriou konverzácie, vďaka ktorej model dokáže prirodzene nadväzovať na predchádzajúcu komunikáciu v~rámci jednej používateľskej relácie.
+
+Pri vytvorení databázového pripojenia backend automaticky vytvorí novú session, ku ktorej sa počas celej komunikácie ukladajú otázky používateľa, odpovede asistenta a~vygenerované SQL dotazy. Takto vzniká história konverzácie, s~ktorou backend pracuje pri spracovaní ďalších požiadaviek.
+
 \subsubsection{Kontext pre SQL generátor}
 
-Pri každom dopyte systém načíta históriu aktuálnej relácie a~pripraví z~nej kontext pozostávajúci z troch zložiek: 
+Pri prijatí novej otázky backend načíta aktuálnu session a~z~histórie správ pripraví kontext pre LLM model. Do kontextu sa posielajú iba najrelevantnejšie informácie -- nie celá história, pretože pri dlhších konverzáciách by zbytočne narastal počet tokenov a~znižovala sa efektivita spracovania:
 
- \begin{itemize}
-     \item textová reprezentácia posledných správ konverzácie
-     \item posledný vygenerovaný SQL dotaz
-     \item osledná otázka používateľa
- \end{itemize} 
+\begin{itemize}
+    \item niekoľko posledných správ z~konverzácie,
+    \item predchádzajúca otázka používateľa,
+    \item posledný vygenerovaný SQL dotaz.
+\end{itemize}
 
-Tento kontext je odovzdaný SQL generátoru, ktorý ho zahrnie do promptu. Vďaka tomu model rozumie nadväzujúcim otázkam -- napríklad ak používateľ najprv spýta „ukáž posledné objednávky" a~následne „teraz len top 10", model vie o~predchádzajúcom dotaze a~sformuluje správny SQL.
+Tento kontext je odovzdaný SQL generátoru, ktorý ho zahrnie do promptu. Vďaka tomu model rozumie nadväzujúcim otázkam -- napríklad:
+
+\begin{quote}
+Ukáž posledné objednávky \\
+teraz len top 10
+\end{quote}
+
+Model vďaka predchádzajúcemu kontextu chápe, že druhá otázka odkazuje na predchádzajúci SQL dotaz a~má ho upraviť aplikovaním dodatočného obmedzenia. Bez zachovania kontextu by model druhú otázku nedokázal správne interpretovať, pretože sama o~sebe neobsahuje dostatok informácií na vytvorenie relevantného SQL dotazu.
+
+Prácu s~históriou komunikácie možno rozdeliť na dve časti:
+
+\begin{enumerate}
+    \item \textbf{Začiatok požiadavky} -- backend načíta aktuálnu session, získa históriu správ a~pripraví kontext pre LLM model.
+    \item \textbf{Koniec požiadavky} -- po úspešnom spracovaní sa do histórie uloží nová správa používateľa, vygenerovaný SQL dotaz a~výsledná odpoveď asistenta.
+\end{enumerate}
+
+História konverzácie sa priebežne aktualizuje po každej požiadavke, čím má model pri ďalších otázkach k~dispozícii informácie o~predchádzajúcej komunikácii. Takýto prístup umožňuje prirodzenejšiu komunikáciu medzi používateľom a systémom a~zároveň znižuje potrebu opakovania rovnakých informácií pri pokračujúcich otázkach.
+
+Frontend zároveň uchováva identifikátor aktuálnej session pomocou \texttt{localStorage}, vďaka čomu zostáva referencia na konverzáciu zachovaná aj po obnovení stránky. Predchádzajúce relácie sa zobrazujú v~bočnom paneli aplikácie, čo umožňuje pokračovať v~komunikácii bez straty histórie konverzácie.
+
 
 \subsection{Redis -- cachovanie}
 
