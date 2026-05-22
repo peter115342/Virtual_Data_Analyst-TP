@@ -150,7 +150,7 @@ Komponent využíva model \texttt{GPT-4.1} pre generovanie SQL dotazov. Systémo
     \item Generovať \textbf{len SELECT} dotazy (read-only prístup)
     \item Nikdy nepoužívať INSERT, UPDATE, DELETE, DROP, CREATE a~iné modifikačné príkazy
     \item Vrátiť len čistý SQL dotaz bez vysvetlení
-    \item Používať správnu PostgreSQL syntax
+    \item Používať správnu syntax podľa typu databázy
 \end{itemize}
 
 \subsubsection{Response Summarizer}
@@ -210,11 +210,17 @@ Systém je navrhnutý ako \textbf{trojvrstvová architektúra} s~jasne oddelený
 \toprule
 \textbf{Komponent} & \textbf{Popis} \\
 \midrule
-\texttt{DatabaseManager} & Správa pripojenia k~PostgreSQL, vynucovanie READ-ONLY módu, získavanie schémy \\
-\texttt{QueryGenerator} & LLM-based generovanie SQL dotazov pomocou GPT-4.1 \\
-\texttt{ResponseSummarizer} & LLM-based sumarizácia výsledkov pomocou Gemini 2.5 Flash \\
-\texttt{Router} & (TODO) Rozhodovanie medzi Data Tools a~Database queries \\
-\texttt{RedisClient} & (TODO) Caching pre optimalizáciu opakovaných dotazov \\
+\texttt{DatabaseManager} & Správa pripojenia k~PostgreSQL, MySQL, Oracle, SQL Server; vynucovanie READ-ONLY módu; získavanie schémy \\
+\texttt{QueryGenerator} & LLM-based generovanie SQL dotazov pomocou Azure GPT-4.1 \\
+\texttt{ResponseSummarizer} & LLM-based sumarizácia výsledkov pomocou Google Gemini 2.5 Flash \\
+\texttt{RedisClient} & Multi-layer caching schémy, SQL queries, výsledkov a~sumarizácií pre optimalizáciu \\
+\texttt{SemanticQACache} & Semantic caching s~vektorovými embedingami a~kosínusovou podobnosťou \\
+\texttt{EntraIDAuth} & Validácia JWT tokenov z~Azure Entra ID a~bezpečnostný middleware \\
+\texttt{ChatHistory} & Správa chat histórie v~MongoDB s~indexovaním a~session manažmentom \\
+\texttt{MongoClient} & Asynchrónne pripojenie a~správa MongoDB databázy \\
+\texttt{ChartIntentDetector} & Detekcia požiadavky na grafickú vizualizáciu a~extrakcia parametrov grafu \\
+\texttt{ChartRenderer} & Vygenerovanie PNG grafu na základe SQL výsledkov pomocou Matplotlib \\
+\texttt{Router} & (TODO) LLM-based rozhodovanie medzi Data Tools a~Database queries \\
 \bottomrule
 \end{tabular}
 \caption{Backend komponenty a~ich zodpovednosti}
@@ -234,6 +240,13 @@ Systém je navrhnutý ako \textbf{trojvrstvová architektúra} s~jasne oddelený
 \texttt{/api/connect-database} & POST & Pripojenie k~databáze \\
 \texttt{/api/disconnect-database} & POST & Odpojenie databázy \\
 \texttt{/api/schema} & GET & Získanie schémy databázy \\
+\texttt{/api/ask-chart} & POST & Vygenerovanie grafu na základe otázky \\
+\texttt{/api/new-chat} & POST & Vytvorenie novej chat session \\
+\texttt{/api/cache-stats} & GET & Štatistiky Redis cache \\
+\texttt{/api/history/\{session\_id\}} & GET & Získanie histórie chat session \\
+\texttt{/api/sessions} & GET & Zoznam sessions používateľa \\
+\texttt{/api/mongo/sessions} & GET & Zoznam sessions z~MongoDB \\
+\texttt{/api/database/status} & GET & Stav pripojenia k~databáze \\
 \bottomrule
 \end{tabular}
 \caption{REST API endpoints}
@@ -426,8 +439,8 @@ Databázová vrstva predstavuje jednu zo základných súčastí aplikácie. Zab
 Aplikácia podporuje pripojenie k~nasledujúcim relačným databázovým systémom:
 
 \begin{itemize}
-    \item \textbf{PostgreSQL} -- primárne testovaná a~podporovaná databáza,
-    \item \textbf{MySQL} -- podpora cez pymysql konektor,
+    \item \textbf{PostgreSQL} -- podpora cez psycopg2 driver,
+    \item \textbf{MySQL} -- podpora cez pymysql driver,
     \item \textbf{Microsoft SQL Server} -- podpora cez pyodbc a~odbc driver,
     \item \textbf{Oracle Database} -- podpora cez python-oracledb.
 \end{itemize}
