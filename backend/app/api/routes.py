@@ -268,6 +268,10 @@ async def _generate_and_execute_with_retry(
     Vráti: (sql_query, data, row_count, nl2sql_hit)
     Hodí ValueError ak všetky pokusy zlyhajú.
     """
+    previous_sql: str | None = None
+    sql_error: str | None = None
+    sql_query: str = ""
+
     # Skús cache pred retry logikou
     signature = _question_signature(question) or _normalize_question_text(question)
     cache_key = _nl2sql_cache_key(db_fp, signature, history_context)
@@ -279,15 +283,12 @@ async def _generate_and_execute_with_retry(
             try:
                 data = await db.execute_query(cached_sql)
                 return cached_sql, data, len(data), True
-            except Exception:
-                # Cache hit ale SQL zlyhal — pokračuj cez retry
+            except Exception as cache_exec_err:
+                previous_sql = cached_sql
+                sql_error = str(cache_exec_err)
                 pass
 
     await _record_cache_metric("nl2sql", "miss")
-
-    previous_sql: str | None = None
-    sql_error: str | None = None
-    sql_query: str = ""
 
     for attempt in range(1, SQL_MAX_RETRIES + 1):
         try:
