@@ -45,16 +45,63 @@
     morestring=[b]"
 }
 
-\title{Tímový projekt \\ Virtual Data Analyst \\ Inteligentný systém pre analýzu dát pomocou prirodzeného jazyka}
-\author{Peter Muzslay, Janka Tarčákova, Jana Kampová, Jozef Guláš, Tamara Uhrinová}
-\date{Akademický rok 2025/2026}
-
 \begin{document}
 
-\maketitle
+\pagenumbering{Roman}
+
+\begin{titlepage}
+\centering
+
+{\Large\textbf{SLOVENSKÁ TECHNICKÁ UNIVERZITA V~BRATISLAVE}\par}
+\vspace{0.4cm}
+{\large\textbf{FAKULTA ELEKTROTECHNIKY A~INFORMATIKY}\par}
+
+\vfill
+
+{\LARGE\textbf{Tímový projekt}\par}
+\vspace{1.2cm}
+{\Huge\textbf{Virtual Data Analyst}\par}
+\vspace{0.8cm}
+{\Large Inteligentný systém pre analýzu dát pomocou prirodzeného jazyka\par}
+
+\vfill
+
+\begin{flushleft}
+\begin{tabular}{ll}
+\textbf{Autori:} & Peter Muzslay \\
+                 & Janka Tarčáková \\
+                 & Jozef Guláš \\
+                 & Jana Kampová \\
+                 & Tamara Uhrinová \\
+\textbf{Vedúci projektu:} & Adam Kňaze \\
+\textbf{Externý zadávateľ:} & PwC \\
+\textbf{Akademický rok:} & 2025/2026 \\
+\end{tabular}
+\end{flushleft}
+
+\vfill
+
+{\large Bratislava, 2026\par}
+
+\end{titlepage}
+\setcounter{page}{2}
+
+\clearpage
+\section*{Zadanie tímového projektu}
+\addcontentsline{toc}{section}{Zadanie tímového projektu}
+
+\subsection*{Opis zadania}
+
+Cieľom tímového projektu je návrh a~implementácia aplikácie \textbf{Virtual Data Analyst}, ktorá využíva generatívnu umelú inteligenciu na sprístupnenie dátovej analýzy netechnickým používateľom. Aplikácia poskytuje jednoduché webové používateľské rozhranie, v~ktorom používateľ kladie otázky týkajúce sa dát v~prirodzenom jazyku, napríklad otázky o~najziskovejšej oblasti služieb, počte záznamov s~chýbajúcimi hodnotami alebo výskyte anomálií v~transakčných dátach.
+
+Systém používa generatívnu umelú inteligenciu na porozumenie otázke, identifikáciu relevantných dátových zdrojov a~vytvorenie vyhľadávacieho alebo databázového dotazu, ktorým sa získajú potrebné údaje z~firemných databáz. Pri otázkach, ktoré nie sú vhodné ako čistý databázový dotaz, systém využíva preddefinované analytické moduly, napríklad na detekciu anomálií, kontrolu chýbajúcich hodnôt alebo iné formy dátového spracovania.
+
+Na základe získaných výsledkov aplikácia vytvorí zrozumiteľnú odpoveď pre používateľa a~zobrazí ju vo webovom rozhraní. V~prípade vhodného typu výstupu môže odpoveď doplniť aj vizualizáciou dát. Projekt je realizovaný ako externé zadanie pre spoločnosť PwC a~je zameraný na praktické využitie moderných GenAI nástrojov v~oblasti podnikovej dátovej analytiky.
+
 \clearpage
 \tableofcontents
 \clearpage
+\pagenumbering{arabic}
 
 \section{Úvod}
 
@@ -136,7 +183,7 @@ Pri návrhu systému sme zvolili nasledujúce technológie:
 Frontend & React + Vite & Moderný, reaktívny framework s~rýchlym vývojovým prostredím \\
 Backend & FastAPI (Python) & Asynchrónne API s~automatickou dokumentáciou \\
 Databáza & PostgreSQL & Robustná open-source relačná databáza \\
-LLM & GPT-4.1 / Gemini 2.5 & Najmodernejšie jazykové modely pre NLP úlohy \\
+LLM & GPT-4.1 / Gemini 2.5 & Jazykové modely pre NLP úlohy \\
 Cache & Redis & In-memory databáza pre rýchle ukladanie do vyrovnávacej pamäte \\
 Kontajnerizácia & Docker & Konzistentné prostredie pre vývoj a~nasadenie \\
 \bottomrule
@@ -231,11 +278,31 @@ Systém je navrhnutý ako \textbf{trojvrstvová architektúra} s~jasne oddelený
 \texttt{MongoClient} & Asynchrónne pripojenie a~správa MongoDB databázy \\
 \texttt{ChartIntentDetector} & Detekcia požiadavky na grafickú vizualizáciu a~extrakcia parametrov grafu \\
 \texttt{ChartRenderer} & Vygenerovanie PNG grafu na základe SQL výsledkov pomocou Matplotlib \\
-\texttt{Router} & (TODO) LLM-based rozhodovanie medzi Data Tools a~Database queries \\
+\texttt{Router} & LLM-based rozhodovanie medzi Data Tools a~Database queries \\
 \bottomrule
 \end{tabular}
 \caption{Backend komponenty a~ich zodpovednosti}
 \end{table}
+
+\subsubsection{Router: LLM alebo preddefinovaný modul}
+
+Backend spracováva otázky cez komponent \texttt{Router}, ktorý rozhoduje, či je vhodnejšia databázová cesta alebo analytický modul. Pri databázovej ceste sa otázka preloží na SQL dotaz, dotaz sa vykoná nad pripojenou databázou a~výsledok sa sumarizuje. Pri analytickej ceste router odovzdá požiadavku modulom \texttt{data\_tools}, ktoré riešia úlohy vhodnejšie pre deterministické Python spracovanie.
+
+Motiváciou routera je skutočnosť, že nie každá analytická otázka je ideálna ako SQL dotaz. SQL je vhodné pre filtrovanie, agregácie, zoraďovanie, spojenia tabuliek a~výpočty, ktoré sa dajú jasne vyjadriť nad relačnou schémou. Naopak otázky typu detekcia anomálií, hľadanie chýbajúcich hodnôt, porovnanie distribúcií, štatistické testy alebo pokročilejšia transformácia dát môžu byť bezpečnejšie a~presnejšie riešené preddefinovaným Python modulom. Takýto modul vie použiť knižnice pre dátovú analýzu, vykonať kontrolované výpočty a~vrátiť štruktúrovaný výsledok bez toho, aby sa LLM pokúšal všetko vyjadriť jedným SQL dotazom.
+
+Router prijíma otázku používateľa, schému databázy a~kontext aktuálnej relácie. Jeho výstupom je jednoduché štruktúrované rozhodnutie, napríklad \texttt{database} alebo \texttt{data\_tools}, spolu so stručným dôvodom rozhodnutia. Implementácia kombinuje LLM-based klasifikáciu zámeru podľa promptu a~schémy s~preddefinovanými pravidlami pre typické dátové úlohy. Najprv sa vyhodnotia bezpečné deterministické pravidlá a~LLM sa použije pri nejednoznačných prípadoch.
+
+Tok spracovania je nasledovný:
+
+\begin{enumerate}
+    \item Router dostane otázku, databázovú schému a~kontext relácie.
+    \item Vyhodnotí, či je vhodnejšia cesta \texttt{database} alebo \texttt{data\_tools}.
+    \item Pri výstupe \texttt{database} backend spustí existujúcu NL2SQL pipeline.
+    \item Pri výstupe \texttt{data\_tools} backend vyberie a~spustí vhodný Python analytický modul.
+    \item Výsledok sa zjednotí do odpovede používateľovi, aby frontend nemusel rozlišovať internú cestu spracovania.
+\end{enumerate}
+
+Router rozširuje systém z~čisto text-to-SQL nástroja na všeobecnejší analytický orchestrátor. Zároveň ponecháva kontrolu nad rizikovejšími alebo štatisticky citlivými operáciami v~preddefinovaných moduloch, čo zlepšuje reprodukovateľnosť a~znižuje riziko, že LLM zvolí nesprávny výpočtový postup.
 
 \subsubsection{API Endpoints}
 
@@ -726,35 +793,48 @@ Frontend zároveň uchováva identifikátor aktuálnej session pomocou \texttt{l
 
 \subsection{Redis - cachovanie}
 
-Pre zrýchlenie opakovaných operácií systém využíva Redis ako in-memory cache. Implementované sú štyri úrovne cachovania:
+Pre zrýchlenie opakovaných operácií systém využíva Redis ako in-memory cache. Redis sa pripája pri štarte aplikácie v~rámci životného cyklu FastAPI. Implementácia je navrhnutá ako \textit{best-effort} vrstva: ak Redis nie je dostupný, backend pokračuje bez cache a~vykoná štandardné volania databázy alebo LLM modelov. Všetky cache hodnoty sa ukladajú ako JSON a~čítajú sa cez spoločný modul \texttt{redis\_client.py}, ktorý zapuzdruje operácie \texttt{get}, \texttt{set}, \texttt{incr}, prácu so zoradenými množinami a~mazanie podľa vzoru.
+
+Cache kľúče sú odvodené od prefixu \texttt{vda} a~odtlačku aktuálneho databázového pripojenia. Odtlačok vzniká ako krátky hash connection stringu, takže údaje z~jednej databázy sa nemôžu omylom použiť pri práci s~inou databázou. Pri otázkach sa navyše používa normalizovaná signatúra otázky, pri SQL výsledkoch hash normalizovaného SQL dotazu a~pri sumarizácii aj hash pôvodnej otázky ako kontextu. Pri nadväzujúcich otázkach sa do kľúča pre NL2SQL pridáva aj hash kontextu konverzácie, aby sa rovnaká krátka otázka typu „teraz len top 10" nevyhodnotila bez predchádzajúceho významu.
+
+Implementovaných je viacero samostatných vrstiev cachovania:
 
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{lp{5.5cm}p{4cm}}
+\begin{tabular}{lp{4.2cm}p{4cm}p{2.2cm}}
 \toprule
-\textbf{Cache} & \textbf{Obsah} & \textbf{Kľúč} \\
+\textbf{Cache} & \textbf{Obsah} & \textbf{Kľúč} & \textbf{TTL} \\
 \midrule
-Schéma & Štruktúra databázy (tabuľky a~stĺpce) & prefix + odtlačok databázy \\
-NL2SQL & Vygenerovaný SQL pre danú otázku & prefix + odtlačok DB + hash signatúry otázky \\
-Výsledky SQL & Výsledky vykonaného dotazu & prefix + odtlačok DB + hash SQL \\
-Sumarizácia & Textová sumarizácia výsledkov & prefix + odtlačok DB + hash SQL + hash otázky \\
+Schéma & Štruktúra databázy (tabuľky a~stĺpce) & prefix + odtlačok databázy & 1 hodina \\
+NL2SQL & Vygenerovaný SQL pre danú otázku a~kontext & prefix + odtlačok DB + hash signatúry otázky + hash kontextu & 7 dní \\
+Výsledky SQL & Výsledky vykonaného dotazu & prefix + odtlačok DB + hash SQL & 15 minút \\
+Sumarizácia & Textová sumarizácia výsledkov & prefix + odtlačok DB + hash SQL + hash otázky & 15 minút \\
+História chatu & Posledné správy relácie pre rýchle načítanie histórie & prefix + identifikátor session & 1 deň \\
 \bottomrule
 \end{tabular}
 \caption{Úrovne Redis cache}
 \end{table}
 
-Každá cache vrstva funguje na princípe \textbf{cache-aside}: najprv sa pokúsi načítať dáta z~Redisu, pri cache miss vykoná skutočnú operáciu (volanie databázy alebo LLM) a~výsledok uloží do Redisu s~nastaveným TTL. Cache kľúče obsahujú krátky hash connection stringu databázy, čo zabezpečuje, že cache z~jednej databázy sa nikdy nepoužije pre inú.
+Každá cache vrstva funguje na princípe \textbf{cache-aside}: najprv sa pokúsi načítať dáta z~Redisu, pri cache miss vykoná skutočnú operáciu a~výsledok uloží späť do Redisu s~nastaveným TTL. Pri schéme to znamená volanie introspekcie databázy, pri NL2SQL volanie generátora dotazov, pri výsledkoch vykonanie SQL nad databázou a~pri sumarizácii volanie sumarizačného modelu. Výsledky SQL sa ukladajú iba vtedy, ak počet riadkov nepresiahne nakonfigurovaný limit \texttt{cache\_max\_rows}, ktorý je nastavený na 2000. Tým sa zabraňuje tomu, aby veľké odpovede zbytočne zapĺňali Redis.
+
+Cache sa používa aj pri požiadavkách na grafy. Ak si používateľ vyžiada vizualizáciu, backend najskôr zistí zámer grafu a~potom môže opätovne použiť cache schémy a~cache výsledkov SQL. Samotné dáta pre graf sú teda chránené rovnakým mechanizmom ako bežné výsledky dotazov, pričom hlavička odpovede obsahuje aj stav \texttt{X-Cache-Chart-Results}. Tento prístup znižuje duplicitu medzi textovou odpoveďou a~vizualizačnou vetvou spracovania.
+
+Pre históriu konverzácie existuje samostatná cache vrstva. Endpoint pre načítanie histórie relácie najprv hľadá záznam v~Redise a~až pri cache miss načítava dokument z~MongoDB. Po každej úspešnej odpovedi sa do cache doplní správa používateľa aj asistenta, pričom sa uchováva najviac posledných 50 správ. MongoDB tak zostáva trvalým zdrojom pravdy, ale opakované otváranie tej istej relácie je rýchlejšie a~menej zaťažuje databázu.
 
 \subsubsection{Sémantická Q\&A cache}
 
-Nad štandardným cachovaním je implementovaná sémantická cache pre celé dvojice otázka-odpoveď. Pri každom úspešnom spracovaní otázky sa uloží vektorová reprezentácia (embedding) otázky spolu s~SQL dotazom, sumarizáciou a~počtom riadkov.
+Nad štandardným cachovaním je implementovaná sémantická cache pre celé dvojice otázka-odpoveď. Pri každom úspešnom spracovaní otázky sa uloží vektorová reprezentácia (embedding) otázky spolu s~SQL dotazom, sumarizáciou a~počtom riadkov. Embedding sa vytvára modelom \texttt{azure.text-embedding-3-small}. Jednotlivé záznamy sa ukladajú ako samostatné Redis objekty a~ich identifikátory sú vedené v~zoradenej množine podľa času vytvorenia. Cache je obmedzená na 5000 položiek na databázový odtlačok a~pri prekročení limitu sa odstraňujú najstaršie záznamy.
 
-Pri ďalšom dopyte systém porovná embedding novej otázky s~uloženými pomocou cosine similarity. Ak podobnosť prekročí nakonfigurovaný prah, vráti uloženú odpoveď okamžite - bez volania LLM modelu ani databázy. Sémantická cache navyše overuje zhodu kľúčových slov a~číselných hodnôt v~otázke, aby zabránila falošným hitom pri otázkach s~rôznymi filtrami alebo hodnotami.
+Pri ďalšom dopyte systém porovná embedding novej otázky s~uloženými pomocou cosine similarity. Prehľadáva sa najviac 200 najnovších kandidátov a~ak podobnosť prekročí nakonfigurovaný prah 0,70, backend vráti uložený SQL dotaz, sumarizáciu a~počet riadkov okamžite - bez opätovného generovania SQL, bez sumarizácie a~bez spustenia pôvodného databázového dotazu. Sémantická cache navyše overuje zhodu kľúčových slov a~číselných hodnôt v~otázke. Kľúčové slová majú vlastný minimálny prah podobnosti a~pri výpočte finálneho skóre tvoria časť váhy, aby sa zabránilo falošným hitom pri podobne znejúcich otázkach s~iným filtrom alebo iným číslom.
+
+Sémantická cache sa nepoužíva vždy. Ak má otázka konverzačný kontext, napríklad predchádzajúcu otázku, predchádzajúci SQL dotaz alebo text histórie, backend ju cielene obíde a~do hlavičky nastaví stav \texttt{BYPASS}. Je to dôležité najmä pri nadväzujúcich otázkach, ktoré samy o~sebe nemajú úplný význam. V takom prípade je bezpečnejšie nechať SQL generátor pracovať s~aktuálnym kontextom, než použiť starú odpoveď na základe podobnosti samotného textu otázky.
 
 \subsubsection{Cache metriky a~diagnostika}
 
-Systém sleduje počty cache hitov a~missov pre každú vrstvu v~Redise. Každá odpoveď z~API obsahuje HTTP hlavičky s~informáciami o~stave cache:
+Systém sleduje počty cache hitov a~missov pre každú vrstvu v~Redise. Metriky sa ukladajú pod prefixom \texttt{vda:metrics} pre oblasti \texttt{schema}, \texttt{nl2sql}, \texttt{sql\_results}, \texttt{summary}, \texttt{qa\_semantic} a~\texttt{chat\_history}. Endpoint \texttt{/api/cache-stats} vracia pre každú oblasť počet hitov, missov, percentuálnu úspešnosť a~aj počty aktuálnych Redis kľúčov podľa typu cache. Ak Redis nie je pripojený, endpoint explicitne vracia stav \texttt{redis\_unavailable}.
+
+Každá odpoveď z~API obsahuje HTTP hlavičky s~informáciami o~stave cache:
 
 \begin{itemize}
     \item \texttt{X-Cache-Schema} - HIT alebo MISS pre schému databázy,
@@ -769,6 +849,35 @@ Tieto hlavičky umožňujú rýchlu diagnostiku výkonu systému priamo z~HTTP k
 
 \clearpage
 
+\section{CI/CD a~nasadenie}
+
+Projekt využíva priebežnú integráciu cez GitHub Actions. Workflow je definovaný v~súbore \texttt{.github/workflows/ci.yaml} a~spúšťa sa pri pushi do vetvy \texttt{main} aj pri pull requestoch. CI pipeline je rozdelená na dve nezávislé časti: backendové kontroly a~frontendový lint. Vďaka tomu je možné rýchlo identifikovať, či zmena porušila serverovú časť, klientsku časť alebo iba štýlové pravidlá kódu.
+
+\subsection{Backend CI}
+
+Backend job beží na prostredí \texttt{ubuntu-latest} s~Pythonom 3.12. Závislosti sa inštalujú pomocou nástroja \texttt{uv} príkazom \texttt{uv sync {-}{-}extra dev {-}{-}locked}, čím sa používa zamknutý súbor \texttt{uv.lock} a~zabezpečuje sa reprodukovateľné prostredie. Následne sa spúšťajú štyri hlavné kontroly:
+
+\begin{itemize}
+    \item \textbf{Ruff lint} - statická kontrola Python kódu podľa pravidiel v~\texttt{pyproject.toml}.
+    \item \textbf{ty type check} - statická kontrola typov pre balík \texttt{app}, testy a~vstupný súbor \texttt{main.py}.
+    \item \textbf{Bandit security lint} - bezpečnostná analýza Python kódu, ktorá hľadá rizikové konštrukcie.
+    \item \textbf{pytest} - spustenie automatizovaných testov v~adresári \texttt{backend/tests}.
+\end{itemize}
+
+Testy overujú hlavné API scenáre vrátane generovania SQL, spracovania otázky cez \texttt{/api/ask}, odpovedí s~históriou chatu, generovania grafu, pripojenia a~odpojenia databázy, načítania schémy a~práce s~MongoDB sessions. V~testoch sú Redis, MongoDB a~sémantická cache patchované tak, aby boli testy izolované od reálnej infraštruktúry a~dali sa spoľahlivo spúšťať v~CI prostredí.
+
+\subsection{Frontend CI}
+
+Frontend job používa Node.js 20 a~cache pre \texttt{npm} závislosti podľa frontendového lockfile súboru. Inštalácia prebieha cez \texttt{npm ci}, čo je vhodné pre CI prostredie, pretože rešpektuje lockfile a~neprepisuje verzie balíkov. Po inštalácii sa spúšťa \texttt{npm run lint}, teda ESLint kontrola nad súbormi \texttt{.js} a~\texttt{.jsx}. Konfigurácia lintu zakazuje warningy cez \texttt{{-}{-}max-warnings 0}, takže aj menej závažné porušenia štýlu musia byť vyriešené pred zlúčením zmeny.
+
+\subsection{CD na Azure VM}
+
+Kontinuálne nasadenie nadväzuje na rovnaké kontroly ako CI. Pred deployom sa najprv spustí linting, typová kontrola, bezpečnostná analýza a~testy. Až po ich úspešnom dokončení CD job zostaví alebo stiahne kontajnerové obrazy a~nasadí ich na Azure VM. Nasadenie tak nepreskakuje validačné kroky, ktoré chránia vetvu \texttt{main}.
+
+Produkčné nasadenie je kontajnerové cez \texttt{docker-compose.prod.yml}. Táto konfigurácia obsahuje frontendový kontajner dostupný na porte 80 a~backendový kontajner s~FastAPI aplikáciou na porte 8000, ktorý má vlastný health check cez endpoint \texttt{/health}. Backend načítava produkčné premenné prostredia zo súboru \texttt{.env.prod}, používa politiku \texttt{restart: unless-stopped} a~frontend čaká na zdravý stav backendu. CD pipeline na Azure VM vykonáva kroky ako prihlásenie na server cez SSH, aktualizácia zdrojového kódu alebo stiahnutie nových obrazov, spustenie \texttt{docker compose -f docker-compose.prod.yml up -d {-}{-}build} a~kontrola zdravotného stavu služieb po nasadení.
+
+Takýto model nasadenia je jednoduchší než plnohodnotná orchestrácia v~Kubernetes, ale pre tímový projekt poskytuje dostatočnú mieru automatizácie. Azure VM slúži ako stabilný hostiteľ kontajnerov, Docker Compose zabezpečuje spustenie viacerých služieb v~správnom poradí a~health checky umožňujú rýchlo zistiť, či nová verzia aplikácie po deployi korektne beží.
+
 
 \clearpage
 \section*{Použitie nástrojov umelej inteligencie}
@@ -780,6 +889,12 @@ Pri vypracovaní projektu sme využili nasledujúce AI nástroje ako podporné p
 \end{itemize}
 \begin{itemize}
     \item \textbf{Claude Sonnet 4.5 (Anthropic, 2025):} Využitý pri návrhu architektúry systému, code review a~optimalizácii kódu. Pomáhal s~formuláciou systémových promptov pre LLM komponenty.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Claude Opus 4.6 (Anthropic, 2026):} Využitý pri návrhu architektúry systému, code review a~optimalizácii kódu.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Claude Sonnet 4.6 (Anthropic, 2026):} Využitý pri návrhu architektúry systému, code review a~optimalizácii kódu. Pomáhal s~formuláciou systémových promptov pre LLM komponenty.
 \end{itemize}
 \begin{itemize}
     \item \textbf{GPT-4.1 (OpenAI/Azure, 2025):} Integrovaný priamo v~systéme ako Query Generator pre transformáciu prirodzeného jazyka na SQL dotazy.
@@ -842,6 +957,42 @@ Pri vypracovaní projektu sme využili nasledujúce AI nástroje ako podporné p
     
     \item React Hooks Documentation. (2025). \textit{React Hooks - State and Lifecycle in Functional Components}. \\
     \url{https://react.dev/reference/react/hooks}
+
+    \item GitHub Docs. (2026). \textit{About workflows in GitHub Actions}. \\
+    \url{https://docs.github.com/actions/using-workflows/about-workflows}
+
+    \item Docker Documentation. (2026). \textit{Docker Compose}. \\
+    \url{https://docs.docker.com/compose/}
+
+    \item Microsoft Learn. (2026). \textit{Quickstart: Create a Linux virtual machine in the Azure portal}. \\
+    \url{https://learn.microsoft.com/en-us/azure/virtual-machines/linux/quick-create-portal}
+
+    \item Microsoft Learn. (2026). \textit{Introduction to Azure Container Registry}. \\
+    \url{https://learn.microsoft.com/en-us/azure/container-registry/container-registry-intro}
+
+    \item Redis Documentation. (2026). \textit{Redis documentation}. \\
+    \url{https://redis.io/docs/latest/}
+
+    \item LangChain Documentation. (2026). \textit{Router}. \\
+    \url{https://docs.langchain.com/oss/python/langchain/multi-agent/router}
+
+    \item pytest Documentation. (2026). \textit{pytest documentation}. \\
+    \url{https://docs.pytest.org/en/stable/}
+
+    \item Astral. (2026). \textit{The Ruff Linter}. \\
+    \url{https://docs.astral.sh/ruff/linter/}
+
+    \item Astral. (2026). \textit{uv documentation}. \\
+    \url{https://docs.astral.sh/uv/}
+
+    \item Astral. (2026). \textit{ty type checking}. \\
+    \url{https://docs.astral.sh/ty/type-checking/}
+
+    \item Bandit Documentation. (2026). \textit{Bandit documentation}. \\
+    \url{https://bandit.readthedocs.io/en/latest/}
+
+    \item ESLint. (2026). \textit{Getting Started with ESLint}. \\
+    \url{https://eslint.org/docs/latest/use/getting-started}
     
     \item Brown, T., et al. (2020). \textit{Language Models are Few-Shot Learners}. \\
     \url{https://arxiv.org/abs/2005.14165}
