@@ -56,7 +56,13 @@ If a base SQL query is provided, preserve its table selection and filters.
 # def sql_user_prompt(question: str, schema_text: str) -> str:
 #     return f"{schema_text}\nQuestion: {question}"
 
-def sql_user_prompt(question: str, chat_history_context: dict, schema_text: str) -> str:
+def sql_user_prompt(
+        question: str,
+        chat_history_context: dict,
+        schema_text: str,
+        previous_sql: str | None = None,
+        sql_error: str | None = None,
+) -> str:
 
     sections = []
 
@@ -87,22 +93,37 @@ def sql_user_prompt(question: str, chat_history_context: dict, schema_text: str)
       no comments (except the limitation case above)
 """)
 
-    if chat_history_context["history_text"]:
+    if chat_history_context.get("history_text"):
         sections.append(f"""
     ### CONVERSATION HISTORY (CONTEXT ONLY)
     {chat_history_context["history_text"]}
 """)
 
-    if chat_history_context["previous_sql"]:
+    if chat_history_context.get("previous_sql"):
         sections.append(f"""
     ### PREVIOUS SQL (REFERENCE ONLY)
     {chat_history_context["previous_sql"]}
 """)
 
-    if chat_history_context["previous_question"]:
+    if chat_history_context.get("previous_question"):
         sections.append(f"""
     ### PREVIOUS QUESTION (REFERENCE ONLY)
     {chat_history_context["previous_question"]}
+""")
+
+    # Retry sekcia — pridá sa iba ak predchádzajúci SQL zlyhal
+    if previous_sql and sql_error:
+        sections.append(f"""
+    ### FAILED SQL ATTEMPT - FIX REQUIRED
+    The following SQL query was executed but produced a database error.
+    Carefully analyze the error message and generate a corrected query.
+    Do NOT repeat the same query.
+
+    Failed SQL:
+    {previous_sql}
+
+    Database error:
+    {sql_error}
 """)
 
     sections.append(f"""

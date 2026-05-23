@@ -22,7 +22,9 @@ class QueryGenerator:
     async def generate_query(self, question: str,
         schema: dict,
         dialect: str,
-        chat_history_context: dict) -> str:
+        chat_history_context: dict,
+        previous_sql: str | None = None,
+        sql_error: str | None = None,) -> str:
 
         schema_text = format_schema(schema)
 
@@ -30,8 +32,16 @@ class QueryGenerator:
             model=self.model,
             messages=[
                 {"role": "system", "content": get_system_prompt(dialect)},
-                {"role": "user", "content": sql_user_prompt(question, chat_history_context,
-                                                            schema_text)},
+                {
+                    "role": "user",
+                    "content": sql_user_prompt(
+                        question,
+                        chat_history_context,
+                        schema_text,
+                        previous_sql=previous_sql,
+                        sql_error=sql_error,
+                    )
+                },
             ],
             temperature=0.0,
         )

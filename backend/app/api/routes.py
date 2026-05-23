@@ -77,6 +77,7 @@ QUESTION_STOPWORDS = {
     "za",
 }
 
+SQL_MAX_RETRIES = 3
 
 def _short_hash(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]
@@ -251,6 +252,93 @@ async def _get_cached_sql_query(
         ttl_seconds=settings.cache_nl2sql_ttl_seconds,
     )
     return sql_query, False, signature
+
+
+async def _generate_and_execute_with_retry(
+    question: str,
+    schema: dict,
+    generator: QueryGenerator,
+    db: connection.DatabaseManager,
+    db_fp: str,
+    dialect: str,
+    history_context: dict,
+) -> tuple[str, list[dict], int, bool]:
+    """
+    Generuje SQL a vykoná ho. Ak zlyhá, pošle chybu späť LLM a skúsi znova.
+    Vráti: (sql_query, data, row_count, nl2sql_hit)
+    Hodí ValueError ak všetky pokusy zlyhajú.
+    """
+    previous_sql: str | None = None
+    sql_error: str | None = None
+    sql_query: str = ""
+
+    # Skús cache pred retry logikou
+    signature = _question_signature(question) or _normalize_question_text(question)
+    cache_key = _nl2sql_cache_key(db_fp, signature, history_context)
+    cached_payload = await redis_client.get_json(cache_key)
+    if isinstance(cached_payload, dict):
+        cached_sql = cached_payload.get("sql_query")
+        if isinstance(cached_sql, str) and cached_sql.strip():
+            await _record_cache_metric("nl2sql", "hit")
+            try:
+                data = await db.execute_query(cached_sql)
+                return cached_sql, data, len(data), True
+            except Exception as cache_exec_err:
+                previous_sql = cached_sql
+                sql_error = str(cache_exec_err)
+                pass
+
+    await _record_cache_metric("nl2sql", "miss")
+
+    for attempt in range(1, SQL_MAX_RETRIES + 1):
+        try:
+            sql_query = await generator.generate_query(
+                question=question,
+                schema=schema,
+                dialect=dialect,
+                chat_history_context=history_context,
+                previous_sql=previous_sql,
+                sql_error=sql_error,
+            )
+            # log vypis
+            # print(f"[RETRY] Attempt {attempt} — SQL: {sql_query}")
+
+            data = await db.execute_query(sql_query)
+            # log vypis
+            # print(f"[RETRY] Attempt {attempt} — SUCCESS, rows: {len(data)}")
+
+            # Úspech — ulož do cache
+            await redis_client.set_json(
+                cache_key,
+                {
+                    "sql_query": sql_query,
+                    "question_signature": signature,
+                    "chat_context_signature": _chat_context_signature(history_context),
+                    "source_question": question,
+                },
+                ttl_seconds=settings.cache_nl2sql_ttl_seconds,
+            )
+
+            return sql_query, data, len(data), False
+
+        except Exception as e:
+            # log vypis
+            # print(f"[RETRY] Attempt {attempt} — FAILED: {e}")
+            previous_sql = sql_query if sql_query else None
+            sql_error = str(e)
+
+            if attempt == SQL_MAX_RETRIES:
+                raise ValueError(
+                    f"Failed to generate a valid SQL query after {SQL_MAX_RETRIES} attempts. "
+                    f"Last error: {sql_error}"
+                )
+
+            print(f"SQL attempt {attempt}/{SQL_MAX_RETRIES} failed: {sql_error}. Retrying...")
+
+    raise ValueError(
+        f"Failed to generate a valid SQL query after {SQL_MAX_RETRIES} attempts. "
+        f"Last error: {sql_error}"
+    )
 
 
 async def _get_cached_query_results(
@@ -862,17 +950,32 @@ async def ask(
         schema, schema_hit = await _get_cached_schema(db, db_fp)
         dialect = await db.get_db_dialect()
 
-        sql_query, nl2sql_hit, question_signature = await _get_cached_sql_query(
-            request.question,
-            schema,
-            generator,
-            db_fp,
-            dialect,
+        # sql_query, nl2sql_hit, question_signature = await _get_cached_sql_query(
+        #     request.question,
+        #     schema,
+        #     generator,
+        #     db_fp,
+        #     dialect,
+        #     history_context=history_context,
+        # )
+        #
+        # data, sql_results_hit = await _get_cached_query_results(db, sql_query, db_fp)
+        # row_count = len(data)
+
+        sql_query, data, row_count, nl2sql_hit = await _generate_and_execute_with_retry(
+            question=request.question,
+            schema=schema,
+            generator=generator,
+            db=db,
+            db_fp=db_fp,
+            dialect=dialect,
             history_context=history_context,
         )
-
-        data, sql_results_hit = await _get_cached_query_results(db, sql_query, db_fp)
-        row_count = len(data)
+        question_signature = (
+                _question_signature(request.question)
+                or _normalize_question_text(request.question)
+        )
+        sql_results_hit = False  # retry vždy vykoná dotaz priamo
 
         summary, summary_hit = await _get_cached_summary(
             summarizer=summarizer,

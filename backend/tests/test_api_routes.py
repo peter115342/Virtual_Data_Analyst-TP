@@ -117,7 +117,10 @@ async def test_generate_sql_success(client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_ask_success_with_history(client, monkeypatch):
-    async def fake_generate_query(_self, question, schema, dialect, chat_history_context):
+    async def fake_generate_query(
+            _self, question, schema, dialect, chat_history_context,
+            previous_sql=None, sql_error=None, **kwargs
+    ):
         assert question == "question"
         assert schema
         assert dialect == "postgresql"
@@ -159,7 +162,10 @@ async def test_ask_success_with_history(client, monkeypatch):
 async def test_ask_returns_chart_image_when_chart_requested(client, monkeypatch):
     chart_rows = [{"category": "A", "total": 2}, {"category": "B", "total": 3}]
 
-    async def fake_generate_query(_self, question, schema, dialect, chat_history_context):
+    async def fake_generate_query(
+            _self, question, schema, dialect, chat_history_context,
+            previous_sql=None, sql_error=None, **kwargs
+    ):
         assert question == "plot sales by category"
         assert schema
         assert dialect == "postgresql"
@@ -235,7 +241,10 @@ async def test_ask_uses_chat_history_context_and_bypasses_semantic_cache(client,
     async def fail_semantic_store(*_args, **_kwargs):
         pytest.fail("context-dependent follow-up answers should not be stored semantically")
 
-    async def fake_generate_query(_self, question, schema, dialect, chat_history_context):
+    async def fake_generate_query(
+            _self, question, schema, dialect, chat_history_context,
+            previous_sql=None, sql_error=None, **kwargs
+    ):
         assert question == "no, just top 10"
         assert schema
         assert dialect == "postgresql"
