@@ -118,10 +118,10 @@ def sql_user_prompt(
     The following SQL query was executed but produced a database error.
     Carefully analyze the error message and generate a corrected query.
     Do NOT repeat the same query.
-    
+
     Failed SQL:
     {previous_sql}
-    
+   
     Database error:
     {sql_error}
 """)

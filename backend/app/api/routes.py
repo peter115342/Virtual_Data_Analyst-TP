@@ -965,7 +965,10 @@ async def ask(
             dialect=dialect,
             history_context=history_context,
         )
-        question_signature = _question_signature(request.question) or _normalize_question_text(request.question)
+        question_signature = (
+                _question_signature(request.question)
+                or _normalize_question_text(request.question)
+        )
         sql_results_hit = False  # retry vždy vykoná dotaz priamo
 
         summary, summary_hit = await _get_cached_summary(
