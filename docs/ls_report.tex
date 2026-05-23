@@ -851,7 +851,7 @@ Tieto hlavičky umožňujú rýchlu diagnostiku výkonu systému priamo z~HTTP k
 
 \section{CI/CD a~nasadenie}
 
-Projekt využíva priebežnú integráciu cez GitHub Actions. Workflow je definovaný v~súbore \texttt{.github/workflows/ci.yaml} a~spúšťa sa pri pushi do vetvy \texttt{main} aj pri pull requestoch. CI pipeline je rozdelená na dve nezávislé časti: backendové kontroly a~frontendový lint. Vďaka tomu je možné rýchlo identifikovať, či zmena porušila serverovú časť, klientsku časť alebo iba štýlové pravidlá kódu.
+Projekt využíva priebežnú integráciu cez GitHub Actions. Workflow je definovaný v~súbore \texttt{.github/workflows/ci.yaml} a~spúšťa sa pri pushi do vetvy \texttt{main} aj pri pull requestoch. CI pipeline je rozdelená na dve nezávislé časti: backendové kontroly a~frontendové kontroly. Vďaka tomu je možné rýchlo identifikovať, či zmena porušila serverovú časť, klientsku časť, testované správanie alebo iba štýlové pravidlá kódu.
 
 \subsection{Backend CI}
 
@@ -870,6 +870,10 @@ Testy overujú hlavné API scenáre vrátane generovania SQL, spracovania otázk
 
 Frontend job používa Node.js 20 a~cache pre \texttt{npm} závislosti podľa frontendového lockfile súboru. Inštalácia prebieha cez \texttt{npm ci}, čo je vhodné pre CI prostredie, pretože rešpektuje lockfile a~neprepisuje verzie balíkov. Po inštalácii sa spúšťa \texttt{npm run lint}, teda ESLint kontrola nad súbormi \texttt{.js} a~\texttt{.jsx}. Konfigurácia lintu zakazuje warningy cez \texttt{{-}{-}max-warnings 0}, takže aj menej závažné porušenia štýlu musia byť vyriešené pred zlúčením zmeny.
 
+Súčasťou frontendovej CI kontroly je aj spustenie automatizovaných testov príkazom \texttt{npm test}. Testy sú postavené na nástroji Jest, prostredí \texttt{jsdom}, knižnici React Testing Library a~doplnkoch \texttt{jest-dom} a~\texttt{user-event}. Konfigurácia v~súbore \texttt{jest.config.cjs} vyhľadáva súbory \texttt{*.test.js} a~\texttt{*.test.jsx}, nastavuje testovacie prostredie pre React komponenty a~mockuje statické assety, aby testy neboli závislé od reálneho prehliadača ani od obrázkových súborov.
+
+Frontendové testy overujú najmä správanie používateľských komponentov a~servisnej vrstvy. Testy komponentu \texttt{InputQuestion} kontrolujú zadanie a~odoslanie otázky, testy \texttt{UserMessage} overujú vykreslenie textovej odpovede, SQL dotazu a~vizualizácií, testy \texttt{SideBar} pokrývajú načítanie relácií a~chybové stavy. Dopĺňajú ich testy hooku \texttt{useDatabase}, ktorý spravuje pripojenie k~databáze, a~testy modulu \texttt{databaseService}, ktoré overujú volania na backend API.
+
 \subsection{CD na Azure VM}
 
 Kontinuálne nasadenie nadväzuje na rovnaké kontroly ako CI. Pred deployom sa najprv spustí linting, typová kontrola, bezpečnostná analýza a~testy. Až po ich úspešnom dokončení CD job zostaví alebo stiahne kontajnerové obrazy a~nasadí ich na Azure VM. Nasadenie tak nepreskakuje validačné kroky, ktoré chránia vetvu \texttt{main}.
@@ -886,7 +890,7 @@ V~rámci tímového projektu sa podarilo vytvoriť použiteľný MVP systém \te
 
 Frontendová časť aplikácie poskytuje používateľovi chatové rozhranie, modálne okno pre pripojenie databázy, bočný panel so zoznamom predchádzajúcich relácií a~stav pripojenia v~hlavičke aplikácie. Backend zabezpečuje autorizované API endpointy, pripojenie na podporované SQL databázy, získavanie databázovej schémy, generovanie read-only SQL dotazov, vykonávanie dotazov, tvorbu grafov a~sumarizáciu výsledkov. Systém zároveň využíva MongoDB na ukladanie chatovej histórie a~Redis na viacvrstvové cachovanie schémy, SQL výsledkov, sumarizácií a~sémanticky podobných otázok.
 
-Projekt dosiahol aj infraštruktúrne ciele. Repozitár obsahuje CI pipeline, ktorá kontroluje backend pomocou nástrojov Ruff, ty, Bandit a~pytest a~frontend pomocou ESLint. Nasadenie je riešené kontajnerovo cez Docker Compose a~CD proces nasadzuje aplikáciu na Azure VM. Tým je riešenie pripravené na opakovateľné testovanie, kontrolované zmeny a~stabilnejšie nasadenie mimo lokálneho vývojového prostredia.
+Projekt dosiahol aj infraštruktúrne ciele. Repozitár obsahuje CI pipeline, ktorá kontroluje backend pomocou nástrojov Ruff, ty, Bandit a~pytest a~frontend pomocou ESLint, Jest a~React Testing Library. Nasadenie je riešené kontajnerovo cez Docker Compose a~CD proces nasadzuje aplikáciu na Azure VM. Tým je riešenie pripravené na opakovateľné testovanie, kontrolované zmeny a~stabilnejšie nasadenie mimo lokálneho vývojového prostredia.
 
 Súčasťou tímovej organizácie je aj projektová webová stránka dostupná na adrese \url{https://peter115342.github.io/TP25_26_webpage/}. Webová stránka slúži ako verejný prehľad projektu a~obsahuje aj zápisnice, ktoré dokumentujú priebeh práce tímu, stretnutia a~postupné plnenie projektových úloh. Zdrojový kód samotného projektu je dostupný v~repozitári \url{https://github.com/peter115342/Virtual_Data_Analyst-TP}.
 
