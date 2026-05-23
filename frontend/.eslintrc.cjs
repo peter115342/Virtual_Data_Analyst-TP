@@ -27,4 +27,12 @@ module.exports = {
     "no-unused-vars": "off",
     "react/prop-types": "off",
   },
+  overrides: [
+    {
+      files: ["**/*.test.{js,jsx,ts,tsx}", "**/__tests__/**/*.{js,jsx,ts,tsx}"],
+      env: {
+        jest: true,
+      },
+    },
+  ],
 };
