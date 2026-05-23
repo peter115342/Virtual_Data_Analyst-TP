@@ -21,6 +21,7 @@
 \usepackage{subcaption}
 
 \geometry{a4paper, left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\graphicspath{{frontend/}{./}}
 
 \lstset{
     basicstyle=\ttfamily\small,
@@ -32,6 +33,16 @@
     commentstyle=\color{gray},
     keywordstyle=\color{blue},
     stringstyle=\color{red}
+}
+
+\lstdefinelanguage{JavaScript}{
+    keywords={async,await,catch,const,export,false,from,if,import,let,new,return,throw,true,try,var},
+    keywordstyle=\color{blue},
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    stringstyle=\color{red},
+    morestring=[b]',
+    morestring=[b]"
 }
 
 \title{Tímový projekt \\ Virtual Data Analyst \\ Inteligentný systém pre analýzu dát pomocou prirodzeného jazyka}
@@ -49,7 +60,7 @@
 
 Projekt \textbf{Virtuálny dátový analytik} predstavuje moderný webový systém, ktorý umožňuje používateľom analyzovať dáta v~databázach pomocou prirodzeného jazyka. Využitím pokročilých techník spracovania prirodzeného jazyka (NLP) a~veľkých jazykových modelov (LLM) dokáže systém transformovať otázky v~bežnom jazyku na SQL dotazy, vykonať ich nad databázou a~následne vrátiť zrozumiteľné odpovede.
 
-Hlavným cieľom projektu je demokratizácia prístupu k~dátovej analytike -- umožniť aj netechnickým používateľom efektívne získavať informácie z~databáz bez potreby znalosti SQL alebo iných programovacích jazykov.
+Hlavným cieľom projektu je demokratizácia prístupu k~dátovej analytike - umožniť aj netechnickým používateľom efektívne získavať informácie z~databáz bez potreby znalosti SQL alebo iných programovacích jazykov.
 
 \subsection{Motivácia}
 
@@ -67,10 +78,10 @@ Virtuálny dátový analytik tieto bariéry odstraňuje a~sprístupňuje dátov�
 Projekt je rozdelený do nasledujúcich hlavných komponentov:
 
 \begin{enumerate}
-    \item \textbf{Frontend} -- Používateľské rozhranie (React + Vite)
-    \item \textbf{Backend} -- Serverová aplikácia (FastAPI, Python)
-    \item \textbf{GenAI Core} -- Jadro pre spracovanie prirodzeného jazyka (LLM)
-    \item \textbf{Databázová vrstva} -- Pripojenie a~správa databáz
+    \item \textbf{Frontend} - Používateľské rozhranie (React + Vite)
+    \item \textbf{Backend} - Serverová aplikácia (FastAPI, Python)
+    \item \textbf{GenAI Core} - Jadro pre spracovanie prirodzeného jazyka (LLM)
+    \item \textbf{Databázová vrstva} - Pripojenie a~správa databáz
 \end{enumerate}
 
 \clearpage
@@ -83,11 +94,11 @@ Hlavný problém, ktorý projekt rieši, je \textbf{preklad prirodzeného jazyka
 
 Konkrétne výzvy zahŕňajú:
 \begin{itemize}
-    \item \textbf{Sémantické porozumenie} -- Pochopenie zámeru používateľa z~neformálnej otázky
-    \item \textbf{Mapovanie na schému} -- Správne priradenie entít v~otázke k~tabuľkám a~stĺpcom databázy
-    \item \textbf{Generovanie validného SQL} -- Syntakticky a~sémanticky správne dotazy
-    \item \textbf{Bezpečnosť} -- Zabezpečenie len čítacích operácií (READ-ONLY)
-    \item \textbf{Zrozumiteľná odpoveď} -- Sumarizácia výsledkov v~prirodzenom jazyku
+    \item \textbf{Sémantické porozumenie} - Pochopenie zámeru používateľa z~neformálnej otázky
+    \item \textbf{Mapovanie na schému} - Správne priradenie entít v~otázke k~tabuľkám a~stĺpcom databázy
+    \item \textbf{Generovanie validného SQL} - Syntakticky a~sémanticky správne dotazy
+    \item \textbf{Bezpečnosť} - Zabezpečenie len čítacích operácií (READ-ONLY)
+    \item \textbf{Zrozumiteľná odpoveď} - Sumarizácia výsledkov v~prirodzenom jazyku
 \end{itemize}
 
 \subsection{Príklad použitia}
@@ -138,9 +149,9 @@ Kontajnerizácia & Docker & Konzistentné prostredie pre vývoj a~nasadenie \\
 Jadro systému pre spracovanie prirodzeného jazyka pozostáva z~troch hlavných komponentov:
 
 \begin{enumerate}
-    \item \textbf{Router (LLM)} -- Rozhoduje o~spôsobe spracovania dotazu
-    \item \textbf{Query Generator} -- Generuje SQL dotazy z~prirodzeného jazyka
-    \item \textbf{Response Summarizer} -- Sumarizuje výsledky pre používateľa
+    \item \textbf{Router (LLM)} - Rozhoduje o~spôsobe spracovania dotazu
+    \item \textbf{Query Generator} - Generuje SQL dotazy z~prirodzeného jazyka
+    \item \textbf{Response Summarizer} - Sumarizuje výsledky pre používateľa
 \end{enumerate}
 
 \subsubsection{Query Generator}
@@ -234,7 +245,7 @@ Systém je navrhnutý ako \textbf{trojvrstvová architektúra} s~jasne oddelený
 \toprule
 \textbf{Endpoint} & \textbf{Metóda} & \textbf{Popis} \\
 \midrule
-\texttt{/api/ask} & POST & Hlavný endpoint -- otázka $\rightarrow$ SQL $\rightarrow$ sumarizácia \\
+\texttt{/api/ask} & POST & Hlavný endpoint - otázka $\rightarrow$ SQL $\rightarrow$ sumarizácia \\
 \texttt{/api/generate-sql} & POST & Generovanie SQL bez vykonania \\
 \texttt{/api/query-and-summarize} & POST & Vykonanie SQL a~sumarizácia \\
 \texttt{/api/connect-database} & POST & Pripojenie k~databáze \\
@@ -257,9 +268,9 @@ Systém je navrhnutý ako \textbf{trojvrstvová architektúra} s~jasne oddelený
 Systém implementuje viacúrovňové zabezpečenie pre READ-ONLY prístup:
 
 \begin{enumerate}
-    \item \textbf{LLM Prompt} -- Systémový prompt zakazuje generovanie modifikačných príkazov
-    \item \textbf{Regex validácia} -- Kontrola nebezpečných kľúčových slov (INSERT, UPDATE, DELETE, DROP...)
-    \item \textbf{SQL Session} -- Nastavenie \texttt{SET TRANSACTION READ ONLY} na úrovni databázy
+    \item \textbf{LLM Prompt} - Systémový prompt zakazuje generovanie modifikačných príkazov
+    \item \textbf{Regex validácia} - Kontrola nebezpečných kľúčových slov (INSERT, UPDATE, DELETE, DROP...)
+    \item \textbf{SQL Session} - Nastavenie \texttt{SET TRANSACTION READ ONLY} na úrovni databázy
 \end{enumerate}
 
 
@@ -284,9 +295,121 @@ Systém implementuje viacúrovňové zabezpečenie pre READ-ONLY prístup:
 
 \clearpage
 
+\section{Frontendová časť aplikácie}
+
+\subsection{Štruktúra projektu}
+
+Frontendová časť aplikácie je implementovaná pomocou knižnice React v kombinácii s nástrojom Tailwind CSS. Projekt je rozdelený do modulov, aby bol prehľadný a komponenty sa dali ľahko znovu použiť. Komponenty sú navrhnuté tak, aby boli čo najviac nezávislé a komunikovali medzi sebou prostredníctvom vlastností (props).
+
+Adresárová štruktúra projektu je nasledovná:
+
+\begin{itemize}
+    \item \texttt{components/} - Komponenty, ktoré tvoria používateľské rozhranie, napríklad chat, bočný panel, modálne okná a vstupné polia.
+    \item \texttt{hooks/} - Vlastné React hooky, ktoré riešia logiku aplikácie, napríklad pripojenie k databáze.
+    \item \texttt{services/} - Funkcie na komunikáciu s backendom.
+    \item \texttt{pages/} - Komponenty pre hlavné stránky aplikácie.
+    \item \texttt{assets/} - Obrázky, ikony a iné statické súbory.
+    \item \texttt{api/} - Nastavenie HTTP klienta pre volania na backend.
+\end{itemize}
+
+\subsection{Architektúra a~dátový tok}
+
+Architektúra frontendu je postavená na jednosmernom toku dát zhora nadol, typickom pre aplikácie v~Reacte. Centrálnym bodom aplikácie je hlavný kontajner, komponent \texttt{HomePage.jsx}. Tento komponent zabezpečuje stav celej aplikácie a~koordinuje komunikáciu medzi vnorenými modulmi.
+
+Dáta a~stavy (napr. informácia, či je aplikácia pripojená k~databáze, alebo aká je aktívna relácia) sa posúvajú do podriadených komponentov pomocou takzvaných \textit{props} (vlastností). Ak vnorený komponent, akým je napríklad \texttt{SideBar}, zaznamená akciu používateľa, nevymieňa si túto informáciu priamo s~chatom, ale vyvolá príslušnú callback funkciu smerom nahor do \texttt{HomePage}. Tam sa stav vyhodnotí a~podľa potreby sa zmení zobrazenie alebo sa vyvolá varovné modálne okno na prepnutie databázy.
+
+\subsection{Správa stavu (State Management)}
+
+Aplikácia využíva lokálnu správu stavov, nakoľko zložitosť toku dát plne pokrývajú natívne hooky \texttt{useState} a~\texttt{useEffect}. Globálna logika pripojenia k~databáze je pre lepšiu prehľadnosť abstrahovaná v~rámci vlastného hooku \texttt{useDatabase}. Tento hook poskytuje aplikácii zoznam metód (\texttt{connect}, \texttt{disconnect}) a~stavových indikátorov (\texttt{loading}, \texttt{error}, \texttt{sessionId}), vďaka čomu sa nezahlcuje samotná prezentačná vrstva zložitými operáciami.
+
+V~komponente \texttt{HomePage} sa tiež eviduje kontext konverzácií. Ak dôjde k~načítaniu hlavnej stránky, spustí sa asynchrónna operácia (\texttt{getDatabaseStatus}), ktorá overí pripojenie, ako ukazuje nasledujúci blok kódu:
+
+\begin{lstlisting}[language=JavaScript, frame=single, numbers=left, breaklines=true]
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const res = await getDatabaseStatus();
+        setIsConnected(res.connected);
+      } catch (err) {
+        setIsConnected(false);
+      }
+    };
+    checkConnection();
+  }, []);
+\end{lstlisting}
+
+\subsection{Komunikácia s~backendom}
+
+Celá sieťová vrstva komunikujúca so serverom je centralizovaná do modulu \texttt{databaseService.js}. Pre spracovanie HTTP požiadaviek je využívaná knižnica \textbf{Axios}.
+
+Aplikácia pracuje primárne s~komunikáciou vo formáte JSON. Servisné funkcie ako \texttt{listMongoSessions} sťahujú údaje z~API a~starajú sa o~základné vyhodnotenie odpovede zo servera, kým do komponentov vracajú už priamo štruktúrované objekty s~dátami, ktoré vie React iterovať a~vykresliť.
+
+\begin{lstlisting}[language=JavaScript, frame=single, numbers=left, breaklines=true]
+import api from "./api";
+
+export const connectDatabase = async (data) => {
+  const response = await api.post("/api/connect-database", data);
+  return response.data;
+};
+
+export const listMongoSessions = async () => {
+  const response = await api.get("/api/mongo/sessions");
+  if (!response.data) {
+    throw new Error("No data returned");
+  }
+  return response.data;
+};
+\end{lstlisting}
+
+Samotný dopyt používateľa je odosielaný prostredníctvom metódy \texttt{askQuestion}, ktorá zabezpečuje prenos otázky do backendu pre LLM spracovanie a~spätne navracia textovú odpoveď systému, interpretovaný SQL dotaz a~počet výsledných riadkov (\texttt{row\_count}).
+
+\subsection{Rozbor kľúčových UI komponentov}
+
+\subsubsection{Komponent Chat}
+
+Komponent \texttt{Chat.jsx} predstavuje samotné interaktívne jadro celého systému. Zodpovedá za zobrazovanie zoznamu správ a~udržiavanie histórie konkrétneho vlákna. Po prijatí reťazca \texttt{sessionId} od nadradeného komponentu stiahne prostredníctvom \texttt{useEffect} obsah príslušnej histórie cez funkciu \texttt{getSessionHistory}. Počas odosielania novej otázky asynchrónne zablokuje zobrazenie, zapíše do poľa vizuálnu informáciu o~načítavaní odpovede a~po prijatí dát od virtuálneho analytika ju nahradí kompletnou sumarizáciou, ktorej súčasťou je aj vykonaný SQL dotaz.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth,height=0.62\textheight,keepaspectratio]{frontend/ukazka_chat_komponentu.png}
+\caption{Rozhranie komponentu Chat a interakcia používateľa so systémom}
+\end{figure}
+
+\subsubsection{Komponent SideBar (Navigačný panel)}
+
+\texttt{SideBar.jsx} zastrešuje históriu používateľových sedení (sessions) čerpaných z~databázy MongoDB. Prostredníctvom hooku \texttt{useEffect} získava zoznam konverzácií a~transformuje tieto surové dáta na zoznam histórie chatov (\texttt{HistoryBox}). Kľúčovým aspektom Sidebar komponentu je, že po kliknutí na prvok histórie deleguje kompletný objekt dát o~vybranej relácii smerom nadol do aplikácie. Ten je následne využitý v~nadradenom komponente pre plynulé prepnutie chatu alebo zobrazenie varovania v~prípade nekompatibility databáz.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth,height=0.68\textheight,keepaspectratio]{frontend/ukazka_sidebar.png}
+\caption{Zoznam histórie konverzácií v komponente SideBar}
+\end{figure}
+
+\subsubsection{Komponent DatabaseModal}
+
+\texttt{DatabaseModal.jsx} obstaráva modálne okno na manuálne alebo automatizované pripojenie k~vybranej databáze. Modal je navrhnutý pomocou značky \texttt{<form>}, vďaka čomu systém automaticky zachytáva odosielanie formulára natívnym stlačením klávesy \texttt{Enter} z~textového poľa. Modul taktiež disponuje pokročilou logikou pre \textit{predvyplnenie dát} (prefill). Ak prijme parameter \texttt{prefillData} (napr. po výbere inej relácie), dokáže si dynamicky prevziať známe atribúty (\texttt{db\_type}, \texttt{db\_host}, \texttt{db\_name}) a~vložiť ich do stavu (state). Týmto krokom sa minimalizuje interakcia potrebná pre opakované prepájanie k~známym databázam.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth,height=0.55\textheight,keepaspectratio]{frontend/ukazka_database_modal.png}
+\caption{Rozhranie modálneho okna pre nadviazanie spojenia s databázou}
+\end{figure}
+
+\subsubsection{Komponent ChatHeader}
+
+Vrchná informačná a~navigačná lišta reprezentuje aktuálne prihláseného používateľa a~tlačidlo na pripojenie a~odpojenie od databázy.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth,height=0.35\textheight,keepaspectratio]{frontend/ukazka_chatheader.png}
+\caption{Horná lišta ChatHeader}
+\end{figure}
+
+\clearpage
+
 \section{Výber a~testovanie LLM modelov}
 
-Pri návrhu systému bolo kľúčové rozhodnúť, ktoré veľké jazykové modely (LLM) použiť pre jednotlivé úlohy. Keďže systém vyžaduje dva odlišné typy spracovania -- generovanie SQL dotazov a~sumarizáciu výsledkov -- rozhodli sme sa pre špecializovaný prístup s~využitím rôznych modelov.
+Pri návrhu systému bolo kľúčové rozhodnúť, ktoré veľké jazykové modely (LLM) použiť pre jednotlivé úlohy. Keďže systém vyžaduje dva odlišné typy spracovania - generovanie SQL dotazov a~sumarizáciu výsledkov - rozhodli sme sa pre špecializovaný prístup s~využitím rôznych modelov.
 
 \subsection{Metodológia testovania}
 
@@ -294,10 +417,10 @@ Pre objektívne porovnanie výkonnosti LLM modelov sme vytvorili testovací skri
 
 Testovací proces zahŕňal:
 \begin{enumerate}
-    \item \textbf{Kolekcia problémov} -- Výber 50+ SQL problémov z~HackerRank (easy, medium, hard)
-    \item \textbf{Automatizované testovanie} -- Skript generoval dotazy pomocou každého modelu
-    \item \textbf{Validácia výsledkov} -- Porovnanie vygenerovaných dotazov s~očakávanými výstupmi
-    \item \textbf{Meranie metrík} -- Presnosť, čas odozvy, konzistencia výstupov
+    \item \textbf{Kolekcia problémov} - Výber 50+ SQL problémov z~HackerRank (easy, medium, hard)
+    \item \textbf{Automatizované testovanie} - Skript generoval dotazy pomocou každého modelu
+    \item \textbf{Validácia výsledkov} - Porovnanie vygenerovaných dotazov s~očakávanými výstupmi
+    \item \textbf{Meranie metrík} - Presnosť, čas odozvy, konzistencia výstupov
 \end{enumerate}
 
 \subsection{Porovnávané modely}
@@ -319,28 +442,28 @@ Claude 4 Sonnet & Anthropic  \\
 \caption{Porovnávané LLM modely a~ich testované úlohy}
 \end{table}
 
-\subsection{Výsledky testovania -- SQL generácia}
+\subsection{Výsledky testovania - SQL generácia}
 
 Pre generovanie SQL dotazov sme testovali modely na nasledujúcich kritériách:
 
 \begin{itemize}
-    \item \textbf{Syntaktická správnosť} -- Percentuálna úspešnosť generovania validného SQL
-    \item \textbf{Sémantická presnosť} -- Či dotaz vracia očakávané výsledky
-    \item \textbf{Dodržiavanie pravidiel} -- Generovanie len READ-ONLY dotazov
-    \item \textbf{Konzistencia} -- Stabilita výstupov pri opakovaných dotazoch
+    \item \textbf{Syntaktická správnosť} - Percentuálna úspešnosť generovania validného SQL
+    \item \textbf{Sémantická presnosť} - Či dotaz vracia očakávané výsledky
+    \item \textbf{Dodržiavanie pravidiel} - Generovanie len READ-ONLY dotazov
+    \item \textbf{Konzistencia} - Stabilita výstupov pri opakovaných dotazoch
 \end{itemize}
 
 \textbf{GPT-4.1} dosiahol dobré výsledky v~syntaktickej aj sémantickej presnosti, pričom dosiahol aj dodržiavanie READ-ONLY pravidiel. Napriek vyššej latencii a mierne vyššej cene sme ho zvolili pre kritickú úlohu generovania SQL.
 
-\subsection{Výsledky testovania -- Sumarizácia}
+\subsection{Výsledky testovania - Sumarizácia}
 
 Pre sumarizáciu výsledkov sme hodnotili:
 
 \begin{itemize}
-    \item \textbf{Zrozumiteľnosť} -- Kvalita textu pre netechnických používateľov
-    \item \textbf{Faktická správnosť} -- Presnosť interpretácie dát
-    \item \textbf{Rýchlosť} -- Čas potrebný na generovanie odpovede
-    \item \textbf{Cena} -- Náklady na API volania
+    \item \textbf{Zrozumiteľnosť} - Kvalita textu pre netechnických používateľov
+    \item \textbf{Faktická správnosť} - Presnosť interpretácie dát
+    \item \textbf{Rýchlosť} - Čas potrebný na generovanie odpovede
+    \item \textbf{Cena} - Náklady na API volania
 \end{itemize}
 
 \textbf{Gemini 2.5 Flash} ponúkol optimálny pomer kvality, rýchlosti a~ceny. Pri minimálnom rozdiele v~kvalite oproti drahším modelom poskytuje výrazne nižšiu latenciu, náklady a veľké kontextové okno.
@@ -357,7 +480,7 @@ Na základe testovania sme sa rozhodli pre kombináciu:
 
 \clearpage
 
-\section{Použité technológie -- detailný prehľad}
+\section{Použité technológie - detailný prehľad}
 
 \subsection{Backend technológie}
 
@@ -371,7 +494,7 @@ Moderný, asynchrónny webový framework pre budovanie REST API v~Pythone. FastA
 
 \subsubsection*{SQLAlchemy}
 
-Komplexná knižnica pre prácu s~relačnými databázami v~Pythone, fungujúca ako ORM (Object-Relational Mapping) aj ako nástroj pre priame SQL operácie. Poskytuje jednotné rozhranie pre komunikáciu s~rôznymi databázovými systémami -- PostgreSQL, MySQL, MSSQL, Oracle a~ďalšími -- prostredníctvom systému dialektov. SQLAlchemy Inspector umožňuje introspekciu databázových metadát, čo aplikácia využíva na dynamické načítavanie schémy. Connection pooling zabudovaný v~SQLAlchemy efektívne spravuje životný cyklus databázových spojení a~znižuje réžiu pri opakovaných pripojeniach.
+Komplexná knižnica pre prácu s~relačnými databázami v~Pythone, fungujúca ako ORM (Object-Relational Mapping) aj ako nástroj pre priame SQL operácie. Poskytuje jednotné rozhranie pre komunikáciu s~rôznymi databázovými systémami - PostgreSQL, MySQL, MSSQL, Oracle a~ďalšími - prostredníctvom systému dialektov. SQLAlchemy Inspector umožňuje introspekciu databázových metadát, čo aplikácia využíva na dynamické načítavanie schémy. Connection pooling zabudovaný v~SQLAlchemy efektívne spravuje životný cyklus databázových spojení a~znižuje réžiu pri opakovaných pripojeniach.
 
 \subsubsection*{OpenAI SDK}
 
@@ -419,43 +542,43 @@ Nástroj pre definovanie a~spúšťanie viacerých Docker kontajnerov ako jednej
 
 \subsubsection*{Redis}
 
-In-memory databáza a~cache systém s~otvorených zdrojovým kódom, optimalizovaná pre extrémne rýchly prístup k~dátam. Redis ukladá dáta primárne v~operačnej pamäti, čo umožňuje časy odozvy v~rádoch mikrosekúnd. Podporuje rôzne dátové štruktúry -- reťazce, zoznamy, množiny, zoradené množiny a~hashe -- čo ho robí vhodným pre široké spektrum prípadov použitia od cachovania po správu frontov. TTL (Time-To-Live) mechanizmus umožňuje automatické vypršanie uložených dát, čo je kľúčové pre udržiavanie aktuálnosti cache. V~projekte Redis slúži pre štyri úrovne cachovania a~pre ukladanie sémantických embeddingov.
+In-memory databáza a~cache systém s~otvorených zdrojovým kódom, optimalizovaná pre extrémne rýchly prístup k~dátam. Redis ukladá dáta primárne v~operačnej pamäti, čo umožňuje časy odozvy v~rádoch mikrosekúnd. Podporuje rôzne dátové štruktúry - reťazce, zoznamy, množiny, zoradené množiny a~hashe - čo ho robí vhodným pre široké spektrum prípadov použitia od cachovania po správu frontov. TTL (Time-To-Live) mechanizmus umožňuje automatické vypršanie uložených dát, čo je kľúčové pre udržiavanie aktuálnosti cache. V~projekte Redis slúži pre štyri úrovne cachovania a~pre ukladanie sémantických embeddingov.
 
 \subsection{AI/ML modely}
 
 \begin{itemize}
-    \item \textbf{GPT-4.1 (Azure)} -- Generovanie SQL dotazov
-    \item \textbf{Gemini 2.5 Flash (Vertex AI)} -- Sumarizácia výsledkov
+    \item \textbf{GPT-4.1 (Azure)} - Generovanie SQL dotazov
+    \item \textbf{Gemini 2.5 Flash (Vertex AI)} - Sumarizácia výsledkov
 \end{itemize}
 
 \clearpage
 
 \section{Databázová vrstva}
 
-Databázová vrstva predstavuje jednu zo základných súčastí aplikácie. Zabezpečuje pripojenie k~používateľovým SQL databázam, vynucovanie read-only prístupu, získavanie schémy a~vykonávanie dotazov. Okrem toho systém využíva dve ďalšie databázové technológie -- MongoDB pre perzistentnú históriu chatových relácií a~Redis pre viacúrovňové cachovanie.
+Databázová vrstva predstavuje jednu zo základných súčastí aplikácie. Zabezpečuje pripojenie k~používateľovým SQL databázam, vynucovanie read-only prístupu, získavanie schémy a~vykonávanie dotazov. Okrem toho systém využíva dve ďalšie databázové technológie - MongoDB pre perzistentnú históriu chatových relácií a~Redis pre viacúrovňové cachovanie.
 
 \subsection{Podporované databázové systémy}
 
 Aplikácia podporuje pripojenie k~nasledujúcim relačným databázovým systémom:
 
 \begin{itemize}
-    \item \textbf{PostgreSQL} -- podpora cez psycopg2 driver,
-    \item \textbf{MySQL} -- podpora cez pymysql driver,
-    \item \textbf{Microsoft SQL Server} -- podpora cez pyodbc a~odbc driver,
-    \item \textbf{Oracle Database} -- podpora cez python-oracledb.
+    \item \textbf{PostgreSQL} - podpora cez psycopg2 driver,
+    \item \textbf{MySQL} - podpora cez pymysql driver,
+    \item \textbf{Microsoft SQL Server} - podpora cez pyodbc a~odbc driver,
+    \item \textbf{Oracle Database} - podpora cez python-oracledb.
 \end{itemize}
 
 Typ databázy používateľ zadáva pri pripájaní. Backend na základe neho zostaví správny connection string a~zvolí príslušný SQLAlchemy dialekt. Aplikácia zároveň automaticky konfiguruje bezpečnostné mechanizmy špecifické pre daný dialekt.
 
 \subsection{Správa databázového pripojenia}
 
-Správa pripojenia je centralizovaná v~samostatnej komponente \texttt{DatabaseManager}, ktorá zapuzdruje celý životný cyklus spojenia -- od inicializácie až po odpojenie. Komponenta je postavená na SQLAlchemy ORM a~všetky jej operácie sú implementované asynchrónne, čo umožňuje paralelné spracovanie viacerých požiadaviek bez blokovania aplikácie.
+Správa pripojenia je centralizovaná v~samostatnej komponente \texttt{DatabaseManager}, ktorá zapuzdruje celý životný cyklus spojenia - od inicializácie až po odpojenie. Komponenta je postavená na SQLAlchemy ORM a~všetky jej operácie sú implementované asynchrónne, čo umožňuje paralelné spracovanie viacerých požiadaviek bez blokovania aplikácie.
 
-Pre efektívne využívanie zdrojov je použitý \textbf{connection pool} -- sada trvalých pripojení udržiavaných na pozadí. Pool zabezpečuje automatické obnovenie zlyhajúcich spojení a~obmedzuje počet súbežných pripojení k~databáze. Pred každým použitím spojenia sa overuje jeho platnosť, čím sa predchádza chybám pri výpadkoch siete.
+Pre efektívne využívanie zdrojov je použitý \textbf{connection pool} - sada trvalých pripojení udržiavaných na pozadí. Pool zabezpečuje automatické obnovenie zlyhajúcich spojení a~obmedzuje počet súbežných pripojení k~databáze. Pred každým použitím spojenia sa overuje jeho platnosť, čím sa predchádza chybám pri výpadkoch siete.
 
 \subsubsection{Získavanie schémy}
 
-Po pripojení systém načíta štruktúru databázy priamo z~jej systémových metadát. Pre každú tabuľku získa zoznam stĺpcov vrátane ich názvov, dátových typov a~informácie o~tom, či stĺpec môže obsahovať prázdnu hodnotu. Takto získaná schéma slúži ako kontext pre LLM model -- model dostane úplný prehľad tabuliek a~stĺpcov, aby mohol generovať syntakticky a~sémanticky správne dotazy.
+Po pripojení systém načíta štruktúru databázy priamo z~jej systémových metadát. Pre každú tabuľku získa zoznam stĺpcov vrátane ich názvov, dátových typov a~informácie o~tom, či stĺpec môže obsahovať prázdnu hodnotu. Takto získaná schéma slúži ako kontext pre LLM model - model dostane úplný prehľad tabuliek a~stĺpcov, aby mohol generovať syntakticky a~sémanticky správne dotazy.
 
 \subsubsection{Vykonávanie dotazov}
 
@@ -466,9 +589,9 @@ Dotazy sa vykonávajú výhradne v~read-only režime. Bezpečnosť je zaistená 
 Jeden z~najdôležitejších aspektov databázovej vrstvy je garantovaný read-only prístup. Ochrana je implementovaná na troch nezávislých úrovniach:
 
 \begin{enumerate}
-    \item \textbf{Úroveň jazykového modelu} -- systémový prompt pre SQL generátor výslovne zakazuje generovanie akýchkoľvek modifikačných príkazov a~povoľuje výlučne príkazy SELECT,
-    \item \textbf{Úroveň regulárnych výrazov} -- pred vykonaním sa každý dotaz skontroluje na prítomnosť nebezpečných kľúčových slov (INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, TRUNCATE, GRANT, REVOKE); detekcia je nezávislá od veľkosti písmen a~pri nájdení zakázaného slova sa dotaz odmietne,
-    \item \textbf{Úroveň databázovej transakcie} -- pre podporované databázové systémy sa read-only mód nastaví priamo na úrovni databázovej transakcie pomocou databázo-špecifického príkazu.
+    \item \textbf{Úroveň jazykového modelu} - systémový prompt pre SQL generátor výslovne zakazuje generovanie akýchkoľvek modifikačných príkazov a~povoľuje výlučne príkazy SELECT,
+    \item \textbf{Úroveň regulárnych výrazov} - pred vykonaním sa každý dotaz skontroluje na prítomnosť nebezpečných kľúčových slov (INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, TRUNCATE, GRANT, REVOKE); detekcia je nezávislá od veľkosti písmen a~pri nájdení zakázaného slova sa dotaz odmietne,
+    \item \textbf{Úroveň databázovej transakcie} - pre podporované databázové systémy sa read-only mód nastaví priamo na úrovni databázovej transakcie pomocou databázo-špecifického príkazu.
 \end{enumerate}
 
 Tento trojúrovňový prístup zabezpečuje, že ani pri kompromitácii jednej vrstvy nedôjde k~nežiaducim zmenám v~databáze.
@@ -522,9 +645,9 @@ Pre vývoj a~testovanie aplikácie je pripravených niekoľko samostatných Dock
 \toprule
 \textbf{Konfigurácia} & \textbf{Obsah} \\
 \midrule
-PostgreSQL -- e-commerce & Zákaznícke správanie v~e-commerce prostredí \\
-PostgreSQL -- bike store & Predajné dáta obchodu s~bicyklami \\
-MySQL -- e-commerce & E-commerce analýza v~MySQL dialekte \\
+PostgreSQL - e-commerce & Zákaznícke správanie v~e-commerce prostredí \\
+PostgreSQL - bike store & Predajné dáta obchodu s~bicyklami \\
+MySQL - e-commerce & E-commerce analýza v~MySQL dialekte \\
 Microsoft SQL Server & Testovacia databáza pre enterprise prostredie \\
 Oracle Database & Testovacia databáza pre korporátne prostredie \\
 \bottomrule
@@ -534,7 +657,7 @@ Oracle Database & Testovacia databáza pre korporátne prostredie \\
 
 Každá konfigurácia obsahuje health check pre monitorovanie dostupnosti, automatickú inicializáciu dát zo SQL skriptov a~CSV súborov a~persistentné volumes pre ukladanie dát medzi reštartmi kontajnera.
 
-\subsection{MongoDB -- história chatových relácií}
+\subsection{MongoDB - história chatových relácií}
 
 Pre perzistentnú históriu konverzácií systém využíva MongoDB. Každá databázová session má vlastný dokument obsahujúci metadáta o~pripojení (typ databázy, host, názov databázy, čas pripojenia a~odpojenia) a~pole správ konverzácie. Každá správa uchováva rolu (používateľ alebo asistent), textový obsah, prípadný SQL dotaz, počet vrátených riadkov a~časovú pečiatku.
 
@@ -572,7 +695,7 @@ Pri vytvorení databázového pripojenia backend automaticky vytvorí novú sess
 
 \subsubsection{Kontext pre SQL generátor}
 
-Pri prijatí novej otázky backend načíta aktuálnu session a~z~histórie správ pripraví kontext pre LLM model. Do kontextu sa posielajú iba najrelevantnejšie informácie -- nie celá história, pretože pri dlhších konverzáciách by zbytočne narastal počet tokenov a~znižovala sa efektivita spracovania:
+Pri prijatí novej otázky backend načíta aktuálnu session a~z~histórie správ pripraví kontext pre LLM model. Do kontextu sa posielajú iba najrelevantnejšie informácie - nie celá história, pretože pri dlhších konverzáciách by zbytočne narastal počet tokenov a~znižovala sa efektivita spracovania:
 
 \begin{itemize}
     \item niekoľko posledných správ z~konverzácie,
@@ -580,7 +703,7 @@ Pri prijatí novej otázky backend načíta aktuálnu session a~z~histórie spr�
     \item posledný vygenerovaný SQL dotaz.
 \end{itemize}
 
-Tento kontext je odovzdaný SQL generátoru, ktorý ho zahrnie do promptu. Vďaka tomu model rozumie nadväzujúcim otázkam -- napríklad:
+Tento kontext je odovzdaný SQL generátoru, ktorý ho zahrnie do promptu. Vďaka tomu model rozumie nadväzujúcim otázkam - napríklad:
 
 \begin{quote}
 Ukáž posledné objednávky \\
@@ -592,8 +715,8 @@ Model vďaka predchádzajúcemu kontextu chápe, že druhá otázka odkazuje na 
 Prácu s~históriou komunikácie možno rozdeliť na dve časti:
 
 \begin{enumerate}
-    \item \textbf{Začiatok požiadavky} -- backend načíta aktuálnu session, získa históriu správ a~pripraví kontext pre LLM model.
-    \item \textbf{Koniec požiadavky} -- po úspešnom spracovaní sa do histórie uloží nová správa používateľa, vygenerovaný SQL dotaz a~výsledná odpoveď asistenta.
+    \item \textbf{Začiatok požiadavky} - backend načíta aktuálnu session, získa históriu správ a~pripraví kontext pre LLM model.
+    \item \textbf{Koniec požiadavky} - po úspešnom spracovaní sa do histórie uloží nová správa používateľa, vygenerovaný SQL dotaz a~výsledná odpoveď asistenta.
 \end{enumerate}
 
 História konverzácie sa priebežne aktualizuje po každej požiadavke, čím má model pri ďalších otázkach k~dispozícii informácie o~predchádzajúcej komunikácii. Takýto prístup umožňuje prirodzenejšiu komunikáciu medzi používateľom a systémom a~zároveň znižuje potrebu opakovania rovnakých informácií pri pokračujúcich otázkach.
@@ -601,7 +724,7 @@ História konverzácie sa priebežne aktualizuje po každej požiadavke, čím m
 Frontend zároveň uchováva identifikátor aktuálnej session pomocou \texttt{localStorage}, vďaka čomu zostáva referencia na konverzáciu zachovaná aj po obnovení stránky. Predchádzajúce relácie sa zobrazujú v~bočnom paneli aplikácie, čo umožňuje pokračovať v~komunikácii bez straty histórie konverzácie.
 
 
-\subsection{Redis -- cachovanie}
+\subsection{Redis - cachovanie}
 
 Pre zrýchlenie opakovaných operácií systém využíva Redis ako in-memory cache. Implementované sú štyri úrovne cachovania:
 
@@ -627,168 +750,24 @@ Každá cache vrstva funguje na princípe \textbf{cache-aside}: najprv sa pokús
 
 Nad štandardným cachovaním je implementovaná sémantická cache pre celé dvojice otázka-odpoveď. Pri každom úspešnom spracovaní otázky sa uloží vektorová reprezentácia (embedding) otázky spolu s~SQL dotazom, sumarizáciou a~počtom riadkov.
 
-Pri ďalšom dopyte systém porovná embedding novej otázky s~uloženými pomocou cosine similarity. Ak podobnosť prekročí nakonfigurovaný prah, vráti uloženú odpoveď okamžite -- bez volania LLM modelu ani databázy. Sémantická cache navyše overuje zhodu kľúčových slov a~číselných hodnôt v~otázke, aby zabránila falošným hitom pri otázkach s~rôznymi filtrami alebo hodnotami.
+Pri ďalšom dopyte systém porovná embedding novej otázky s~uloženými pomocou cosine similarity. Ak podobnosť prekročí nakonfigurovaný prah, vráti uloženú odpoveď okamžite - bez volania LLM modelu ani databázy. Sémantická cache navyše overuje zhodu kľúčových slov a~číselných hodnôt v~otázke, aby zabránila falošným hitom pri otázkach s~rôznymi filtrami alebo hodnotami.
 
 \subsubsection{Cache metriky a~diagnostika}
 
 Systém sleduje počty cache hitov a~missov pre každú vrstvu v~Redise. Každá odpoveď z~API obsahuje HTTP hlavičky s~informáciami o~stave cache:
 
 \begin{itemize}
-    \item \texttt{X-Cache-Schema} -- HIT alebo MISS pre schému databázy,
-    \item \texttt{X-Cache-NL2SQL} -- HIT alebo MISS pre SQL generovanie,
-    \item \texttt{X-Cache-SQL-Results} -- HIT alebo MISS pre výsledky dotazu,
-    \item \texttt{X-Cache-Summary} -- HIT alebo MISS pre sumarizáciu,
-    \item \texttt{X-Cache-QA-Semantic} -- HIT alebo MISS pre sémantickú cache,
-    \item \texttt{X-Cache-Trace} -- zhrnutie všetkých cache stavov v~jednej hlavičke.
+    \item \texttt{X-Cache-Schema} - HIT alebo MISS pre schému databázy,
+    \item \texttt{X-Cache-NL2SQL} - HIT alebo MISS pre SQL generovanie,
+    \item \texttt{X-Cache-SQL-Results} - HIT alebo MISS pre výsledky dotazu,
+    \item \texttt{X-Cache-Summary} - HIT alebo MISS pre sumarizáciu,
+    \item \texttt{X-Cache-QA-Semantic} - HIT alebo MISS pre sémantickú cache,
+    \item \texttt{X-Cache-Trace} - zhrnutie všetkých cache stavov v~jednej hlavičke.
 \end{itemize}
 
 Tieto hlavičky umožňujú rýchlu diagnostiku výkonu systému priamo z~HTTP klienta alebo vývojárskych nástrojov prehliadača.
 
 \clearpage
-
-\section{Frontendová časť aplikácie}
-
-\subsubsection{Štruktúra projektu}
-
-Frontendová časť aplikácie je implementovaná pomocou knižnice React v kombinácii s nástrojom Tailwind. Projekt je rozdelený do modulov, aby bol prehľadný a komponenty sa dali ľahko znovu použiť. Komponenty sú navrhnuté tak, aby boli čo najviac nezávislé a komunikovali medzi sebou prostredníctvom vlastností (props).
-
-Adresárová štruktúra projektu je nasledovná:
-
-\begin{itemize}
-    \item \texttt{components/} - Komponenty, ktoré tvoria používateľské rozhranie, napríklad chat, bočný panel, modálne okná a vstupné polia.
-    \item \texttt{hooks/} - Vlastné React hooky, ktoré riešia logiku aplikácie, napríklad pripojenie k databáze.
-    \item \texttt{services/} - Funkcie na komunikáciu s backendom.
-    \item \texttt{pages/} - Komponenty pre hlavné stránky aplikácie.
-    \item \texttt{assets/} - Obrázky, ikony a iné statické súbory.
-    \item \texttt{api/} - Nastavenie HTTP klienta pre volania na backend.
-\end{itemize}
-
-\subsubsection{Správa stavu aplikácie}
-
-Správa stavu aplikácie je realizovaná pomocou vstavaných React hookov \texttt{useState}, \texttt{useEffect} a \texttt{useRef}.
-
-Stavy sú spravované lokálne v jednotlivých komponentoch, napríklad:
-\begin{itemize}
-    \item otvorenie a zatvorenie modálneho okna pre databázu,
-    \item stav načítavania počas pripájania databázy,
-    \item vstupné hodnoty formulárových polí,
-    \item priebeh komunikácie v chatovom rozhraní.
-\end{itemize}
-
-\subsubsection{Vlastné React hooky}
-
-Vo fronte je použitý vlastný React hook \texttt{useDatabase}, ktorý sa stará o pripojenie a odpojenie databázy. Komponenty ho môžu použiť bez toho, aby sa museli starať o detaily HTTP komunikácie.  
-
-Hook \texttt{useDatabase}:
-\begin{itemize}
-    \item pripája a odpojuje databázu cez backend,
-    \item sleduje, či sa práve načítava (\texttt{loading}),
-    \item uchováva a zobrazuje chyby (\texttt{error}),
-\end{itemize}
-
-
-\subsection{Komunikácia s backendom}
-
-Frontendová aplikácia komunikuje s backendom prostredníctvom HTTP požiadaviek. 
-Táto komunikácia zabezpečuje pripojenie a odpojenie databázy, ako aj odosielanie otázok používateľa a prijímanie odpovedí od systému. Frontend odosiela požiadavky na backend vo formáte JSON a backend vracia odpovede v rovnakom formáte.
-
-\subsubsection{Správa API volaní pomocou Axios}
-
-Pre komunikáciu s backendom je použitá knižnica \textbf{Axios}. 
-V projekte je vytvorený jeden centrálny Axios klient, ktorý obsahuje základnú konfiguráciu, ako je adresa backendového servera a hlavičky požiadaviek.
-
-\begin{lstlisting}[caption={Základná konfigurácia Axios klienta}]
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-export default api;
-\end{lstlisting}
-
-Na základe tohto klienta sú vytvorené servisné funkcie, ktoré reprezentujú jednotlivé API volania.
-
-\begin{lstlisting}[caption={Servisné funkcie pre komunikáciu s backendom}]
-import api from "./api";
-
-export const connectDatabase = async (data) => {
-  const response = await api.post("/api/connect-database", data);
-  return response.data;
-};
-
-export const disconnectDatabase = async () => {
-  const response = await api.post("/api/disconnect-database");
-  return response.data;
-};
-
-export const askQuestion = async (question) => {
-  const response = await api.post("/api/ask", {
-    question,
-  });
-  return response.data;
-};
-\end{lstlisting}
-
-\subsection{Používateľské rozhranie}
-
-Frontendová aplikácia má jednoduché a prehľadné rozhranie, ktoré umožňuje používateľovi komunikovať so systémom a spravovať pripojenie k databáze.
-
-\subsubsection{Rozloženie aplikácie}
-
-Hlavná stránka je rozdelená na dve časti:
-
-\begin{itemize}
-    \item \textbf{Bočný panel (Sidebar)} - obsahuje tlačidlá na otvorenie modálu pre pripojenie k databáze a ďalšie ovládacie prvky.
-    \item \textbf{Hlavný obsah (Chat)} - zobrazujú sa správy medzi používateľom a systémom.
-\end{itemize}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.95\textwidth]{frontend_layout.png}
-\caption{Ukážka rozloženia frontendovej aplikácie}
-\end{figure}
-\clearpage
-\subsubsection{Chatové rozhranie}
-
-Chat pozostáva z oblasti správ a vstupného poľa na zadávanie otázok. Používateľ môže zadávať otázky, ktoré sú posielané systému, a výsledky sa zobrazujú v chronologickom poradí.
-
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.8\textwidth]{chat_example.png}
-\caption{Ukážka chatového rozhrania}
-\end{figure}
-
-\subsubsection{Správa pripojenia k databáze}
-
-Používateľ môže databázu pripojiť alebo odpojiť pomocou tlačidla v bočnom paneli.  
-Stav pripojenia sa vizuálne zobrazuje priamo na tlačidle:
-\begin{itemize}
-    \item \textbf{Connect Database} - databáza nie je pripojená,
-    \item \textbf{Disconnect Database} - databáza je pripojená.
-\end{itemize}
-
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.45\textwidth]{database_button.png}
-\caption{Stav pripojenia k databáze zobrazený na tlačidle}
-\end{figure}
-
-\subsubsection{Modálne okno}
-
-Modálne okno slúži na zadanie údajov potrebných na pripojenie k databáze, ako sú hostiteľ, port, používateľské meno, heslo a názov databázy. Počas pripájania sa používateľovi zobrazuje stav \textbf{Connecting...}, aby vedel, že sa proces práve vykonáva. V prípade chyby sa zobrazí chybová hláška, ktorá informuje o neúspešnom pripojení.
-
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.9\textwidth]{database_modal.png}
-\caption{Ukážka modálneho okna pre pripojenie databázy}
-\end{figure}
 
 
 \clearpage

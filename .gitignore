@@ -256,3 +256,5 @@ db/init_oracle/data/*.csv
 chart.png
 
 .vscode/
+
+project_website/
