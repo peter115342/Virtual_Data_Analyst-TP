@@ -334,6 +334,11 @@ async def _generate_and_execute_with_retry(
 
             print(f"SQL attempt {attempt}/{SQL_MAX_RETRIES} failed: {sql_error}. Retrying...")
 
+    raise ValueError(
+        f"Failed to generate a valid SQL query after {SQL_MAX_RETRIES} attempts. "
+        f"Last error: {sql_error}"
+    )
+
 
 async def _get_cached_query_results(
     db: connection.DatabaseManager,
