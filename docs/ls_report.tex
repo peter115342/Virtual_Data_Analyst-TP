@@ -168,6 +168,38 @@ Konkrétne výzvy zahŕňajú:
 
 \clearpage
 
+\section{Prieskum existujúcich riešení}
+
+Na začiatku projektu bol realizovaný prieskum trhu a~existujúcich riešení v~oblasti práce s~dátami pomocou prirodzeného jazyka. Cieľom bolo identifikovať nástroje, ktoré dokážu previesť používateľskú otázku na SQL dotaz, pracovať s~rôznymi dátovými zdrojmi, prezentovať výsledky vo forme tabuľky alebo grafu a~prípadne vysvetliť alebo optimalizovať vygenerovaný dotaz.
+
+Pri výbere nástrojov sme sledovali najmä presnosť generovania SQL, jednoduchosť používateľského rozhrania, možnosti vizualizácie, otvorenosť pre integráciu do vlastného riešenia a~doplňujúce funkcie, ako je vysvetlenie, oprava alebo optimalizácia SQL dotazu. Do užšieho porovnania boli zaradené nástroje \textbf{Julius AI}, \textbf{Vanna AI}, \textbf{Text2SQL AI} a~\textbf{AI2SQL}.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{2.4cm}p{5.3cm}p{5.6cm}}
+\toprule
+\textbf{Nástroj} & \textbf{Hlavné vlastnosti} & \textbf{Poznatok pre návrh projektu} \\
+\midrule
+Julius AI & Analýza dát v~prirodzenom jazyku, práca so súbormi aj databázami, generovanie Python, R alebo SQL kódu, grafy a~textové zhrnutia. & Ukázal význam jednotného chatového rozhrania pre analytické úlohy a~kombinácie textovej odpovede s~vizualizáciou. \\
+\midrule
+Vanna AI & Pripojenie k~databáze, generovanie SQL, zobrazenie výsledkov v~tabuľke alebo grafe, práca s~tréningovými dátami, DDL a~vlastnými SQL príkladmi. & Potvrdil dôležitosť databázovej schémy a~kontextu pri generovaní SQL dotazov. Inšpiroval aj potrebu transparentne zobrazovať používateľovi SQL dotaz. \\
+\midrule
+Text2SQL AI & Generovanie SQL dotazov, vysvetlenie dotazu v~prirodzenom jazyku, funkcie na opravu a~optimalizáciu SQL. & Silná stránka je práca so samotným SQL, ale menej pokrýva komplexný tok od pripojenia databázy po uloženie relácie a~vizualizáciu. \\
+\midrule
+AI2SQL & Generovanie SQL podľa prirodzeného jazyka, výber SQL dialektu, vysvetlenie, formátovanie, oprava a~optimalizácia dotazov. & Potvrdil potrebu podpory viacerých SQL dialektov a~vysvetliteľnosti výstupu pre netechnických používateľov. \\
+\bottomrule
+\end{tabular}
+\caption{Stručné porovnanie vybraných existujúcich riešení}
+\end{table}
+
+\subsection{Porovnanie s~navrhnutým riešením}
+
+Existujúce nástroje potvrdili, že text-to-SQL prístup má praktický význam, ale zároveň ukázali aj obmedzenia hotových riešení. Časť nástrojov sa sústreďuje najmä na samotné generovanie SQL a~nepokrýva celý analytický tok od databázového pripojenia až po históriu relácií. Iné riešenia poskytujú širšiu dátovú analýzu, ale fungujú primárne ako externé platformy, ktoré sa ťažšie prispôsobujú konkrétnej infraštruktúre, bezpečnostným požiadavkám a~procesom zadávateľa.
+
+
+\clearpage
+
 \section{Prístup a~metodológia}
 
 \subsection{Výber technológií}
@@ -723,7 +755,7 @@ Oracle Database & Testovacia databáza pre korporátne prostredie \\
 \end{table}
 
 Každá konfigurácia obsahuje health check pre monitorovanie dostupnosti, automatickú inicializáciu dát zo SQL skriptov a~CSV súborov a~persistentné volumes pre ukladanie dát medzi reštartmi kontajnera.
-
+\clearpage
 \subsection{MongoDB - história chatových relácií}
 
 Pre perzistentnú históriu konverzácií systém využíva MongoDB. Každá databázová session má vlastný dokument obsahujúci metadáta o~pripojení (typ databázy, host, názov databázy, čas pripojenia a~odpojenia) a~pole správ konverzácie. Každá správa uchováva rolu (používateľ alebo asistent), textový obsah, prípadný SQL dotaz, počet vrátených riadkov a~časovú pečiatku.
@@ -932,6 +964,18 @@ Pri vypracovaní projektu sme využili nasledujúce AI nástroje ako podporné p
 
     \item Virtual Data Analyst. (2026). \textit{Zdrojový kód projektu}. \\
     \url{https://github.com/peter115342/Virtual_Data_Analyst-TP}
+
+    \item Julius AI. (2026). \textit{AI for Data Analysis}. \\
+    \url{https://julius.ai/}
+
+    \item Vanna AI. (2026). \textit{Documentation}. \\
+    \url{https://vanna.ai/docs/}
+
+    \item Text2SQL.ai. (2026). \textit{Getting Started with Text2SQL.ai}. \\
+    \url{https://www.text2sql.ai/docs/get-started}
+
+    \item AI2SQL. (2026). \textit{AI-Powered Text2SQL}. \\
+    \url{https://ai2sql.io/text2sql}
 
     \item FastAPI Documentation. (2025). \textit{FastAPI - Modern, Fast Web Framework}. \\
     \url{https://fastapi.tiangolo.com/}
