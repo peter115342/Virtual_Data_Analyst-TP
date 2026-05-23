@@ -880,6 +880,19 @@ Takýto model nasadenia je jednoduchší než plnohodnotná orchestrácia v~Kube
 
 
 \clearpage
+\section{Záver}
+
+V~rámci tímového projektu sa podarilo vytvoriť použiteľný MVP systém \textbf{Virtual Data Analyst}, ktorý prepája moderné webové rozhranie, backendovú API vrstvu, databázové pripojenia a~generatívnu umelú inteligenciu do jedného funkčného celku. Pôvodná myšlienka jednoduchého prekladu otázky v~prirodzenom jazyku na SQL dotaz bola rozšírená o~praktické prvky potrebné pre reálne používanie: správu relácií, zachovanie kontextu medzi otázkami, históriu chatu, vizualizácie, autentifikáciu, cachovanie a~kontinuálnu kontrolu kvality kódu.
+
+Frontendová časť aplikácie poskytuje používateľovi chatové rozhranie, modálne okno pre pripojenie databázy, bočný panel so zoznamom predchádzajúcich relácií a~stav pripojenia v~hlavičke aplikácie. Backend zabezpečuje autorizované API endpointy, pripojenie na podporované SQL databázy, získavanie databázovej schémy, generovanie read-only SQL dotazov, vykonávanie dotazov, tvorbu grafov a~sumarizáciu výsledkov. Systém zároveň využíva MongoDB na ukladanie chatovej histórie a~Redis na viacvrstvové cachovanie schémy, SQL výsledkov, sumarizácií a~sémanticky podobných otázok.
+
+Projekt dosiahol aj infraštruktúrne ciele. Repozitár obsahuje CI pipeline, ktorá kontroluje backend pomocou nástrojov Ruff, ty, Bandit a~pytest a~frontend pomocou ESLint. Nasadenie je riešené kontajnerovo cez Docker Compose a~CD proces nasadzuje aplikáciu na Azure VM. Tým je riešenie pripravené na opakovateľné testovanie, kontrolované zmeny a~stabilnejšie nasadenie mimo lokálneho vývojového prostredia.
+
+Súčasťou tímovej organizácie je aj projektová webová stránka dostupná na adrese \url{https://peter115342.github.io/TP25_26_webpage/}. Webová stránka slúži ako verejný prehľad projektu a~obsahuje aj zápisnice, ktoré dokumentujú priebeh práce tímu, stretnutia a~postupné plnenie projektových úloh. Zdrojový kód samotného projektu je dostupný v~repozitári \url{https://github.com/peter115342/Virtual_Data_Analyst-TP}.
+
+Celkovo projekt ukazuje praktické využitie generatívnej umelej inteligencie v~podnikovej dátovej analytike. Výsledná aplikácia znižuje bariéru medzi netechnickým používateľom a~databázami, umožňuje klásť otázky v~prirodzenom jazyku a~vracia odpovede vo forme, ktorá je vhodná pre rýchlu interpretáciu a~ďalšie rozhodovanie.
+
+\clearpage
 \section*{Použitie nástrojov umelej inteligencie}
 
 Pri vypracovaní projektu sme využili nasledujúce AI nástroje ako podporné prostriedky:
@@ -910,6 +923,12 @@ Pri vypracovaní projektu sme využili nasledujúce AI nástroje ako podporné p
 \section*{Zdroje}
 
 \begin{enumerate}
+    \item Virtual Data Analyst. (2026). \textit{Projektová webová stránka a~zápisnice}. \\
+    \url{https://peter115342.github.io/TP25_26_webpage/}
+
+    \item Virtual Data Analyst. (2026). \textit{Zdrojový kód projektu}. \\
+    \url{https://github.com/peter115342/Virtual_Data_Analyst-TP}
+
     \item FastAPI Documentation. (2025). \textit{FastAPI - Modern, Fast Web Framework}. \\
     \url{https://fastapi.tiangolo.com/}
     
