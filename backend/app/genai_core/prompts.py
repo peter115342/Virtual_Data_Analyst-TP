@@ -121,7 +121,7 @@ def sql_user_prompt(
 
     Failed SQL:
     {previous_sql}
-   
+
     Database error:
     {sql_error}
 """)
