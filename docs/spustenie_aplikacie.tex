@@ -1,0 +1,255 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[slovak]{babel}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage[hidelinks,breaklinks=true]{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+
+\geometry{a4paper, left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\setlength{\emergencystretch}{3em}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    columns=fullflexible,
+    showstringspaces=false,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray}
+}
+
+\title{Virtual Data Analyst\\Návod na lokálne spustenie aplikácie}
+\date{Akademický rok 2025/2026}
+
+\begin{document}
+
+\maketitle
+\clearpage
+
+\section*{Poznámka k dostupnosti}
+
+Nasadená verzia aplikácie nie je verejne dostupná, pretože beží iba v internom prostredí spoločnosti PwC. Z rovnakého dôvodu nie je možné odovzdať ani interný GenAI API kľúč alebo prístup k internému PwC LLM endpointu. Tento návod preto slúži najmä ako technický postup, ako by sa aplikácia dala lokálne spustiť pri dostupnosti vlastnej infraštruktúry.
+
+Od používateľa mimo prostredia PwC sa neočakáva, že aplikáciu bude možné bez ďalšej konfigurácie plnohodnotne rozbehať. Na funkčné spustenie je potrebné zabezpečiť vlastný Azure LLM endpoint, vlastný API kľúč, lokálnu MongoDB inštanciu a testovaciu SQL databázu.
+
+\section{Požiadavky}
+
+Pred spustením aplikácie je potrebné mať nainštalované:
+
+\begin{itemize}
+    \item \textbf{Git} na stiahnutie repozitára,
+    \item \textbf{Docker Desktop} alebo Docker Engine s podporou Docker Compose,
+    \item \textbf{MongoDB} spustenú samostatne, napríklad ako Docker kontajner,
+    \item \textbf{GenAI API kľúč} a vlastný Azure LLM base URL endpoint používaný backendom.
+\end{itemize}
+
+Aplikácia pozostáva z troch hlavných služieb:
+
+\begin{itemize}
+    \item frontend na adrese \url{http://localhost:5173},
+    \item backend API na adrese \url{http://localhost:8000},
+    \item Redis cache, ktorá sa pri Docker Compose spúšťa automaticky.
+\end{itemize}
+
+MongoDB sa v hlavnom \texttt{docker-compose.yml} nespúšťa ako samostatná služba. Používateľ si ju musí spustiť samostatne, napríklad ako Docker kontajner, alebo nastaviť pripojenie na vlastnú existujúcu MongoDB inštanciu.
+
+\section{Stiahnutie projektu}
+
+Projekt sa najprv naklonuje z GitHub repozitára:
+
+\begin{lstlisting}
+git clone https://github.com/peter115342/Virtual_Data_Analyst-TP.git
+cd Virtual_Data_Analyst-TP
+\end{lstlisting}
+
+V ďalších častiach sa predpokladá, že všetky príkazy sa spúšťajú z koreňového adresára projektu.
+
+\section{Konfigurácia backendu}
+
+Backend načítava citlivé konfiguračné hodnoty zo súboru \texttt{backend/.env}. V aktuálnom projekte tento súbor obsahuje iba identifikátory Azure Entra ID aplikácie a API kľúč pre LLM endpoint. Ostatné hodnoty, napríklad \texttt{FASTAPI\_ENV}, \texttt{REDIS\_URL} a \texttt{MONGODB\_URL}, sa pri Docker Compose spustení nastavujú v súbore \texttt{docker-compose.yml} alebo majú predvolené hodnoty v backend konfigurácii. Kľúče a heslá sa nemajú commitovať do repozitára.
+
+Príklad vývojového súboru \texttt{backend/.env}:
+
+\begin{lstlisting}
+# Azure Entra ID
+# Pri lokalnom dev mode nie su tieto hodnoty podstatne,
+# pretoze aplikacia pouziva Skip auth (dev mode).
+AZURE_AD_CLIENT_ID=sem_vlozte_client_id
+AZURE_AD_TENANT_ID=sem_vlozte_tenant_id
+
+# LLM
+API_KEY=sem_vlozte_vas_api_kluc
+\end{lstlisting}
+
+Premenné \texttt{AZURE\_AD\_CLIENT\_ID} a \texttt{AZURE\_AD\_TENANT\_ID} sú potrebné pri reálnom prihlásení cez Microsoft Entra ID. Pri lokálnom vývojovom režime nie sú rozhodujúce, pretože používateľ môže vo frontende zvoliť \textit{Skip auth (dev mode)} a backend prijme vývojový token \texttt{dev}.
+
+Premenná \texttt{API\_KEY} je kľúč pre GenAI službu. Pôvodný projekt používa interný PwC Azure LLM endpoint, ktorý nie je dostupný mimo prostredia PwC. Base URL tohto endpointu nie je v našom \texttt{backend/.env}; backend ju berie z predvolenej hodnoty v konfigurácii \texttt{backend/app/config.py}. Mimo prostredia PwC je preto potrebné v súbore \texttt{backend/app/config.py} zmeniť riadok:
+
+\begin{lstlisting}
+openai_base_url: str = "https://genai-sharedservice-emea.pwc.com/"
+\end{lstlisting}
+
+Hodnota sa má nahradiť vlastným Azure LLM endpointom. Konfiguračná premenná sa volá \texttt{OPENAI\_BASE\_URL}, pretože backend komunikuje cez OpenAI SDK a OpenAI-compatible API rozhranie; v tomto projekte však predstavuje base URL pre Azure LLM gateway, nie verejné OpenAI API. Pri lokálnom spustení mimo PwC je preto potrebné získať vlastný Azure LLM API kľúč a nastaviť vlastný Azure endpoint. V aktuálnej implementácii backend očakáva modely \texttt{azure.gpt-4.1}, \texttt{vertex\_ai.gemini-2.5-flash} a \texttt{azure.text-embedding-3-small}; pri inom poskytovateľovi alebo inom nasadení môže byť potrebné upraviť názvy modelov v backend kóde.
+\clearpage
+\section{Konfigurácia frontendu}
+
+Frontend číta premenné zo súboru \texttt{frontend/.env}. Pre lokálny vývoj stačí nastaviť adresu backendu a ponechať Entra hodnoty prázdne alebo vyplnené testovacími hodnotami. Keďže aplikácia beží cez Vite v režime \texttt{dev}, zobrazí sa možnosť \textit{Skip auth (dev mode)}.
+
+Príklad súboru \texttt{frontend/.env}:
+
+\begin{lstlisting}
+VITE_API_BASE_URL=http://localhost:8000
+
+# Pre lokalny dev mode nie je realna Entra konfiguracia nutna
+VITE_AZURE_AD_CLIENT_ID=00000000-0000-0000-0000-000000000000
+VITE_AZURE_AD_TENANT_ID=common
+VITE_AZURE_AD_AUTHORITY=common
+VITE_AZURE_AD_TOKEN_MODE=id_token
+
+# Volitelne, ak sa dev bypass pouziva mimo Vite dev rezimu
+VITE_ENABLE_DEV_AUTH_BYPASS=true
+\end{lstlisting}
+
+Ak sa používa reálne prihlásenie cez Microsoft Entra ID, hodnoty \texttt{VITE\_AZURE\_AD\_*} musia zodpovedať registrovanej aplikácii v Entra ID a backend musí mať nastavené povolené tenanty a audiences.
+\clearpage
+
+\section{MongoDB}
+
+MongoDB slúži na ukladanie histórie chatových relácií. Projekt pre MongoDB neobsahuje samostatný Docker Compose súbor, preto si ju používateľ musí spustiť sám. Najjednoduchšie lokálne spustenie je cez samostatný Docker kontajner:
+
+\begin{lstlisting}
+docker run -d --name vda-mongo -p 27017:27017 mongo:7
+\end{lstlisting}
+
+Keďže backend sa spúšťa cez hlavný \texttt{docker-compose.yml} a MongoDB beží ako samostatný kontajner publikovaný na hostiteľskom počítači, backend kontajner sa na ňu pripája cez špeciálny hostiteľský názov:
+
+\begin{lstlisting}
+MONGODB_URL=mongodb://host.docker.internal:27017
+\end{lstlisting}
+
+V súbore \texttt{docker-compose.yml} je táto hodnota nastavená priamo:
+
+\begin{lstlisting}
+MONGODB_URL=mongodb://host.docker.internal:27017
+\end{lstlisting}
+
+Ak MongoDB beží inde, hodnotu \texttt{MONGODB\_URL} v \texttt{docker-compose.yml} treba zmeniť podľa reálneho umiestnenia MongoDB. Napríklad:
+
+\begin{lstlisting}
+# Vzdialena MongoDB
+MONGODB_URL=mongodb://pouzivatel:heslo@server.example.com:27017
+\end{lstlisting}
+
+\section{Spustenie aplikácie cez Docker Compose}
+
+Odporúčaný vývojový postup je spustiť frontend, backend a Redis cez hlavný Docker Compose súbor:
+
+\begin{lstlisting}
+docker compose up --build
+\end{lstlisting}
+
+Tento príkaz spustí:
+
+\begin{itemize}
+    \item frontend kontajner s Vite dev serverom na porte 5173,
+    \item backend kontajner s FastAPI aplikáciou na porte 8000,
+    \item Redis kontajner na porte 6379.
+\end{itemize}
+
+Po spustení je potrebné otvoriť:
+
+\begin{lstlisting}
+http://localhost:5173
+\end{lstlisting}
+
+Na prihlasovacej obrazovke treba kliknúť na \textit{Skip auth (dev mode)}. Frontend následne posiela na backend hlavičku \texttt{Authorization: Bearer dev}. Backend ju akceptuje, pretože v \texttt{docker-compose.yml} je nastavené:
+
+\begin{lstlisting}
+FASTAPI_ENV=development
+\end{lstlisting}
+
+\section{Pripojenie testovacej databázy}
+
+Samotná aplikačná databáza sa nepripája cez \texttt{DATABASE\_URL}, ale cez modálne okno vo frontende. Po vstupe do aplikácie treba kliknúť na tlačidlo pre pripojenie databázy a vyplniť typ databázy, host, port, používateľské meno, heslo a názov databázy alebo service name.
+
+Projekt podporuje hodnoty typov databázy:
+
+\begin{itemize}
+    \item \texttt{postgres},
+    \item \texttt{mysql},
+    \item \texttt{oracle},
+    \item \texttt{sqlserver}.
+\end{itemize}
+
+V repozitári sú pripravené samostatné Docker Compose súbory pre testovacie databázy. Pre okamžité vyskúšanie aplikácie je pripravený jednoduchý dataset iba v PostgreSQL konfigurácii \texttt{docker-compose.db.yml}. Táto databáza sa spustí príkazom:
+
+\begin{lstlisting}
+docker compose -f docker-compose.db.yml up -d
+\end{lstlisting}
+
+Keď aplikácia beží cez Docker Compose a testovacia databáza beží na hostiteľskom počítači alebo cez samostatný compose súbor s publikovaným portom, do poľa \textit{Database Host} sa spravidla zadáva \texttt{host.docker.internal}.
+
+Ostatné databázové typy sú podporované implementáciou backendu a vo frontende ich možno vybrať v modálnom okne pripojenia. Ak chce používateľ vyskúšať ďalšiu PostgreSQL databázu, MySQL, Oracle Database alebo SQL Server na vlastných dátach, musí do príslušného priečinka v adresári \texttt{db/} doplniť vlastné inicializačné skripty alebo dáta. Pre tieto databázy slúžia existujúce compose súbory najmä ako základná šablóna prostredia:
+
+\begin{lstlisting}
+docker compose -f docker-compose.db_bikes.yml up -d
+docker compose -f docker-compose.db_ecommerce.yml up -d
+docker compose -f docker-compose.db_sqlserver.yml up -d
+docker compose -f docker-compose.db_oracle.yml up -d
+\end{lstlisting}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{4cm}p{9cm}}
+\toprule
+\textbf{Databáza} & \textbf{Údaje pre lokálny test} \\
+\midrule
+PostgreSQL &
+typ \texttt{postgres}, port \texttt{5432}, user \texttt{postgres}, heslo \texttt{postgres}, DB \texttt{virtual\_data\_analyst} \\
+\bottomrule
+\end{tabular}
+\caption{Pripravená lokálna testovacia databáza}
+\end{table}
+
+Naraz môže byť problém spustiť viac databáz používajúcich rovnaký port. V takom prípade treba spustiť iba jednu z nich alebo upraviť mapovanie portov.
+\clearpage
+\section{Overenie funkčnosti}
+
+Po spustení aplikácie sa odporúča skontrolovať:
+
+\begin{enumerate}
+    \item frontend na adrese \url{http://localhost:5173},
+    \item prihlásenie cez \textit{Skip auth (dev mode)},
+    \item pripojenie testovacej databázy cez modálne okno,
+    \item odoslanie jednoduchej otázky, napríklad \textit{Koľko záznamov je v tabuľke?}.
+\end{enumerate}
+
+Ak backend hlási, že MongoDB nie je pripojená, treba skontrolovať hodnotu \texttt{MONGODB\_URL}. Ak zlyhá generovanie odpovede cez LLM, najčastejšou príčinou je chýbajúci alebo neplatný \texttt{API\_KEY}. Ak sa aplikácia nevie pripojiť k testovacej databáze, treba overiť host, port, prihlasovacie údaje a to, či sa databáza pripája z kontajnera alebo priamo z hostiteľského počítača.
+
+\section{Ukončenie služieb}
+
+Hlavnú aplikáciu spustenú cez Docker Compose možno zastaviť príkazom:
+
+\begin{lstlisting}
+docker compose down
+\end{lstlisting}
+
+Samostatnú testovaciu databázu možno zastaviť rovnakým spôsobom s príslušným compose súborom, napríklad:
+
+\begin{lstlisting}
+docker compose -f docker-compose.db.yml down
+\end{lstlisting}
+
+Ak sa MongoDB alebo Redis spustili cez \texttt{docker run}, zastavia sa príkazmi:
+
+\begin{lstlisting}
+docker stop vda-mongo
+docker stop vda-redis
+\end{lstlisting}
+
+\end{document}
