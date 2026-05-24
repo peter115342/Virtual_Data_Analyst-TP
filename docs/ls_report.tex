@@ -99,15 +99,62 @@ Systém používa generatívnu umelú inteligenciu na porozumenie otázke, ident
 Na základe získaných výsledkov aplikácia vytvorí zrozumiteľnú odpoveď pre používateľa a~zobrazí ju vo webovom rozhraní. V~prípade vhodného typu výstupu môže odpoveď doplniť aj vizualizáciou dát. Projekt je realizovaný ako externé zadanie pre spoločnosť PwC a~je zameraný na praktické využitie moderných GenAI nástrojov v~oblasti podnikovej dátovej analytiky.
 
 \clearpage
+\section*{Ponuka pre tímový projekt}
+\addcontentsline{toc}{section}{Ponuka pre tímový projekt}
+
+\subsection*{Identifikácia témy}
+
+\begin{tabular}{ll}
+\textbf{Názov témy:} & Virtual Data Analyst \\
+\textbf{Zadávateľ témy:} & Ing. Adam Kňaze \\
+\textbf{Členovia tímu:} & Peter Muzslay \\
+                     & Janka Tarčáková \\
+                     & Jozef Guláš \\
+                     & Jana Kampová \\
+                     & Tamara Uhrinová \\
+\end{tabular}
+
+\subsection*{Odhadované zdroje}
+
+Časové náklady boli odhadnuté približne na jednu hodinu konzultácií týždenne. Hardvérové náklady záviseli od zvolenej architektúry riešenia. Pri cloudovom riešení bolo možné využiť služby v~rámci bezplatných vrstiev poskytovateľov, zatiaľ čo pri on-premise nasadení by bolo potrebné zabezpečiť výpočtový uzol na fakultnom serveri. Súčasťou odhadovaných zdrojov bol aj prístup cez API k~vybranému veľkému jazykovému modelu, ktorý je potrebný na generovanie SQL dotazov a~sumarizáciu výsledkov.
+
+\subsection*{Motivácia}
+
+Motiváciou tímu bolo preskúmať potenciál, ktorý generatívna umelá inteligencia prináša do oblasti dátovej analýzy. Cieľom bolo vytvoriť intuitívnu aplikáciu, ktorá umožní aj netechnickým používateľom klásť komplexné otázky svojim dátam v~prirodzenom jazyku. Tým sa odstraňuje bariéra medzi používateľmi a~databázami, pretože používateľ nemusí poznať SQL ani internú štruktúru databázy. Projekt zároveň predstavoval príležitosť využiť spoločné skúsenosti tímu v~oblasti backendového vývoja, frontendového vývoja, testovania a~dátového spracovania a~získať praktické skúsenosti s~jednou z~najdynamickejších technológií súčasnosti.
+
+\subsection*{Predstavenie členov tímu}
+
+\paragraph*{Peter Muzslay}
+Počas štúdia získal skúsenosti na viacerých pozíciách, primárne ako Software Engineer a~Data Engineer. Venoval sa optimalizácii legacy PL/SQL procedúr pre rozsiahle Oracle databázy, vývoju CI/CD a~ETL pipelines a~tvorbe interných Python balíčkov pre spracovanie dát na platforme Databricks. Realizoval aj vlastný end-to-end data-engineering projekt na Google Cloud Platform s~využitím technológií BigQuery, Cloud Functions a~Terraform pre Infrastructure as Code. Tieto skúsenosti sú relevantné najmä pri návrhu dátovej vrstvy, backendovej architektúry a~nasadenia projektu.
+
+\paragraph*{Janka Tarčáková}
+Pracuje ako testerka, kde získava praktické skúsenosti s~testovaním softvéru. Počas štúdia pracovala na projektoch využívajúcich Vue, Javu, Python, PHP, HTML, CSS a~Docker. Bakalársku prácu vypracovala na tému rozpoznávania rodinného príbuzenstva medzi dvojicami obrazov tvárí, kde pracovala v~Pythone, pripravovala dataset a~riešila tréning a~testovanie modelu. Jej skúsenosti sú prínosné najmä pri testovaní aplikácie, spracovaní dát a~overovaní kvality riešenia.
+
+\paragraph*{Jana Kampová}
+Má skúsenosti s~tvorbou webových aplikácií v~technológiách HTML, CSS, JavaScript, TypeScript, Angular a~Vue. Pracovala aj s~Dockerom a~PHP na strane backendu. V~rámci webových projektov realizovala galérie, formuláre, hlasovacie aplikácie a~systémy na overovanie vedomostí študentov vrátane autentifikácie. Vyskúšala si aj vývoj mobilnej hry využívajúcej gyroskop a~hry založenej na socketovej komunikácii.
+
+\paragraph*{Jozef Guláš}
+Pracoval na projektoch s~využitím technológií JavaScript, PHP a~Java. V~bakalárskej práci upravoval a~vizualizoval GPS trasy v~jazyku Python s~využitím knižníc Pandas, Folium a~NumPy. Jeho skúsenosti sú využiteľné pri práci s~dátami, vizualizáciách a~implementácii aplikačnej logiky.
+
+\paragraph*{Tamara Uhrinová}
+Pracovala na rôznych projektoch, kde využívala technológie .NET, React, SQLite, ASP.NET Core, Java, C\# a~Python. V~rámci bakalárskej práce vyvíjala webovú aplikáciu na vyhľadávanie bilingválnych škôl a~testovací portál, kde sa používatelia môžu registrovať, riešiť testy a~sledovať svoje výsledky. Tieto skúsenosti sú prínosné najmä pri návrhu používateľského rozhrania, autentifikácie a~aplikačnej logiky.
+
+\clearpage
 \tableofcontents
 \clearpage
 \pagenumbering{arabic}
 
 \section{Úvod}
 
-Projekt \textbf{Virtuálny dátový analytik} predstavuje moderný webový systém, ktorý umožňuje používateľom analyzovať dáta v~databázach pomocou prirodzeného jazyka. Využitím pokročilých techník spracovania prirodzeného jazyka (NLP) a~veľkých jazykových modelov (LLM) dokáže systém transformovať otázky v~bežnom jazyku na SQL dotazy, vykonať ich nad databázou a~následne vrátiť zrozumiteľné odpovede.
+Projekt \textbf{Virtual Data Analyst} predstavuje moderný webový systém, ktorý umožňuje používateľom analyzovať dáta v~databázach pomocou prirodzeného jazyka. Využitím pokročilých techník spracovania prirodzeného jazyka (NLP) a~veľkých jazykových modelov (LLM) dokáže systém transformovať otázky v~bežnom jazyku na SQL dotazy, vykonať ich nad databázou a~následne vrátiť zrozumiteľné odpovede.
 
 Hlavným cieľom projektu je demokratizácia prístupu k~dátovej analytike - umožniť aj netechnickým používateľom efektívne získavať informácie z~databáz bez potreby znalosti SQL alebo iných programovacích jazykov.
+
+\subsection{Rozsah dokumentácie}
+
+Táto dokumentácia obsahuje oficiálne zadanie projektu, vypracovanú ponuku, ciele riešenia, analýzu problému, opis použitých algoritmov a~metód, dokumentáciu k~jednotlivým programovým častiam, výsledky riešenia, porovnanie so známymi existujúcimi nástrojmi a~použitú literatúru a~zdroje spracovávaných textov.
+
+Súčasťou projektovej dokumentácie je aj webová stránka tímu dostupná na adrese \url{https://peter115342.github.io/TP25_26_webpage/}. Na tejto stránke sú zverejnené základné informácie o~projekte a~zápisnice zo stretnutí, ktoré dokumentujú priebeh práce tímu počas semestra.
 
 \subsection{Motivácia}
 
@@ -118,7 +165,7 @@ V~súčasnej dobe je dátová analytika kľúčovým faktorom pri rozhodovaní v
     \item Technické zručnosti pre interpretáciu výsledkov
 \end{itemize}
 
-Virtuálny dátový analytik tieto bariéry odstraňuje a~sprístupňuje dátovú analýzu širšiemu okruhu používateľov.
+Virtual Data Analyst tieto bariéry odstraňuje a~sprístupňuje dátovú analýzu širšiemu okruhu používateľov.
 
 \subsection{Štruktúra projektu}
 
@@ -255,142 +302,76 @@ Komponent využíva model \texttt{Gemini 2.5 Flash} pre sumarizáciu výsledkov.
 
 \clearpage
 
-\section{Architektúra systému}
+\section{Použité technológie - detailný prehľad}
 
-\subsection{Vysokoúrovňová architektúra (High-Level)}
+\subsection{Backend technológie}
 
-Systém je navrhnutý ako \textbf{trojvrstvová architektúra} s~jasne oddelenými zodpovednosťami:
+\subsubsection*{Python 3.12+}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=1.05\textwidth]{high_level_VDA.png}
-\caption{Vysokoúrovňová architektúra systému}
-\end{figure}
+Hlavný programovací jazyk aplikácie. Python je interpretovaný, vysokoúrovňový jazyk so silným ekosystémom knižníc pre dátovú vedu, strojové učenie a~webový vývoj. Verzia 3.12 prináša výrazné zlepšenia výkonu interprétera a~rozšírenú podporu asynchrónneho programovania. Vďaka jednoduchej syntaxi a~rozsiahlej komunite je Python de facto štandardom pre aplikácie využívajúce LLM modely a~AI integrácie. Jeho dynamická typovosť je dopĺňaná nástrojmi pre statickú analýzu, čo umožňuje kombináciu rýchlosti vývoja so spoľahlivosťou kódu.
 
-\subsubsection{Tok dát (Data Flow)}
+\subsubsection*{FastAPI}
 
-\begin{enumerate}
-    \item Používateľ zadá otázku v~prirodzenom jazyku cez webové rozhranie
-    \item Frontend odošle požiadavku na Backend API (\texttt{/api/ask})
-    \item Backend získa schému databázy
-    \item Query Generator (GPT-4.1) vygeneruje SQL dotaz
-    \item Dotaz sa vykoná nad databázou (READ-ONLY)
-    \item Response Summarizer (Gemini 2.5) vytvorí textovú sumarizáciu
-    \item Odpoveď sa vráti používateľovi
-\end{enumerate}
+Moderný, asynchrónny webový framework pre budovanie REST API v~Pythone. FastAPI je postavený na štandarde ASGI a~knižnici Starlette, čo mu umožňuje natívne spracovávať asynchrónne požiadavky s~vysokou priepustnosťou. Automaticky generuje OpenAPI dokumentáciu na základe typových anotácií, čím výrazne znižuje objem manuálnej dokumentácie. Integrácia s~knižnicou Pydantic zabezpečuje automatickú validáciu vstupných a~výstupných dát. FastAPI patrí medzi najrýchlejšie Python frameworky pre webové API, čo ho robí vhodným pre aplikácie s~požiadavkami na nízku latenciu.
 
-\clearpage
+\subsubsection*{SQLAlchemy}
 
-\subsection{Technická architektúra (Low-Level)}
+Komplexná knižnica pre prácu s~relačnými databázami v~Pythone, fungujúca ako ORM (Object-Relational Mapping) aj ako nástroj pre priame SQL operácie. Poskytuje jednotné rozhranie pre komunikáciu s~rôznymi databázovými systémami - PostgreSQL, MySQL, MSSQL, Oracle a~ďalšími - prostredníctvom systému dialektov. SQLAlchemy Inspector umožňuje introspekciu databázových metadát, čo aplikácia využíva na dynamické načítavanie schémy. Connection pooling zabudovaný v~SQLAlchemy efektívne spravuje životný cyklus databázových spojení a~znižuje réžiu pri opakovaných pripojeniach.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=1.05\textwidth]{arch_VDA.png}
-\caption{Detailná architektúra systému s~komponentmi}
-\end{figure}
+\subsubsection*{OpenAI SDK}
+
+Oficiálna klientská knižnica pre komunikáciu s~OpenAI API a~kompatibilnými LLM endpointami. SDK poskytuje jednoduché rozhranie pre volanie modelov cez štandardizované Chat Completions API, pričom podporuje synchronné aj asynchrónne volania. Knižnica zabezpečuje správu HTTP spojení, serializáciu požiadaviek a~deserializáciu odpovedí vrátane štruktúrovaných výstupov. V~projekte sa používa nielen pre OpenAI modely (GPT-4.1), ale aj pre prístup k~modelom Google Gemini cez kompatibilný endpoint, čo umožňuje jednotné rozhranie pre viacero poskytovateľov LLM.
+
+\subsubsection*{Pydantic}
+
+Knižnica pre validáciu dát a~správu nastavení v~Pythone, postavená na typových anotáciách. Pydantic automaticky overuje typy, formáty a~obmedzenia vstupných dát pri ich spracovaní, čím predchádza chybám spôsobeným neplatnými vstupmi. V~kombinácii s~FastAPI definuje schémy pre API požiadavky a~odpovede, ktoré slúžia aj ako podklad pre automatickú OpenAPI dokumentáciu. Verzia 2 priniesla výrazné zlepšenie výkonu validácie a~rozšírenú podporu pre komplexné dátové modely. Pydantic Settings poskytuje typovo-bezpečné načítanie konfigurácie z~premenných prostredia.
+
+\subsubsection*{uv}
+
+Moderný správca Python balíčkov a~virtuálnych prostredí implementovaný v~jazyku Rust. Na rozdiel od tradičného nástroja pip je uv výrazne rýchlejší pri inštalácii závislostí vďaka paralelizácii a~agresívnemu cachovaniu. Podporuje správu závislostí cez súbor \texttt{pyproject.toml} a~deterministické zamykanie verzií cez \texttt{uv.lock}, čo zaručuje reprodukovateľné prostredie vo vývoji aj v~CI/CD pipeline. uv tiež zjednodušuje správu Python verzií a~virtuálnych prostredí v~jednom nástroji.
 
 
-
-\subsubsection{Backend komponenty}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{lp{9cm}}
-\toprule
-\textbf{Komponent} & \textbf{Popis} \\
-\midrule
-\texttt{DatabaseManager} & Správa pripojenia k~PostgreSQL, MySQL, Oracle, SQL Server; vynucovanie READ-ONLY módu; získavanie schémy \\
-\texttt{QueryGenerator} & LLM-based generovanie SQL dotazov pomocou Azure GPT-4.1 \\
-\texttt{ResponseSummarizer} & LLM-based sumarizácia výsledkov pomocou Google Gemini 2.5 Flash \\
-\texttt{RedisClient} & Multi-layer caching schémy, SQL queries, výsledkov a~sumarizácií pre optimalizáciu \\
-\texttt{SemanticQACache} & Semantic caching s~vektorovými embedingami a~kosínusovou podobnosťou \\
-\texttt{EntraIDAuth} & Validácia JWT tokenov z~Azure Entra ID a~bezpečnostný middleware \\
-\texttt{ChatHistory} & Správa chat histórie v~MongoDB s~indexovaním a~session manažmentom \\
-\texttt{MongoClient} & Asynchrónne pripojenie a~správa MongoDB databázy \\
-\texttt{ChartIntentDetector} & Detekcia požiadavky na grafickú vizualizáciu a~extrakcia parametrov grafu \\
-\texttt{ChartRenderer} & Vygenerovanie PNG grafu na základe SQL výsledkov pomocou Matplotlib \\
-\texttt{Router} & LLM-based rozhodovanie medzi Data Tools a~Database queries \\
-\bottomrule
-\end{tabular}
-\caption{Backend komponenty a~ich zodpovednosti}
-\end{table}
-
-\subsubsection{Router: LLM alebo preddefinovaný modul}
-
-Backend spracováva otázky cez komponent \texttt{Router}, ktorý rozhoduje, či je vhodnejšia databázová cesta alebo analytický modul. Pri databázovej ceste sa otázka preloží na SQL dotaz, dotaz sa vykoná nad pripojenou databázou a~výsledok sa sumarizuje. Pri analytickej ceste router odovzdá požiadavku modulom \texttt{data\_tools}, ktoré riešia úlohy vhodnejšie pre deterministické Python spracovanie.
-
-Motiváciou routera je skutočnosť, že nie každá analytická otázka je ideálna ako SQL dotaz. SQL je vhodné pre filtrovanie, agregácie, zoraďovanie, spojenia tabuliek a~výpočty, ktoré sa dajú jasne vyjadriť nad relačnou schémou. Naopak otázky typu detekcia anomálií, hľadanie chýbajúcich hodnôt, porovnanie distribúcií, štatistické testy alebo pokročilejšia transformácia dát môžu byť bezpečnejšie a~presnejšie riešené preddefinovaným Python modulom. Takýto modul vie použiť knižnice pre dátovú analýzu, vykonať kontrolované výpočty a~vrátiť štruktúrovaný výsledok bez toho, aby sa LLM pokúšal všetko vyjadriť jedným SQL dotazom.
-
-Router prijíma otázku používateľa, schému databázy a~kontext aktuálnej relácie. Jeho výstupom je jednoduché štruktúrované rozhodnutie, napríklad \texttt{database} alebo \texttt{data\_tools}, spolu so stručným dôvodom rozhodnutia. Implementácia kombinuje LLM-based klasifikáciu zámeru podľa promptu a~schémy s~preddefinovanými pravidlami pre typické dátové úlohy. Najprv sa vyhodnotia bezpečné deterministické pravidlá a~LLM sa použije pri nejednoznačných prípadoch.
-
-Tok spracovania je nasledovný:
-
-\begin{enumerate}
-    \item Router dostane otázku, databázovú schému a~kontext relácie.
-    \item Vyhodnotí, či je vhodnejšia cesta \texttt{database} alebo \texttt{data\_tools}.
-    \item Pri výstupe \texttt{database} backend spustí existujúcu NL2SQL pipeline.
-    \item Pri výstupe \texttt{data\_tools} backend vyberie a~spustí vhodný Python analytický modul.
-    \item Výsledok sa zjednotí do odpovede používateľovi, aby frontend nemusel rozlišovať internú cestu spracovania.
-\end{enumerate}
-
-Router rozširuje systém z~čisto text-to-SQL nástroja na všeobecnejší analytický orchestrátor. Zároveň ponecháva kontrolu nad rizikovejšími alebo štatisticky citlivými operáciami v~preddefinovaných moduloch, čo zlepšuje reprodukovateľnosť a~znižuje riziko, že LLM zvolí nesprávny výpočtový postup.
-
-\subsubsection{API Endpoints}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{llp{6cm}}
-\toprule
-\textbf{Endpoint} & \textbf{Metóda} & \textbf{Popis} \\
-\midrule
-\texttt{/api/ask} & POST & Hlavný endpoint - otázka $\rightarrow$ SQL $\rightarrow$ sumarizácia \\
-\texttt{/api/generate-sql} & POST & Generovanie SQL bez vykonania \\
-\texttt{/api/query-and-summarize} & POST & Vykonanie SQL a~sumarizácia \\
-\texttt{/api/connect-database} & POST & Pripojenie k~databáze \\
-\texttt{/api/disconnect-database} & POST & Odpojenie databázy \\
-\texttt{/api/schema} & GET & Získanie schémy databázy \\
-\texttt{/api/ask-chart} & POST & Vygenerovanie grafu na základe otázky \\
-\texttt{/api/new-chat} & POST & Vytvorenie novej chat session \\
-\texttt{/api/cache-stats} & GET & Štatistiky Redis cache \\
-\texttt{/api/history/\{session\_id\}} & GET & Získanie histórie chat session \\
-\texttt{/api/sessions} & GET & Zoznam sessions používateľa \\
-\texttt{/api/mongo/sessions} & GET & Zoznam sessions z~MongoDB \\
-\texttt{/api/database/status} & GET & Stav pripojenia k~databáze \\
-\bottomrule
-\end{tabular}
-\caption{REST API endpoints}
-\end{table}
-
-\subsubsection{Bezpečnostné mechanizmy}
-
-Systém implementuje viacúrovňové zabezpečenie pre READ-ONLY prístup:
-
-\begin{enumerate}
-    \item \textbf{LLM Prompt} - Systémový prompt zakazuje generovanie modifikačných príkazov
-    \item \textbf{Regex validácia} - Kontrola nebezpečných kľúčových slov (INSERT, UPDATE, DELETE, DROP...)
-    \item \textbf{SQL Session} - Nastavenie \texttt{SET TRANSACTION READ ONLY} na úrovni databázy
-\end{enumerate}
+\subsection{Frontend technológie}
 
 
-\subsubsection{Frontend komponenty}
+\subsubsection*{React}
 
-\begin{table}[H]
-\centering
-\begin{tabular}{lp{9cm}}
-\toprule
-\textbf{Komponent} & \textbf{Popis} \\
-\midrule
-\texttt{HomePage} & Hlavná stránka aplikácie, správa stavu pripojenia \\
-\texttt{Chat} & Chat rozhranie pre komunikáciu s~analytikom \\
-\texttt{SideBar} & Bočný panel s~ovládacími prvkami \\
-\texttt{DatabaseModal} & Modal pre zadanie pripojovacích údajov k~databáze \\
-\texttt{InputQuestion} & Vstupné pole pre zadávanie otázok \\
-\texttt{UserMessage} & Zobrazenie správ v~chate \\
-\bottomrule
-\end{tabular}
-\caption{React komponenty frontendu}
-\end{table}
+JavaScriptová knižnica pre budovanie používateľských rozhraní. React zavádza komponentový model vývoja, kde sa UI skladá z~nezávislých, znovupoužiteľných komponentov s~vlastným stavom a~logikou. Virtuálny DOM zabezpečuje efektívne aktualizácie rozhrania tým, že minimalizuje priame manipulácie s~reálnym DOM stromom. Systém hookov (\texttt{useState}, \texttt{useEffect} a~ďalšie) umožňuje správu stavu a~vedľajších efektov vo funkcionálnych komponentoch bez potreby tried. React je v~súčasnosti jednou z~najrozšírenejších knižníc pre tvorbu webových aplikácií s~rozsiahlym ekosystémom doplnkov.
+
+\subsubsection*{Vite}
+
+Moderný build nástroj a~vývojový server pre JavaScript aplikácie. Vite využíva natívne ES moduly prehliadača počas vývoja, čo eliminuje potrebu bundlovania a~dramaticky skracuje čas štartu vývojového servera. Pre produkčné buildy používa Rollup, ktorý generuje optimalizované a~minifikované výstupy. Hot Module Replacement (HMR) v~prostredí Vite funguje takmer okamžite aj pri veľkých projektoch, čo výrazne zrýchľuje iteračný vývoj. Vite je navrhnutý ako nástupca starších nástrojov ako webpack a~Create React App.
+
+\subsubsection*{Tailwind CSS}
+
+Utility-first CSS framework, ktorý namiesto preddefinovaných komponentov poskytuje nízkoúrovňové CSS triedy aplikovateľné priamo v~HTML. Tento prístup eliminuje potrebu písania vlastných CSS súborov pre väčšinu prípadov a~vedie k~konzistentnejšiemu vizuálnemu dizajnu. Tailwind obsahuje rozsiahly systém designových tokenov pre farby, medzery, typografiu a~ďalšie vlastnosti. Produkčný build automaticky odstraňuje nepoužívané CSS triedy (tree-shaking), čím minimalizuje veľkosť výsledného CSS súboru. Responzívny dizajn je riešený pomocou prefixov breakpointov priamo v~triede.
+
+\subsubsection*{Axios}
+
+HTTP klientská knižnica pre JavaScript podporujúca požiadavky z~prehliadača aj z~prostredia Node.js. Axios poskytuje jednotné Promise-based API pre vykonávanie HTTP požiadaviek s~automatickou serializáciou JSON dát. Podporuje interceptory pre globálne spracovanie požiadaviek a~odpovedí, čo uľahčuje implementáciu autentifikácie a~centralizovaného spracovania chýb. Na rozdiel od natívneho \texttt{fetch} API automaticky odmietne Promise pri HTTP chybových stavoch (4xx, 5xx) a~poskytuje detailnejšie chybové objekty. V~projekte je nakonfigurovaný centrálny Axios klient so základnou URL adresou backendu a~spoločnými hlavičkami.
+
+
+\subsection{Infraštruktúra}
+
+
+\subsubsection*{Docker}
+
+Platforma pre kontajnerizáciu aplikácií, ktorá zabaľuje aplikáciu a~všetky jej závislosti do izolovaného, prenosného kontajnera. Kontajnery zdieľajú jadro operačného systému hostiteľa, čo ich robí oveľa ľahšími ako tradičné virtuálne stroje. Dockerfile definuje sériu inštrukción pre zostavenie obrazu, čím zabezpečuje plne reprodukovateľné prostredie nezávislé od konfigurácie hostiteľského systému. Docker eliminuje problém „funguje to iba u~mňa" a~zjednodušuje nasadenie aplikácií na rôzne infraštruktúry. Je základným stavebným kameňom moderných CI/CD pipeline a~cloudových nasadení.
+
+\subsubsection*{Docker Compose}
+
+Nástroj pre definovanie a~spúšťanie viacerých Docker kontajnerov ako jednej aplikácie pomocou YAML konfiguračného súboru. Docker Compose umožňuje deklaratívne definovať služby, siete a~volumes, čo zjednodušuje orchestráciu komplexných aplikácií skladajúcich sa z~viacerých komponentov (backend, frontend, databáza, cache). Príkazom \texttt{docker compose up} sa spustia všetky služby s~ich závislosťami v~správnom poradí. V~projekte sa Docker Compose využíva nielen pre hlavnú aplikáciu, ale aj pre správu rôznych testovacích databáz, pričom každý databázový systém má vlastný konfiguračný súbor.
+
+\subsubsection*{Redis}
+
+In-memory databáza a~cache systém s~otvorených zdrojovým kódom, optimalizovaná pre extrémne rýchly prístup k~dátam. Redis ukladá dáta primárne v~operačnej pamäti, čo umožňuje časy odozvy v~rádoch mikrosekúnd. Podporuje rôzne dátové štruktúry - reťazce, zoznamy, množiny, zoradené množiny a~hashe - čo ho robí vhodným pre široké spektrum prípadov použitia od cachovania po správu frontov. TTL (Time-To-Live) mechanizmus umožňuje automatické vypršanie uložených dát, čo je kľúčové pre udržiavanie aktuálnosti cache. V~projekte Redis slúži pre štyri úrovne cachovania a~pre ukladanie sémantických embeddingov.
+
+\subsection{AI/ML modely}
+
+\begin{itemize}
+    \item \textbf{GPT-4.1 (Azure)} - Generovanie SQL dotazov
+    \item \textbf{Gemini 2.5 Flash (Vertex AI)} - Sumarizácia výsledkov
+\end{itemize}
 
 \clearpage
 
@@ -416,7 +397,7 @@ Adresárová štruktúra projektu je nasledovná:
 Architektúra frontendu je postavená na jednosmernom toku dát zhora nadol, typickom pre aplikácie v~Reacte. Centrálnym bodom aplikácie je hlavný kontajner, komponent \texttt{HomePage.jsx}. Tento komponent zabezpečuje stav celej aplikácie a~koordinuje komunikáciu medzi vnorenými modulmi.
 
 Dáta a~stavy (napr. informácia, či je aplikácia pripojená k~databáze, alebo aká je aktívna relácia) sa posúvajú do podriadených komponentov pomocou takzvaných \textit{props} (vlastností). Ak vnorený komponent, akým je napríklad \texttt{SideBar}, zaznamená akciu používateľa, nevymieňa si túto informáciu priamo s~chatom, ale vyvolá príslušnú callback funkciu smerom nahor do \texttt{HomePage}. Tam sa stav vyhodnotí a~podľa potreby sa zmení zobrazenie alebo sa vyvolá varovné modálne okno na prepnutie databázy.
-
+\clearpage
 \subsection{Správa stavu (State Management)}
 
 Aplikácia využíva lokálnu správu stavov, nakoľko zložitosť toku dát plne pokrývajú natívne hooky \texttt{useState} a~\texttt{useEffect}. Globálna logika pripojenia k~databáze je pre lepšiu prehľadnosť abstrahovaná v~rámci vlastného hooku \texttt{useDatabase}. Tento hook poskytuje aplikácii zoznam metód (\texttt{connect}, \texttt{disconnect}) a~stavových indikátorov (\texttt{loading}, \texttt{error}, \texttt{sessionId}), vďaka čomu sa nezahlcuje samotná prezentačná vrstva zložitými operáciami.
@@ -503,152 +484,6 @@ Vrchná informačná a~navigačná lišta reprezentuje aktuálne prihláseného 
 \includegraphics[width=0.85\textwidth,height=0.35\textheight,keepaspectratio]{ukazka_chatheader.png}
 \caption{Horná lišta ChatHeader}
 \end{figure}
-
-\clearpage
-
-\section{Výber a~testovanie LLM modelov}
-
-Pri návrhu systému bolo kľúčové rozhodnúť, ktoré veľké jazykové modely (LLM) použiť pre jednotlivé úlohy. Keďže systém vyžaduje dva odlišné typy spracovania - generovanie SQL dotazov a~sumarizáciu výsledkov - rozhodli sme sa pre špecializovaný prístup s~využitím rôznych modelov.
-
-\subsection{Metodológia testovania}
-
-Pre objektívne porovnanie výkonnosti LLM modelov sme vytvorili testovací skript, ktorý automatizovane vyhodnocoval schopnosti modelov riešiť SQL problémy. Ako zdroj testovacích úloh sme použili problémy z~platformy \textbf{HackerRank}, ktorá poskytuje široké spektrum SQL výziev rôznej obtiažnosti.
-
-Testovací proces zahŕňal:
-\begin{enumerate}
-    \item \textbf{Kolekcia problémov} - Výber 50+ SQL problémov z~HackerRank (easy, medium, hard)
-    \item \textbf{Automatizované testovanie} - Skript generoval dotazy pomocou každého modelu
-    \item \textbf{Validácia výsledkov} - Porovnanie vygenerovaných dotazov s~očakávanými výstupmi
-    \item \textbf{Meranie metrík} - Presnosť, čas odozvy, konzistencia výstupov
-\end{enumerate}
-
-\subsection{Porovnávané modely}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{ll}
-\toprule
-\textbf{Model} & \textbf{Poskytovateľ}  \\
-\midrule
-GPT-4.1 & OpenAI/Azure  \\
-GPT-4o & OpenAI/Azure  \\
-GPT-3.5-turbo & OpenAI/Azure  \\
-Gemini 2.5 Flash & Google  \\
-Gemini 2.5 Pro & Google  \\
-Claude 4 Sonnet & Anthropic  \\
-\bottomrule
-\end{tabular}
-\caption{Porovnávané LLM modely a~ich testované úlohy}
-\end{table}
-
-\subsection{Výsledky testovania - SQL generácia}
-
-Pre generovanie SQL dotazov sme testovali modely na nasledujúcich kritériách:
-
-\begin{itemize}
-    \item \textbf{Syntaktická správnosť} - Percentuálna úspešnosť generovania validného SQL
-    \item \textbf{Sémantická presnosť} - Či dotaz vracia očakávané výsledky
-    \item \textbf{Dodržiavanie pravidiel} - Generovanie len READ-ONLY dotazov
-    \item \textbf{Konzistencia} - Stabilita výstupov pri opakovaných dotazoch
-\end{itemize}
-
-\textbf{GPT-4.1} dosiahol dobré výsledky v~syntaktickej aj sémantickej presnosti, pričom dosiahol aj dodržiavanie READ-ONLY pravidiel. Napriek vyššej latencii a mierne vyššej cene sme ho zvolili pre kritickú úlohu generovania SQL.
-
-\subsection{Výsledky testovania - Sumarizácia}
-
-Pre sumarizáciu výsledkov sme hodnotili:
-
-\begin{itemize}
-    \item \textbf{Zrozumiteľnosť} - Kvalita textu pre netechnických používateľov
-    \item \textbf{Faktická správnosť} - Presnosť interpretácie dát
-    \item \textbf{Rýchlosť} - Čas potrebný na generovanie odpovede
-    \item \textbf{Cena} - Náklady na API volania
-\end{itemize}
-
-\textbf{Gemini 2.5 Flash} ponúkol optimálny pomer kvality, rýchlosti a~ceny. Pri minimálnom rozdiele v~kvalite oproti drahším modelom poskytuje výrazne nižšiu latenciu, náklady a veľké kontextové okno.
-
-\subsection{Záver výberu modelov}
-
-Na základe testovania sme sa rozhodli pre kombináciu:
-
-\begin{itemize}
-    \item \textbf{GPT-4.1 (Azure)} pre generovanie SQL: dobrá presnosť a~spoľahlivosť pri dodržiavaní bezpečnostných pravidiel
-    \item \textbf{Gemini 2.5 Flash (Vertex AI)} pre sumarizáciu: optimálny pomer veľkosť/cena/rýchlosť
-\end{itemize}
-
-
-\clearpage
-
-\section{Použité technológie - detailný prehľad}
-
-\subsection{Backend technológie}
-
-\subsubsection*{Python 3.12+}
-
-Hlavný programovací jazyk aplikácie. Python je interpretovaný, vysokoúrovňový jazyk so silným ekosystémom knižníc pre dátovú vedu, strojové učenie a~webový vývoj. Verzia 3.12 prináša výrazné zlepšenia výkonu interprétera a~rozšírenú podporu asynchrónneho programovania. Vďaka jednoduchej syntaxi a~rozsiahlej komunite je Python de facto štandardom pre aplikácie využívajúce LLM modely a~AI integrácie. Jeho dynamická typovosť je dopĺňaná nástrojmi pre statickú analýzu, čo umožňuje kombináciu rýchlosti vývoja so spoľahlivosťou kódu.
-
-\subsubsection*{FastAPI}
-
-Moderný, asynchrónny webový framework pre budovanie REST API v~Pythone. FastAPI je postavený na štandarde ASGI a~knižnici Starlette, čo mu umožňuje natívne spracovávať asynchrónne požiadavky s~vysokou priepustnosťou. Automaticky generuje OpenAPI dokumentáciu na základe typových anotácií, čím výrazne znižuje objem manuálnej dokumentácie. Integrácia s~knižnicou Pydantic zabezpečuje automatickú validáciu vstupných a~výstupných dát. FastAPI patrí medzi najrýchlejšie Python frameworky pre webové API, čo ho robí vhodným pre aplikácie s~požiadavkami na nízku latenciu.
-
-\subsubsection*{SQLAlchemy}
-
-Komplexná knižnica pre prácu s~relačnými databázami v~Pythone, fungujúca ako ORM (Object-Relational Mapping) aj ako nástroj pre priame SQL operácie. Poskytuje jednotné rozhranie pre komunikáciu s~rôznymi databázovými systémami - PostgreSQL, MySQL, MSSQL, Oracle a~ďalšími - prostredníctvom systému dialektov. SQLAlchemy Inspector umožňuje introspekciu databázových metadát, čo aplikácia využíva na dynamické načítavanie schémy. Connection pooling zabudovaný v~SQLAlchemy efektívne spravuje životný cyklus databázových spojení a~znižuje réžiu pri opakovaných pripojeniach.
-
-\subsubsection*{OpenAI SDK}
-
-Oficiálna klientská knižnica pre komunikáciu s~OpenAI API a~kompatibilnými LLM endpointami. SDK poskytuje jednoduché rozhranie pre volanie modelov cez štandardizované Chat Completions API, pričom podporuje synchronné aj asynchrónne volania. Knižnica zabezpečuje správu HTTP spojení, serializáciu požiadaviek a~deserializáciu odpovedí vrátane štruktúrovaných výstupov. V~projekte sa používa nielen pre OpenAI modely (GPT-4.1), ale aj pre prístup k~modelom Google Gemini cez kompatibilný endpoint, čo umožňuje jednotné rozhranie pre viacero poskytovateľov LLM.
-
-\subsubsection*{Pydantic}
-
-Knižnica pre validáciu dát a~správu nastavení v~Pythone, postavená na typových anotáciách. Pydantic automaticky overuje typy, formáty a~obmedzenia vstupných dát pri ich spracovaní, čím predchádza chybám spôsobeným neplatnými vstupmi. V~kombinácii s~FastAPI definuje schémy pre API požiadavky a~odpovede, ktoré slúžia aj ako podklad pre automatickú OpenAPI dokumentáciu. Verzia 2 priniesla výrazné zlepšenie výkonu validácie a~rozšírenú podporu pre komplexné dátové modely. Pydantic Settings poskytuje typovo-bezpečné načítanie konfigurácie z~premenných prostredia.
-
-\subsubsection*{uv}
-
-Moderný správca Python balíčkov a~virtuálnych prostredí implementovaný v~jazyku Rust. Na rozdiel od tradičného nástroja pip je uv výrazne rýchlejší pri inštalácii závislostí vďaka paralelizácii a~agresívnemu cachovaniu. Podporuje správu závislostí cez súbor \texttt{pyproject.toml} a~deterministické zamykanie verzií cez \texttt{uv.lock}, čo zaručuje reprodukovateľné prostredie vo vývoji aj v~CI/CD pipeline. uv tiež zjednodušuje správu Python verzií a~virtuálnych prostredí v~jednom nástroji.
-
-
-\subsection{Frontend technológie}
-
-
-\subsubsection*{React}
-
-JavaScriptová knižnica pre budovanie používateľských rozhraní. React zavádza komponentový model vývoja, kde sa UI skladá z~nezávislých, znovupoužiteľných komponentov s~vlastným stavom a~logikou. Virtuálny DOM zabezpečuje efektívne aktualizácie rozhrania tým, že minimalizuje priame manipulácie s~reálnym DOM stromom. Systém hookov (\texttt{useState}, \texttt{useEffect} a~ďalšie) umožňuje správu stavu a~vedľajších efektov vo funkcionálnych komponentoch bez potreby tried. React je v~súčasnosti jednou z~najrozšírenejších knižníc pre tvorbu webových aplikácií s~rozsiahlym ekosystémom doplnkov.
-
-\subsubsection*{Vite}
-
-Moderný build nástroj a~vývojový server pre JavaScript aplikácie. Vite využíva natívne ES moduly prehliadača počas vývoja, čo eliminuje potrebu bundlovania a~dramaticky skracuje čas štartu vývojového servera. Pre produkčné buildy používa Rollup, ktorý generuje optimalizované a~minifikované výstupy. Hot Module Replacement (HMR) v~prostredí Vite funguje takmer okamžite aj pri veľkých projektoch, čo výrazne zrýchľuje iteračný vývoj. Vite je navrhnutý ako nástupca starších nástrojov ako webpack a~Create React App.
-
-\subsubsection*{Tailwind CSS}
-
-Utility-first CSS framework, ktorý namiesto preddefinovaných komponentov poskytuje nízkoúrovňové CSS triedy aplikovateľné priamo v~HTML. Tento prístup eliminuje potrebu písania vlastných CSS súborov pre väčšinu prípadov a~vedie k~konzistentnejšiemu vizuálnemu dizajnu. Tailwind obsahuje rozsiahly systém designových tokenov pre farby, medzery, typografiu a~ďalšie vlastnosti. Produkčný build automaticky odstraňuje nepoužívané CSS triedy (tree-shaking), čím minimalizuje veľkosť výsledného CSS súboru. Responzívny dizajn je riešený pomocou prefixov breakpointov priamo v~triede.
-
-\subsubsection*{Axios}
-
-HTTP klientská knižnica pre JavaScript podporujúca požiadavky z~prehliadača aj z~prostredia Node.js. Axios poskytuje jednotné Promise-based API pre vykonávanie HTTP požiadaviek s~automatickou serializáciou JSON dát. Podporuje interceptory pre globálne spracovanie požiadaviek a~odpovedí, čo uľahčuje implementáciu autentifikácie a~centralizovaného spracovania chýb. Na rozdiel od natívneho \texttt{fetch} API automaticky odmietne Promise pri HTTP chybových stavoch (4xx, 5xx) a~poskytuje detailnejšie chybové objekty. V~projekte je nakonfigurovaný centrálny Axios klient so základnou URL adresou backendu a~spoločnými hlavičkami.
-
-
-\subsection{Infraštruktúra}
-
-
-\subsubsection*{Docker}
-
-Platforma pre kontajnerizáciu aplikácií, ktorá zabaľuje aplikáciu a~všetky jej závislosti do izolovaného, prenosného kontajnera. Kontajnery zdieľajú jadro operačného systému hostiteľa, čo ich robí oveľa ľahšími ako tradičné virtuálne stroje. Dockerfile definuje sériu inštrukción pre zostavenie obrazu, čím zabezpečuje plne reprodukovateľné prostredie nezávislé od konfigurácie hostiteľského systému. Docker eliminuje problém „funguje to iba u~mňa" a~zjednodušuje nasadenie aplikácií na rôzne infraštruktúry. Je základným stavebným kameňom moderných CI/CD pipeline a~cloudových nasadení.
-
-\subsubsection*{Docker Compose}
-
-Nástroj pre definovanie a~spúšťanie viacerých Docker kontajnerov ako jednej aplikácie pomocou YAML konfiguračného súboru. Docker Compose umožňuje deklaratívne definovať služby, siete a~volumes, čo zjednodušuje orchestráciu komplexných aplikácií skladajúcich sa z~viacerých komponentov (backend, frontend, databáza, cache). Príkazom \texttt{docker compose up} sa spustia všetky služby s~ich závislosťami v~správnom poradí. V~projekte sa Docker Compose využíva nielen pre hlavnú aplikáciu, ale aj pre správu rôznych testovacích databáz, pričom každý databázový systém má vlastný konfiguračný súbor.
-
-\subsubsection*{Redis}
-
-In-memory databáza a~cache systém s~otvorených zdrojovým kódom, optimalizovaná pre extrémne rýchly prístup k~dátam. Redis ukladá dáta primárne v~operačnej pamäti, čo umožňuje časy odozvy v~rádoch mikrosekúnd. Podporuje rôzne dátové štruktúry - reťazce, zoznamy, množiny, zoradené množiny a~hashe - čo ho robí vhodným pre široké spektrum prípadov použitia od cachovania po správu frontov. TTL (Time-To-Live) mechanizmus umožňuje automatické vypršanie uložených dát, čo je kľúčové pre udržiavanie aktuálnosti cache. V~projekte Redis slúži pre štyri úrovne cachovania a~pre ukladanie sémantických embeddingov.
-
-\subsection{AI/ML modely}
-
-\begin{itemize}
-    \item \textbf{GPT-4.1 (Azure)} - Generovanie SQL dotazov
-    \item \textbf{Gemini 2.5 Flash (Vertex AI)} - Sumarizácia výsledkov
-\end{itemize}
 
 \clearpage
 
@@ -825,7 +660,7 @@ Frontend zároveň uchováva identifikátor aktuálnej session pomocou \texttt{l
 
 \subsection{Redis - cachovanie}
 
-Pre zrýchlenie opakovaných operácií systém využíva Redis ako in-memory cache. Redis sa pripája pri štarte aplikácie v~rámci životného cyklu FastAPI. Implementácia je navrhnutá ako \textit{best-effort} vrstva: ak Redis nie je dostupný, backend pokračuje bez cache a~vykoná štandardné volania databázy alebo LLM modelov. Všetky cache hodnoty sa ukladajú ako JSON a~čítajú sa cez spoločný modul \texttt{redis\_client.py}, ktorý zapuzdruje operácie \texttt{get}, \texttt{set}, \texttt{incr}, prácu so zoradenými množinami a~mazanie podľa vzoru.
+Pre zrýchlenie opakovaných operácií systém využíva Redis ako in-memory cache. Redis sa pripája pri štarte aplikácie v~rámci životného cyklu FastAPI. Implementácia je navrhnutá ako \textit{best-effort} vrstva: ak Redis nie je dostupný, backend pokračuje bez cache a~vykoná štandardné volania  LLM modelov. Všetky cache hodnoty sa ukladajú ako JSON a~čítajú sa cez spoločný modul \texttt{redis\_client.py}, ktorý zapuzdruje operácie \texttt{get}, \texttt{set}, \texttt{incr}, prácu so zoradenými množinami a~mazanie podľa vzoru.
 
 Cache kľúče sú odvodené od prefixu \texttt{vda} a~odtlačku aktuálneho databázového pripojenia. Odtlačok vzniká ako krátky hash connection stringu, takže údaje z~jednej databázy sa nemôžu omylom použiť pri práci s~inou databázou. Pri otázkach sa navyše používa normalizovaná signatúra otázky, pri SQL výsledkoch hash normalizovaného SQL dotazu a~pri sumarizácii aj hash pôvodnej otázky ako kontextu. Pri nadväzujúcich otázkach sa do kľúča pre NL2SQL pridáva aj hash kontextu konverzácie, aby sa rovnaká krátka otázka typu „teraz len top 10" nevyhodnotila bez predchádzajúceho významu.
 
@@ -878,6 +713,218 @@ Každá odpoveď z~API obsahuje HTTP hlavičky s~informáciami o~stave cache:
 \end{itemize}
 
 Tieto hlavičky umožňujú rýchlu diagnostiku výkonu systému priamo z~HTTP klienta alebo vývojárskych nástrojov prehliadača.
+
+\clearpage
+
+\section{Architektúra systému}
+
+\subsection{Vysokoúrovňová architektúra (High-Level)}
+
+Systém je navrhnutý ako \textbf{trojvrstvová architektúra} s~jasne oddelenými zodpovednosťami:
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1.05\textwidth]{high_level_VDA.png}
+\caption{Vysokoúrovňová architektúra systému}
+\end{figure}
+
+\subsubsection{Tok dát (Data Flow)}
+
+\begin{enumerate}
+    \item Používateľ zadá otázku v~prirodzenom jazyku cez webové rozhranie
+    \item Frontend odošle požiadavku na Backend API (\texttt{/api/ask})
+    \item Backend získa schému databázy
+    \item Query Generator (GPT-4.1) vygeneruje SQL dotaz
+    \item Dotaz sa vykoná nad databázou (READ-ONLY)
+    \item Response Summarizer (Gemini 2.5) vytvorí textovú sumarizáciu
+    \item Odpoveď sa vráti používateľovi
+\end{enumerate}
+
+\clearpage
+
+\subsection{Technická architektúra (Low-Level)}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1.05\textwidth]{arch_VDA.png}
+\caption{Detailná architektúra systému s~komponentmi}
+\end{figure}
+
+
+
+\subsubsection{Backend komponenty}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Komponent} & \textbf{Popis} \\
+\midrule
+\texttt{DatabaseManager} & Správa pripojenia k~PostgreSQL, MySQL, Oracle, SQL Server; vynucovanie READ-ONLY módu; získavanie schémy \\
+\texttt{QueryGenerator} & LLM-based generovanie SQL dotazov pomocou Azure GPT-4.1 \\
+\texttt{ResponseSummarizer} & LLM-based sumarizácia výsledkov pomocou Google Gemini 2.5 Flash \\
+\texttt{RedisClient} & Multi-layer caching schémy, SQL queries, výsledkov a~sumarizácií pre optimalizáciu \\
+\texttt{SemanticQACache} & Semantic caching s~vektorovými embedingami a~kosínusovou podobnosťou \\
+\texttt{EntraIDAuth} & Validácia JWT tokenov z~Azure Entra ID a~bezpečnostný middleware \\
+\texttt{ChatHistory} & Správa chat histórie v~MongoDB s~indexovaním a~session manažmentom \\
+\texttt{MongoClient} & Asynchrónne pripojenie a~správa MongoDB databázy \\
+\texttt{ChartIntentDetector} & Detekcia požiadavky na grafickú vizualizáciu a~extrakcia parametrov grafu \\
+\texttt{ChartRenderer} & Vygenerovanie PNG grafu na základe SQL výsledkov pomocou Matplotlib \\
+\texttt{Router} & LLM-based rozhodovanie medzi Data Tools a~Database queries \\
+\bottomrule
+\end{tabular}
+\caption{Backend komponenty a~ich zodpovednosti}
+\end{table}
+
+\subsubsection{Router: LLM alebo preddefinovaný modul}
+
+Backend spracováva otázky cez komponent \texttt{Router}, ktorý rozhoduje, či je vhodnejšia databázová cesta alebo analytický modul. Pri databázovej ceste sa otázka preloží na SQL dotaz, dotaz sa vykoná nad pripojenou databázou a~výsledok sa sumarizuje. Pri analytickej ceste router odovzdá požiadavku modulom \texttt{data\_tools}, ktoré riešia úlohy vhodnejšie pre deterministické Python spracovanie.
+
+Motiváciou routera je skutočnosť, že nie každá analytická otázka je ideálna ako SQL dotaz. SQL je vhodné pre filtrovanie, agregácie, zoraďovanie, spojenia tabuliek a~výpočty, ktoré sa dajú jasne vyjadriť nad relačnou schémou. Naopak otázky typu detekcia anomálií, hľadanie chýbajúcich hodnôt, porovnanie distribúcií, štatistické testy alebo pokročilejšia transformácia dát môžu byť bezpečnejšie a~presnejšie riešené preddefinovaným Python modulom. Takýto modul vie použiť knižnice pre dátovú analýzu, vykonať kontrolované výpočty a~vrátiť štruktúrovaný výsledok bez toho, aby sa LLM pokúšal všetko vyjadriť jedným SQL dotazom.
+
+Router prijíma otázku používateľa, schému databázy a~kontext aktuálnej relácie. Jeho výstupom je jednoduché štruktúrované rozhodnutie, napríklad \texttt{database} alebo \texttt{data\_tools}, spolu so stručným dôvodom rozhodnutia. Implementácia kombinuje LLM-based klasifikáciu zámeru podľa promptu a~schémy s~preddefinovanými pravidlami pre typické dátové úlohy. Najprv sa vyhodnotia bezpečné deterministické pravidlá a~LLM sa použije pri nejednoznačných prípadoch.
+
+Tok spracovania je nasledovný:
+
+\begin{enumerate}
+    \item Router dostane otázku, databázovú schému a~kontext relácie.
+    \item Vyhodnotí, či je vhodnejšia cesta \texttt{database} alebo \texttt{data\_tools}.
+    \item Pri výstupe \texttt{database} backend spustí existujúcu NL2SQL pipeline.
+    \item Pri výstupe \texttt{data\_tools} backend vyberie a~spustí vhodný Python analytický modul.
+    \item Výsledok sa zjednotí do odpovede používateľovi, aby frontend nemusel rozlišovať internú cestu spracovania.
+\end{enumerate}
+
+Router rozširuje systém z~čisto text-to-SQL nástroja na všeobecnejší analytický orchestrátor. Zároveň ponecháva kontrolu nad rizikovejšími alebo štatisticky citlivými operáciami v~preddefinovaných moduloch, čo zlepšuje reprodukovateľnosť a~znižuje riziko, že LLM zvolí nesprávny výpočtový postup.
+
+\subsubsection{API Endpoints}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{6cm}}
+\toprule
+\textbf{Endpoint} & \textbf{Metóda} & \textbf{Popis} \\
+\midrule
+\texttt{/api/ask} & POST & Hlavný endpoint - otázka $\rightarrow$ SQL $\rightarrow$ sumarizácia \\
+\texttt{/api/generate-sql} & POST & Generovanie SQL bez vykonania \\
+\texttt{/api/query-and-summarize} & POST & Vykonanie SQL a~sumarizácia \\
+\texttt{/api/connect-database} & POST & Pripojenie k~databáze \\
+\texttt{/api/disconnect-database} & POST & Odpojenie databázy \\
+\texttt{/api/schema} & GET & Získanie schémy databázy \\
+\texttt{/api/ask-chart} & POST & Vygenerovanie grafu na základe otázky \\
+\texttt{/api/new-chat} & POST & Vytvorenie novej chat session \\
+\texttt{/api/cache-stats} & GET & Štatistiky Redis cache \\
+\texttt{/api/history/\{session\_id\}} & GET & Získanie histórie chat session \\
+\texttt{/api/sessions} & GET & Zoznam sessions používateľa \\
+\texttt{/api/mongo/sessions} & GET & Zoznam sessions z~MongoDB \\
+\texttt{/api/database/status} & GET & Stav pripojenia k~databáze \\
+\bottomrule
+\end{tabular}
+\caption{REST API endpoints}
+\end{table}
+
+\subsubsection{Bezpečnostné mechanizmy}
+
+Systém implementuje viacúrovňové zabezpečenie pre READ-ONLY prístup:
+
+\begin{enumerate}
+    \item \textbf{LLM Prompt} - Systémový prompt zakazuje generovanie modifikačných príkazov
+    \item \textbf{Regex validácia} - Kontrola nebezpečných kľúčových slov (INSERT, UPDATE, DELETE, DROP...)
+    \item \textbf{SQL Session} - Nastavenie \texttt{SET TRANSACTION READ ONLY} na úrovni databázy
+\end{enumerate}
+
+
+\subsubsection{Frontend komponenty}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Komponent} & \textbf{Popis} \\
+\midrule
+\texttt{HomePage} & Hlavná stránka aplikácie, správa stavu pripojenia \\
+\texttt{Chat} & Chat rozhranie pre komunikáciu s~analytikom \\
+\texttt{SideBar} & Bočný panel s~ovládacími prvkami \\
+\texttt{DatabaseModal} & Modal pre zadanie pripojovacích údajov k~databáze \\
+\texttt{InputQuestion} & Vstupné pole pre zadávanie otázok \\
+\texttt{UserMessage} & Zobrazenie správ v~chate \\
+\bottomrule
+\end{tabular}
+\caption{React komponenty frontendu}
+\end{table}
+
+\clearpage
+
+\section{Výber a~testovanie LLM modelov}
+
+Pri návrhu systému bolo kľúčové rozhodnúť, ktoré veľké jazykové modely (LLM) použiť pre jednotlivé úlohy. Keďže systém vyžaduje dva odlišné typy spracovania - generovanie SQL dotazov a~sumarizáciu výsledkov - rozhodli sme sa pre špecializovaný prístup s~využitím rôznych modelov.
+
+\subsection{Metodológia testovania}
+
+Pre objektívne porovnanie výkonnosti LLM modelov sme vytvorili testovací skript, ktorý automatizovane vyhodnocoval schopnosti modelov riešiť SQL problémy. Ako zdroj testovacích úloh sme použili problémy z~platformy \textbf{HackerRank}, ktorá poskytuje široké spektrum SQL výziev rôznej obtiažnosti.
+
+Testovací proces zahŕňal:
+\begin{enumerate}
+    \item \textbf{Kolekcia problémov} - Výber 50+ SQL problémov z~HackerRank (easy, medium, hard)
+    \item \textbf{Automatizované testovanie} - Skript generoval dotazy pomocou každého modelu
+    \item \textbf{Validácia výsledkov} - Porovnanie vygenerovaných dotazov s~očakávanými výstupmi
+    \item \textbf{Meranie metrík} - Presnosť, čas odozvy, konzistencia výstupov
+\end{enumerate}
+
+\subsection{Porovnávané modely}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Model} & \textbf{Poskytovateľ}  \\
+\midrule
+GPT-4.1 & OpenAI/Azure  \\
+GPT-4o & OpenAI/Azure  \\
+GPT-3.5-turbo & OpenAI/Azure  \\
+Gemini 2.5 Flash & Google  \\
+Gemini 2.5 Pro & Google  \\
+Claude 4 Sonnet & Anthropic  \\
+\bottomrule
+\end{tabular}
+\caption{Porovnávané LLM modely a~ich testované úlohy}
+\end{table}
+
+\subsection{Výsledky testovania - SQL generácia}
+
+Pre generovanie SQL dotazov sme testovali modely na nasledujúcich kritériách:
+
+\begin{itemize}
+    \item \textbf{Syntaktická správnosť} - Percentuálna úspešnosť generovania validného SQL
+    \item \textbf{Sémantická presnosť} - Či dotaz vracia očakávané výsledky
+    \item \textbf{Dodržiavanie pravidiel} - Generovanie len READ-ONLY dotazov
+    \item \textbf{Konzistencia} - Stabilita výstupov pri opakovaných dotazoch
+\end{itemize}
+
+\textbf{GPT-4.1} dosiahol dobré výsledky v~syntaktickej aj sémantickej presnosti, pričom dosiahol aj dodržiavanie READ-ONLY pravidiel. Napriek vyššej latencii a mierne vyššej cene sme ho zvolili pre kritickú úlohu generovania SQL.
+
+\subsection{Výsledky testovania - Sumarizácia}
+
+Pre sumarizáciu výsledkov sme hodnotili:
+
+\begin{itemize}
+    \item \textbf{Zrozumiteľnosť} - Kvalita textu pre netechnických používateľov
+    \item \textbf{Faktická správnosť} - Presnosť interpretácie dát
+    \item \textbf{Rýchlosť} - Čas potrebný na generovanie odpovede
+    \item \textbf{Cena} - Náklady na API volania
+\end{itemize}
+
+\textbf{Gemini 2.5 Flash} ponúkol optimálny pomer kvality, rýchlosti a~ceny. Pri minimálnom rozdiele v~kvalite oproti drahším modelom poskytuje výrazne nižšiu latenciu, náklady a veľké kontextové okno.
+
+\subsection{Záver výberu modelov}
+
+Na základe testovania sme sa rozhodli pre kombináciu:
+
+\begin{itemize}
+    \item \textbf{GPT-4.1 (Azure)} pre generovanie SQL: dobrá presnosť a~spoľahlivosť pri dodržiavaní bezpečnostných pravidiel
+    \item \textbf{Gemini 2.5 Flash (Vertex AI)} pre sumarizáciu: optimálny pomer veľkosť/cena/rýchlosť
+\end{itemize}
+
 
 \clearpage
 
