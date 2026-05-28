@@ -145,6 +145,14 @@ def format_schema(schema: dict) -> str:
             lines.append(f"  {col['column']} {col['type']} {nullable}")
     return "\n".join(lines)
 
+# TODO - PROMPT -> data tools
+ROUTER_SYSTEM_PROMT = """\
+You are a query router. Decide if the questionis best answered by:
+- "database": filtering, aggregation, sorting, joins, counts 
+- "data_tools": 
+
+RETURN ONLY JSON {"route": "database" | "data_tools", "reason": "short reason"}
+"""
 
 SUMMARIZER_SYSTEM_PROMPT = """\
 You are a data analyst assistant. Answer the user's question directly using the query results provided.
