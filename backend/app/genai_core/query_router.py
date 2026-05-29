@@ -17,13 +17,14 @@ class QueryRouter:
         return await self._llm_route(question, schema, context)
 
     def rule_based(self, question: str) -> dict | None:
+        # TODO add keywords
         data_tools_keywords = [
-            # TODO keywords
-            ""
+            "anomaly", "missing values", "distribution", "correlation",
+            "outlier"
         ]
         if any(kw in question.lower() for kw in data_tools_keywords):
             return {"route": "data_tools", "reason": ""}
-        return None
+        return None     # nejednoznačné → ide do LLM
 
     async def _llm_route(self, question: str, schema: dict, context: dict) -> dict:
         # LLM vráti JSON: {"route": "database"|"data_tools", "reason": "..."}

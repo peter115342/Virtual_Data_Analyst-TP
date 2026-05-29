@@ -149,7 +149,8 @@ def format_schema(schema: dict) -> str:
 ROUTER_SYSTEM_PROMT = """\
 You are a query router. Decide if the questionis best answered by:
 - "database": filtering, aggregation, sorting, joins, counts 
-- "data_tools": 
+- "data_tools": anomaly detection, missing values, distributions, 
+                statistical tests, correlation
 
 RETURN ONLY JSON {"route": "database" | "data_tools", "reason": "short reason"}
 """
