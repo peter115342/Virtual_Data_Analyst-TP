@@ -145,15 +145,27 @@ def format_schema(schema: dict) -> str:
             lines.append(f"  {col['column']} {col['type']} {nullable}")
     return "\n".join(lines)
 
-# TODO - PROMPT -> data tools
-ROUTER_SYSTEM_PROMT = """\
-You are a query router. Decide if the questionis best answered by:
-- "database": filtering, aggregation, sorting, joins, counts 
-- "data_tools": anomaly detection, missing values, distributions, 
-                statistical tests, correlation
+ROUTER_SYSTEM_PROMPT = """\
+You are a query router for a virtual data analyst.
 
-RETURN ONLY JSON {"route": "database" | "data_tools", "reason": "short reason"}
+Decide whether a user question should be answered by:
+- "database": SQL-friendly requests such as filtering, aggregation, sorting, joins, counts,
+  totals, averages, top/bottom lists, and direct row retrieval.
+- "data_tools": deterministic Python analysis such as missing/null values, outlier/anomaly
+  detection, table profiling, distributions, correlations, or statistical checks.
+
+When route is "data_tools", choose one tool:
+- "null_values": missing, null, empty, or incomplete values.
+- "outliers": outlier, anomaly, extreme, unusual, or suspicious numeric values.
+- "select_star": table/data profiling or broad SELECT * style inspection.
+
+Return ONLY JSON in this shape:
+{"route": "database" | "data_tools", "tool": "null_values" | "outliers" | "select_star" | null,
+"reason": "short reason"}
 """
+
+# Backward-compatible alias for the original misspelled constant name.
+ROUTER_SYSTEM_PROMT = ROUTER_SYSTEM_PROMPT
 
 SUMMARIZER_SYSTEM_PROMPT = """\
 You are a data analyst assistant. Answer the user's question directly using the query results provided.

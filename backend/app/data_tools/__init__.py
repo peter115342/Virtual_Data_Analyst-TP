@@ -1,4 +1,3 @@
-
 from app.data_tools import modules
 
 
@@ -13,7 +12,7 @@ async def run_data_tools(tool: str, data: list[dict]) -> dict:
     """
 
     if tool == "null_values":
-        return modules.null_values(data)
+        return modules.analyze_null_values(data)
 
     if tool == "outliers":
         return modules.analyze_outliers(data)
