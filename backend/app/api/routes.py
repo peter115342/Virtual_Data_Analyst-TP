@@ -16,6 +16,7 @@ from sqlalchemy import text
 from app.auth.entra import validate_token
 from app.cache import redis_client, semantic_qa_cache
 from app.config import settings
+from app.data_tools import run_data_tools
 from app.database import chat_history, connection
 from app.database.connection import get_db_manager
 from app.database.mongo import get_db
@@ -23,6 +24,7 @@ from app.database.utils import build_db_connection_url
 from app.genai_core.chart_intent import ChartIntentDetector
 from app.genai_core.chart_render import render_chart_png
 from app.genai_core.query_generator import QueryGenerator
+from app.genai_core.query_router import QueryRouter
 from app.genai_core.response_summarizer import ResponseSummarizer
 
 router = APIRouter(prefix="/api", tags=["api"])
@@ -557,6 +559,10 @@ class AskResponse(BaseModel):
     chart_data: list[dict] | None = None
     chart_image: str | None = None
     session_id: str | None = None
+    route: str | None = None
+    tool: str | None = None
+    routing_reason: str | None = None
+    tool_result: dict | None = None
 
 
 class QueryRequest(BaseModel):
@@ -805,6 +811,17 @@ async def generate_sql(
         raise HTTPException(status_code=500, detail=f"Error generating SQL: {str(e)}")
 
 
+def _data_tool_extraction_question(question: str, tool: str | None) -> str:
+    tool_hint = tool or "data_tools"
+    return (
+        "Return raw rows and columns needed for deterministic Python analysis. "
+        "Do not calculate the final analytical answer in SQL; do not aggregate unless the "
+        "original question explicitly requires pre-filtered aggregate rows. "
+        f"Python tool: {tool_hint}. "
+        f"Original question: {question}"
+    )
+
+
 @router.post("/ask", response_model=AskResponse)
 async def ask(
     request: AskRequest,
@@ -834,6 +851,7 @@ async def ask(
     try:
         db = get_db_manager()
         generator = QueryGenerator()
+        query_router = QueryRouter()
         summarizer = ResponseSummarizer()
         chart_detector = ChartIntentDetector()
         db_fp = _db_fingerprint(db)
@@ -846,16 +864,41 @@ async def ask(
                 print(f"Warning: failed to create chat session: {hist_err}")
 
         history_context = await get_chat_context(session_id)
-        semantic_cache_bypassed = _has_chat_context(history_context)
 
-        chart_intent = await chart_detector.detect_intent(request.question)
+        schema, schema_hit = await _get_cached_schema(db, db_fp)
+        dialect = await db.get_db_dialect()
+        routing = await query_router.route(request.question, schema, history_context)
+        route_name = routing.get("route", "database")
+        if route_name not in {"database", "data_tools"}:
+            route_name = "database"
+        tool_name = routing.get("tool") if route_name == "data_tools" else None
+        if route_name == "data_tools" and tool_name not in {
+            "null_values",
+            "outliers",
+            "select_star",
+        }:
+            tool_name = "select_star"
+        routing_reason = str(routing.get("reason") or "")
+
+        chart_intent = (
+            await chart_detector.detect_intent(request.question)
+            if route_name == "database"
+            else {"requested": False}
+        )
         chart_requested = bool(chart_intent.get("requested"))
         response_chart_intent = chart_intent if chart_requested else None
+
+        semantic_bypass_reasons = []
+        if _has_chat_context(history_context):
+            semantic_bypass_reasons.append("chat_history_context")
+        if route_name == "data_tools":
+            semantic_bypass_reasons.append("data_tools_route")
+        semantic_cache_bypassed = bool(semantic_bypass_reasons)
 
         semantic_hit = None
         if semantic_cache_bypassed:
             response.headers["X-Cache-QA-Semantic"] = "BYPASS"
-            response.headers["X-Cache-QA-Semantic-Reason"] = "chat_history_context"
+            response.headers["X-Cache-QA-Semantic-Reason"] = ",".join(semantic_bypass_reasons)
         else:
             semantic_probe = await semantic_qa_cache.probe_similar_answer(db_fp, request.question)
             if semantic_probe.best_similarity is not None:
@@ -878,8 +921,6 @@ async def ask(
             chart_image = None
             row_count = semantic_hit.row_count
             if chart_requested:
-                schema, schema_hit = await _get_cached_schema(db, db_fp)
-                dialect = await db.get_db_dialect()
                 chart_sql = await generator.generate_chart_query(
                     request.question,
                     chart_intent,
@@ -940,6 +981,9 @@ async def ask(
                 chart_data=chart_data,
                 chart_image=chart_image,
                 session_id=session_id,
+                route=route_name,
+                tool=tool_name,
+                routing_reason=routing_reason,
             )
 
         if not semantic_cache_bypassed:
@@ -947,136 +991,209 @@ async def ask(
             response.headers["X-Cache-QA-Semantic"] = "MISS"
         qa_semantic_status = "BYPASS" if semantic_cache_bypassed else "MISS"
 
-        schema, schema_hit = await _get_cached_schema(db, db_fp)
-        dialect = await db.get_db_dialect()
-
-        # sql_query, nl2sql_hit, question_signature = await _get_cached_sql_query(
-        #     request.question,
-        #     schema,
-        #     generator,
-        #     db_fp,
-        #     dialect,
-        #     history_context=history_context,
-        # )
-        #
-        # data, sql_results_hit = await _get_cached_query_results(db, sql_query, db_fp)
-        # row_count = len(data)
-
-        sql_query, data, row_count, nl2sql_hit = await _generate_and_execute_with_retry(
-            question=request.question,
-            schema=schema,
-            generator=generator,
-            db=db,
-            db_fp=db_fp,
-            dialect=dialect,
-            history_context=history_context,
-        )
-        question_signature = (
-                _question_signature(request.question)
-                or _normalize_question_text(request.question)
-        )
-        sql_results_hit = False  # retry vždy vykoná dotaz priamo
-
-        summary, summary_hit = await _get_cached_summary(
-            summarizer=summarizer,
-            sql_query=sql_query,
-            data=data,
-            context=request.question,
-            db_fp=db_fp,
-        )
-
-        response.headers["X-Cache-Schema"] = _cache_header_status(schema_hit)
-        response.headers["X-Cache-NL2SQL"] = _cache_header_status(nl2sql_hit)
-        response.headers["X-Cache-SQL-Results"] = _cache_header_status(sql_results_hit)
-        response.headers["X-Cache-Summary"] = _cache_header_status(summary_hit)
-        response.headers["X-Cache-NL2SQL-Signature-Hash"] = _short_hash(question_signature)
-        response.headers["X-Cache-Trace"] = (
-            f"qa_semantic={qa_semantic_status};"
-            f"schema={_cache_header_status(schema_hit)};"
-            f"nl2sql={_cache_header_status(nl2sql_hit)};"
-            f"sql_results={_cache_header_status(sql_results_hit)};"
-            f"summary={_cache_header_status(summary_hit)}"
-        )
-
-        chart_data = None
-        chart_sql = None
-        chart_image = None
-        if chart_requested:
-            chart_sql = await generator.generate_chart_query(
-                request.question,
-                chart_intent,
-                schema,
-                dialect,
-                sql_query,
+        if route_name == "data_tools":
+            extraction_question = _data_tool_extraction_question(request.question, tool_name)
+            sql_query, data, row_count, nl2sql_hit = await _generate_and_execute_with_retry(
+                question=extraction_question,
+                schema=schema,
+                generator=generator,
+                db=db,
+                db_fp=db_fp,
+                dialect=dialect,
+                history_context=history_context,
             )
-            chart_data, chart_results_hit = await _get_cached_query_results(
-                db, chart_sql, db_fp
+            question_signature = (
+                _question_signature(extraction_question)
+                or _normalize_question_text(extraction_question)
             )
-            response.headers["X-Cache-Chart-Results"] = _cache_header_status(chart_results_hit)
+            sql_results_hit = False
+            tool_result = await run_data_tools(tool_name or "select_star", data)
+            summary = str(
+                tool_result.get("summary")
+                or f"Completed {tool_name or 'data_tools'} analysis."
+            )
+
+            response.headers["X-Cache-Schema"] = _cache_header_status(schema_hit)
+            response.headers["X-Cache-NL2SQL"] = _cache_header_status(nl2sql_hit)
+            response.headers["X-Cache-SQL-Results"] = _cache_header_status(sql_results_hit)
+            response.headers["X-Cache-Summary"] = "BYPASS"
+            response.headers["X-Cache-NL2SQL-Signature-Hash"] = _short_hash(question_signature)
+            response.headers["X-Data-Route"] = route_name
+            response.headers["X-Data-Tool"] = tool_name or ""
             response.headers["X-Cache-Trace"] = (
                 f"qa_semantic={qa_semantic_status};"
                 f"schema={_cache_header_status(schema_hit)};"
                 f"nl2sql={_cache_header_status(nl2sql_hit)};"
                 f"sql_results={_cache_header_status(sql_results_hit)};"
-                f"summary={_cache_header_status(summary_hit)};"
-                f"chart_results={_cache_header_status(chart_results_hit)}"
+                "summary=BYPASS;"
+                f"data_tool={tool_name or 'unknown'}"
             )
-            chart_image = _render_chart_data_uri(chart_data, response_chart_intent)
 
-        if session_id:
-            try:
-                await chat_history.add_message(
-                    session_id=session_id,
-                    role="user",
-                    content=request.question,
-                )
-                await chat_history.add_message(
-                    session_id=session_id,
-                    role="assistant",
-                    content=summary,
-                    sql_query=sql_query,
-                    row_count=row_count,
-                )
+            if session_id:
+                try:
+                    await chat_history.add_message(
+                        session_id=session_id,
+                        role="user",
+                        content=request.question,
+                    )
+                    await chat_history.add_message(
+                        session_id=session_id,
+                        role="assistant",
+                        content=summary,
+                        sql_query=sql_query,
+                        row_count=row_count,
+                    )
 
-                await _append_chat_cache(
-                    session_id=session_id,
-                    role="user",
-                    content=request.question,
-                )
-                await _append_chat_cache(
-                    session_id=session_id,
-                    role="assistant",
-                    content=summary,
-                    sql_query=sql_query,
-                    row_count=row_count,
-                )
-            except Exception as hist_err:
-                print(f"Warning: failed to save chat history: {hist_err}")
+                    await _append_chat_cache(
+                        session_id=session_id,
+                        role="user",
+                        content=request.question,
+                    )
+                    await _append_chat_cache(
+                        session_id=session_id,
+                        role="assistant",
+                        content=summary,
+                        sql_query=sql_query,
+                        row_count=row_count,
+                    )
+                except Exception as hist_err:
+                    print(f"Warning: failed to save chat history: {hist_err}")
 
-        if not semantic_cache_bypassed:
-            try:
-                await semantic_qa_cache.store_answer(
-                    db_fp=db_fp,
-                    question=request.question,
-                    sql_query=sql_query,
-                    summary=summary,
-                    row_count=row_count,
-                )
-            except Exception as cache_err:
-                print(f"Warning: semantic cache store failed: {cache_err}")
+            return AskResponse(
+                status="success",
+                question=request.question,
+                sql_query=sql_query,
+                summary=summary,
+                row_count=row_count,
+                chart_sql=None,
+                chart_intent=None,
+                chart_data=None,
+                chart_image=None,
+                session_id=session_id,
+                route=route_name,
+                tool=tool_name,
+                routing_reason=routing_reason,
+                tool_result=tool_result,
+            )
+        else:
+            sql_query, data, row_count, nl2sql_hit = await _generate_and_execute_with_retry(
+                question=request.question,
+                schema=schema,
+                generator=generator,
+                db=db,
+                db_fp=db_fp,
+                dialect=dialect,
+                history_context=history_context,
+            )
+            question_signature = (
+                    _question_signature(request.question)
+                    or _normalize_question_text(request.question)
+            )
+            sql_results_hit = False  # retry vždy vykoná dotaz priamo
 
-        return AskResponse(
-            status="success",
-            question=request.question,
-            sql_query=sql_query,
-            summary=summary,
-            row_count=row_count,
-            chart_sql=chart_sql,
-            chart_intent=response_chart_intent,
-            chart_data=chart_data,
-            chart_image=chart_image,
-            session_id=session_id,
-        )
+            summary, summary_hit = await _get_cached_summary(
+                summarizer=summarizer,
+                sql_query=sql_query,
+                data=data,
+                context=request.question,
+                db_fp=db_fp,
+            )
+
+            response.headers["X-Cache-Schema"] = _cache_header_status(schema_hit)
+            response.headers["X-Cache-NL2SQL"] = _cache_header_status(nl2sql_hit)
+            response.headers["X-Cache-SQL-Results"] = _cache_header_status(sql_results_hit)
+            response.headers["X-Cache-Summary"] = _cache_header_status(summary_hit)
+            response.headers["X-Cache-NL2SQL-Signature-Hash"] = _short_hash(question_signature)
+            response.headers["X-Cache-Trace"] = (
+                f"qa_semantic={qa_semantic_status};"
+                f"schema={_cache_header_status(schema_hit)};"
+                f"nl2sql={_cache_header_status(nl2sql_hit)};"
+                f"sql_results={_cache_header_status(sql_results_hit)};"
+                f"summary={_cache_header_status(summary_hit)}"
+            )
+
+            chart_data = None
+            chart_sql = None
+            chart_image = None
+            if chart_requested:
+                chart_sql = await generator.generate_chart_query(
+                    request.question,
+                    chart_intent,
+                    schema,
+                    dialect,
+                    sql_query,
+                )
+                chart_data, chart_results_hit = await _get_cached_query_results(
+                    db, chart_sql, db_fp
+                )
+                response.headers["X-Cache-Chart-Results"] = _cache_header_status(chart_results_hit)
+                response.headers["X-Cache-Trace"] = (
+                    f"qa_semantic={qa_semantic_status};"
+                    f"schema={_cache_header_status(schema_hit)};"
+                    f"nl2sql={_cache_header_status(nl2sql_hit)};"
+                    f"sql_results={_cache_header_status(sql_results_hit)};"
+                    f"summary={_cache_header_status(summary_hit)};"
+                    f"chart_results={_cache_header_status(chart_results_hit)}"
+                )
+                chart_image = _render_chart_data_uri(chart_data, response_chart_intent)
+
+            if session_id:
+                try:
+                    await chat_history.add_message(
+                        session_id=session_id,
+                        role="user",
+                        content=request.question,
+                    )
+                    await chat_history.add_message(
+                        session_id=session_id,
+                        role="assistant",
+                        content=summary,
+                        sql_query=sql_query,
+                        row_count=row_count,
+                    )
+
+                    await _append_chat_cache(
+                        session_id=session_id,
+                        role="user",
+                        content=request.question,
+                    )
+                    await _append_chat_cache(
+                        session_id=session_id,
+                        role="assistant",
+                        content=summary,
+                        sql_query=sql_query,
+                        row_count=row_count,
+                    )
+                except Exception as hist_err:
+                    print(f"Warning: failed to save chat history: {hist_err}")
+
+            if not semantic_cache_bypassed:
+                try:
+                    await semantic_qa_cache.store_answer(
+                        db_fp=db_fp,
+                        question=request.question,
+                        sql_query=sql_query,
+                        summary=summary,
+                        row_count=row_count,
+                    )
+                except Exception as cache_err:
+                    print(f"Warning: semantic cache store failed: {cache_err}")
+
+            return AskResponse(
+                status="success",
+                question=request.question,
+                sql_query=sql_query,
+                summary=summary,
+                row_count=row_count,
+                chart_sql=chart_sql,
+                chart_intent=response_chart_intent,
+                chart_data=chart_data,
+                chart_image=chart_image,
+                session_id=session_id,
+                route=route_name,
+                tool=tool_name,
+                routing_reason=routing_reason,
+            )
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

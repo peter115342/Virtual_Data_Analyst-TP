@@ -29,6 +29,24 @@ class FakeDbManager:
         return "postgresql"
 
 
+class FakeDatabaseRouter:
+    async def route(self, question, schema, context):
+        return {
+            "route": "database",
+            "tool": None,
+            "reason": "test database route",
+        }
+
+
+class FakeNullValuesRouter:
+    async def route(self, question, schema, context):
+        return {
+            "route": "data_tools",
+            "tool": "null_values",
+            "reason": "test null values route",
+        }
+
+
 class FakeCursor:
     def __init__(self, docs):
         self._docs = list(docs)
@@ -145,6 +163,7 @@ async def test_ask_success_with_history(client, monkeypatch):
 
     monkeypatch.setattr(routes, "get_db_manager", lambda: FakeDbManager())
     monkeypatch.setattr(routes, "QueryGenerator", FakeGenerator)
+    monkeypatch.setattr(routes, "QueryRouter", FakeDatabaseRouter)
     monkeypatch.setattr(routes, "ResponseSummarizer", FakeSummarizer)
     monkeypatch.setattr(routes.chat_history, "add_message", fake_add_message)
 
@@ -155,6 +174,7 @@ async def test_ask_success_with_history(client, monkeypatch):
     assert body["summary"] == "summary"
     assert body["row_count"] == 1
     assert body["session_id"] == "s-1"
+    assert body["route"] == "database"
     assert len(history_calls["messages"]) == 2
 
 
@@ -205,6 +225,7 @@ async def test_ask_returns_chart_image_when_chart_requested(client, monkeypatch)
 
     monkeypatch.setattr(routes, "get_db_manager", lambda: FakeDbManager(data=chart_rows))
     monkeypatch.setattr(routes, "QueryGenerator", FakeGenerator)
+    monkeypatch.setattr(routes, "QueryRouter", FakeDatabaseRouter)
     monkeypatch.setattr(routes, "ResponseSummarizer", FakeSummarizer)
     monkeypatch.setattr(routes, "ChartIntentDetector", FakeChartDetector)
 
@@ -216,7 +237,53 @@ async def test_ask_returns_chart_image_when_chart_requested(client, monkeypatch)
     assert body["chart_sql"] == "SELECT category, total FROM sales GROUP BY category"
     assert body["chart_data"] == chart_rows
     assert body["chart_image"].startswith("data:image/png;base64,")
+    assert body["route"] == "database"
     assert body["session_id"] == "session-1"
+
+
+@pytest.mark.asyncio
+async def test_ask_data_tools_runs_null_values_and_bypasses_semantic_cache(client, monkeypatch):
+    rows = [
+        {"id": 1, "name": "A", "price": 10},
+        {"id": 2, "name": None, "price": None},
+    ]
+
+    async def fake_generate_query(
+            _self, question, schema, dialect, chat_history_context,
+            previous_sql=None, sql_error=None, **kwargs
+    ):
+        assert question.startswith("Return raw rows and columns needed")
+        assert "Python tool: null_values" in question
+        assert "Original question: find missing values" in question
+        assert schema
+        assert dialect == "postgresql"
+        assert_empty_chat_context(chat_history_context)
+        return "SELECT id, name, price FROM table"
+
+    async def fail_semantic_probe(*_args, **_kwargs):
+        pytest.fail("semantic cache should be bypassed for data_tools route")
+
+    class FakeGenerator:
+        generate_query = fake_generate_query
+
+    monkeypatch.setattr(routes, "get_db_manager", lambda: FakeDbManager(data=rows))
+    monkeypatch.setattr(routes, "QueryGenerator", FakeGenerator)
+    monkeypatch.setattr(routes, "QueryRouter", FakeNullValuesRouter)
+    monkeypatch.setattr(routes.semantic_qa_cache, "probe_similar_answer", fail_semantic_probe)
+
+    response = await client.post("/api/ask", json={"question": "find missing values"})
+
+    assert response.status_code == 200
+    assert response.headers["X-Cache-QA-Semantic"] == "BYPASS"
+    assert response.headers["X-Cache-QA-Semantic-Reason"] == "data_tools_route"
+    body = response.json()
+    assert body["route"] == "data_tools"
+    assert body["tool"] == "null_values"
+    assert body["routing_reason"] == "test null values route"
+    assert body["sql_query"] == "SELECT id, name, price FROM table"
+    assert body["summary"] == "Found null values in 2 out of 3 columns."
+    assert body["tool_result"]["columns_with_nulls"] == 2
+    assert body["chart_data"] is None
 
 
 @pytest.mark.asyncio
@@ -271,6 +338,7 @@ async def test_ask_uses_chat_history_context_and_bypasses_semantic_cache(client,
     monkeypatch.setattr(routes.semantic_qa_cache, "probe_similar_answer", fail_semantic_probe)
     monkeypatch.setattr(routes.semantic_qa_cache, "store_answer", fail_semantic_store)
     monkeypatch.setattr(routes, "QueryGenerator", FakeGenerator)
+    monkeypatch.setattr(routes, "QueryRouter", FakeDatabaseRouter)
     monkeypatch.setattr(routes, "ResponseSummarizer", FakeSummarizer)
 
     response = await client.post(
