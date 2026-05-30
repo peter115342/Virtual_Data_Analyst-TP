@@ -6,6 +6,7 @@ def test_rule_based_routes_missing_values_to_null_tool():
 
     decision = router.rule_based("Show missing values in the data")
 
+    assert decision is not None
     assert decision["route"] == "data_tools"
     assert decision["tool"] == "null_values"
 
@@ -15,6 +16,7 @@ def test_rule_based_routes_outliers_to_outlier_tool():
 
     decision = router.rule_based("Find anomalies and outliers in price")
 
+    assert decision is not None
     assert decision["route"] == "data_tools"
     assert decision["tool"] == "outliers"
 
@@ -24,6 +26,7 @@ def test_rule_based_routes_profile_to_select_star_tool():
 
     decision = router.rule_based("Profile this table")
 
+    assert decision is not None
     assert decision["route"] == "data_tools"
     assert decision["tool"] == "select_star"
 
@@ -33,6 +36,7 @@ def test_rule_based_routes_normal_count_to_database():
 
     decision = router.rule_based("Count orders by customer")
 
+    assert decision is not None
     assert decision["route"] == "database"
     assert decision["tool"] is None
 

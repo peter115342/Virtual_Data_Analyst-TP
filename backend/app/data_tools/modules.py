@@ -151,12 +151,12 @@ def analyze_table(data: list[dict]) -> dict:
 
     df = pl.DataFrame(data)
     total_rows = len(df)
-    columns = []
+    columns: list[dict[str, Any]] = []
 
     for col in df.columns:
         series = df[col]
         null_count = int(series.null_count())
-        profile = {
+        profile: dict[str, Any] = {
             "column": col,
             "dtype": str(series.dtype),
             "null_count": null_count,
@@ -198,7 +198,7 @@ def _is_numeric(series: pl.Series) -> bool:
     return series.dtype in NUMERIC_DTYPES
 
 
-def _top_values(series: pl.Series) -> list[dict]:
+def _top_values(series: pl.Series) -> list[dict[str, Any]]:
     value_counts = series.value_counts(sort=True).head(5).to_dicts()
     value_column = series.name
 
