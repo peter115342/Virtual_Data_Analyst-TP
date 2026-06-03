@@ -7,6 +7,7 @@ import base64
 import hashlib
 import re
 import unicodedata
+from sqlalchemy.exc import OperationalError
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -1188,9 +1189,6 @@ async def connect_database(
 ):
     """
     Create connection to database
-
-    Returns:
-        - Status of database connection
     """
 
     valid_db_types = {"postgres", "mysql", "oracle", "sqlserver"}
@@ -1241,9 +1239,22 @@ async def connect_database(
             "session_id": session_id,
         }
 
+    # 1. ZACHYTENIE ZLÝCH ÚDAJOV ALEBO VYPNUTEJ DB
+    except OperationalError:
+        connection.db_manager = None
+        raise HTTPException(
+            status_code=400, 
+            detail="Failed to connect. Please check your credentials and ensure the database is running."
+        )
+    
+    # 2. ZACHYTENIE ÚPLNE VŠETKÝCH OSTATNÝCH CHÝB (tak, aby užívateľ nevidel heslo ani "dodo")
     except Exception as e:
         connection.db_manager = None
-        raise HTTPException(status_code=400, detail=f"Error connecting database: {str(e)}")
+        print(f"Backend hlási neočakávanú chybu: {e}") # Toto sa vypíše len tebe do terminálu
+        raise HTTPException(
+            status_code=400, 
+            detail="Failed to connect to the database. Please verify your configuration."
+        )
 
 
 class DisconnectRequest(BaseModel):
