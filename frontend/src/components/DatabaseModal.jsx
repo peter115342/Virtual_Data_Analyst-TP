@@ -20,20 +20,19 @@ export default function DatabaseModal({
   
   const [validationError, setValidationError] = useState("")
   
-  // PRIDANÉ: Pamätáme si, či sme už v tomto konkrétnom otvorení okna klikli na Connect
   const [hasSubmitted, setHasSubmitted] = useState(false) 
 
   const handleConnect = async () => {
     setHasSubmitted(true) // Zaznamenáme pokus o pripojenie
     setValidationError("") 
 
-    // 1. Ochrana pred prázdnymi poľami
+    // 1. empty fields
     if (!host || !port || !username || !password || !dbName) {
       setValidationError("All fields are required.")
       return
     }
 
-    // 2. Validácia portu
+    // 2. validation of port number
     if (!/^\d+$/.test(port)) {
       setValidationError("Port must contain only digits (0-9).")
       return
@@ -45,7 +44,7 @@ export default function DatabaseModal({
       return
     }
 
-    // 3. Validácia dĺžok
+    // 3. validation of max length
     if (host.length > 253) {
       setValidationError("Host can have a maximum of 253 characters.")
       return
@@ -63,11 +62,22 @@ export default function DatabaseModal({
       return
     }
 
-    // 4. Validácia povolených znakov
-    const validCharRegex = /^[a-zA-Z0-9.\-_]+$/;
-    if (!validCharRegex.test(host) || !validCharRegex.test(username) || !validCharRegex.test(dbName)) {
-      setValidationError("Host, username, or database name contain invalid characters (e.g., spaces).")
-      return
+    // 4. validation of allowed characters 
+    const hostRegex = /^[a-zA-Z0-9.\-_\[\]:]+$/;
+    const userRegex = /^[a-zA-Z0-9.\-_@]+$/;     
+    const dbNameRegex = /^[a-zA-Z0-9.\-_]+$/;
+
+    if (!hostRegex.test(host)) {
+      setValidationError("Host contains invalid characters.");
+      return;
+    }
+    if (!userRegex.test(username)) {
+      setValidationError("Username contains invalid characters.");
+      return;
+    }
+    if (!dbNameRegex.test(dbName)) {
+      setValidationError("Database name contains invalid characters.");
+      return;
     }
 
     try {
@@ -147,7 +157,6 @@ export default function DatabaseModal({
           <InputDatabase value={password} onChange={setPassword} placeholder="Password" type="password" />
           <InputDatabase value={dbName} onChange={setDbName} placeholder="Database Name" />
 
-          {/* OPRAVENÉ: Backend error (červený text) sa ukáže, až keď sa v tomto okne reálne klikne na Connect */}
           {(validationError || (hasSubmitted && error)) && (
             <p className="text-red-400 text-sm text-center">
               {validationError || error}
