@@ -2,11 +2,12 @@ version: '3.8'
 
 services:
   frontend:
+    image: ${FRONTEND_IMAGE:-virtual-data-analyst-frontend}:${IMAGE_TAG:-prod}
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: ""
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
         VITE_AZURE_AD_CLIENT_ID: ${AZURE_AD_CLIENT_ID:-}
         VITE_AZURE_AD_TENANT_ID: ${AZURE_AD_TENANT_ID:-}
         VITE_AZURE_AD_AUTHORITY: ${AZURE_AD_AUTHORITY:-}
@@ -20,6 +21,7 @@ services:
     restart: unless-stopped
 
   backend:
+    image: ${BACKEND_IMAGE:-virtual-data-analyst-backend}:${IMAGE_TAG:-prod}
     build:
       context: ./backend
       dockerfile: Dockerfile
