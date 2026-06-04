@@ -35,7 +35,9 @@ export default function InputUser({ onSend }) {
   }
 
   const handleSend = () => {
-    if (text.trim() === "") return;
+    // PRIDANÉ: Ochrana proti odoslaniu prázdnej správy ALEBO správy nad 500 znakov
+    if (text.trim() === "" || text.length > 500) return;
+    
     onSend(text);
     setText(""); 
     setTimeout(() => handleInput(), 0);
@@ -78,9 +80,9 @@ export default function InputUser({ onSend }) {
         "
         value={text}
         onChange={(e) => setText(e.target.value)}
+        maxLength={500} // PRIDANÉ: HTML limit pre maximálny počet znakov
       />
       <ButtonSend onClick={handleSend}/>
     </div>
   )
 }
-

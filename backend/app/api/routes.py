@@ -10,8 +10,9 @@ import unicodedata
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 
 from app.auth.entra import validate_token
 from app.cache import redis_client, semantic_qa_cache
@@ -656,6 +657,60 @@ class DatabaseConnectRequest(BaseModel):
     db_name: str
     user_id: str | None = None
 
+    @field_validator("host")
+    @classmethod
+    def validate_host(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Host cannot be empty")
+        # povolené: hostname, IPv4, IPv6 — bez medzier a špeciálnych znakov
+        if not re.match(r'^[a-zA-Z0-9.\-_\[\]:]+$', v):
+            raise ValueError("Host contains invalid characters")
+        if len(v) > 253:
+            raise ValueError("Host is too long")
+        return v
+
+    @field_validator("port")
+    @classmethod
+    def validate_port(cls, v: int) -> int:
+        if not (1 <= v <= 65535):
+            raise ValueError("Port must be between 1 and 65535")
+        return v
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Username cannot be empty")
+        if len(v) > 128:
+            raise ValueError("Username is too long")
+        # povolené znaky pre DB username
+        if not re.match(r'^[a-zA-Z0-9_\-\.@]+$', v):
+            raise ValueError("Username contains invalid characters")
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if not v:
+            raise ValueError("Password cannot be empty")
+        if len(v) > 256:
+            raise ValueError("Password is too long")
+        return v
+
+    @field_validator("db_name")
+    @classmethod
+    def validate_db_name(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Database name cannot be empty")
+        if len(v) > 128:
+            raise ValueError("Database name is too long")
+        if not re.match(r'^[a-zA-Z0-9_\-\.]+$', v):
+            raise ValueError("Database name contains invalid characters")
+        return v
+
 
 def _empty_chat_context() -> dict[str, str]:
     return {
@@ -1251,9 +1306,6 @@ async def connect_database(
 ):
     """
     Create connection to database
-
-    Returns:
-        - Status of database connection
     """
 
     valid_db_types = {"postgres", "mysql", "oracle", "sqlserver"}
@@ -1304,9 +1356,25 @@ async def connect_database(
             "session_id": session_id,
         }
 
+    # 1. ZACHYTENIE ZLÝCH ÚDAJOV ALEBO VYPNUTEJ DB
+    except OperationalError:
+        connection.db_manager = None
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Failed to connect. Please check your credentials and ensure the "
+                "database is running."
+            ),
+        )
+
+    # 2. ZACHYTENIE ÚPLNE VŠETKÝCH OSTATNÝCH CHÝB (tak, aby užívateľ nevidel heslo ani "dodo")
     except Exception as e:
         connection.db_manager = None
-        raise HTTPException(status_code=400, detail=f"Error connecting database: {str(e)}")
+        print(f"Backend hlási neočakávanú chybu: {e}") # Toto sa vypíše len tebe do terminálu
+        raise HTTPException(
+            status_code=400,
+            detail="Failed to connect to the database. Please verify your configuration."
+        )
 
 
 class DisconnectRequest(BaseModel):

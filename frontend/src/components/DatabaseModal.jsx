@@ -17,8 +17,69 @@ export default function DatabaseModal({
   const [password, setPassword] = useState("")
   const [dbName, setDbName] = useState(prefillData?.db_name || "")
   const [dbType, setDbType] = useState(prefillData?.db_type || "postgres")
+  
+  const [validationError, setValidationError] = useState("")
+  
+  const [hasSubmitted, setHasSubmitted] = useState(false) 
 
   const handleConnect = async () => {
+    setHasSubmitted(true) // Zaznamenáme pokus o pripojenie
+    setValidationError("") 
+
+    // 1. empty fields
+    if (!host || !port || !username || !password || !dbName) {
+      setValidationError("All fields are required.")
+      return
+    }
+
+    // 2. validation of port number
+    if (!/^\d+$/.test(port)) {
+      setValidationError("Port must contain only digits (0-9).")
+      return
+    }
+
+    const portNum = Number(port)
+    if (portNum < 1 || portNum > 65535) {
+      setValidationError("Port must be between 1 and 65535.")
+      return
+    }
+
+    // 3. validation of max length
+    if (host.length > 253) {
+      setValidationError("Host can have a maximum of 253 characters.")
+      return
+    }
+    if (username.length > 128) {
+      setValidationError("Username can have a maximum of 128 characters.")
+      return
+    }
+    if (password.length > 256) {
+      setValidationError("Password can have a maximum of 256 characters.")
+      return
+    }
+    if (dbName.length > 128) {
+      setValidationError("Database name can have a maximum of 128 characters.")
+      return
+    }
+
+    // 4. validation of allowed characters 
+    const hostRegex = /^[a-zA-Z0-9.\-_[\]:]+$/;
+    const userRegex = /^[a-zA-Z0-9.\-_@]+$/;     
+    const dbNameRegex = /^[a-zA-Z0-9.\-_]+$/;
+
+    if (!hostRegex.test(host)) {
+      setValidationError("Host contains invalid characters.");
+      return;
+    }
+    if (!userRegex.test(username)) {
+      setValidationError("Username contains invalid characters.");
+      return;
+    }
+    if (!dbNameRegex.test(dbName)) {
+      setValidationError("Database name contains invalid characters.");
+      return;
+    }
+
     try {
       const result = await connect({
         db_type: dbType,
@@ -96,8 +157,10 @@ export default function DatabaseModal({
           <InputDatabase value={password} onChange={setPassword} placeholder="Password" type="password" />
           <InputDatabase value={dbName} onChange={setDbName} placeholder="Database Name" />
 
-          {error && (
-            <p className="text-red-400 text-sm">{error}</p>
+          {(validationError || (hasSubmitted && error)) && (
+            <p className="text-red-400 text-sm text-center">
+              {validationError || error}
+            </p>
           )}
 
           <button
