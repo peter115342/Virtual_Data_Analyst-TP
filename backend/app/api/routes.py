@@ -7,12 +7,12 @@ import base64
 import hashlib
 import re
 import unicodedata
-from sqlalchemy.exc import OperationalError
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, field_validator
 from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 
 from app.auth.entra import validate_token
 from app.cache import redis_client, semantic_qa_cache
@@ -1243,16 +1243,19 @@ async def connect_database(
     except OperationalError:
         connection.db_manager = None
         raise HTTPException(
-            status_code=400, 
-            detail="Failed to connect. Please check your credentials and ensure the database is running."
+            status_code=400,
+            detail=(
+                "Failed to connect. Please check your credentials and ensure the "
+                "database is running."
+            ),
         )
-    
+
     # 2. ZACHYTENIE ÚPLNE VŠETKÝCH OSTATNÝCH CHÝB (tak, aby užívateľ nevidel heslo ani "dodo")
     except Exception as e:
         connection.db_manager = None
         print(f"Backend hlási neočakávanú chybu: {e}") # Toto sa vypíše len tebe do terminálu
         raise HTTPException(
-            status_code=400, 
+            status_code=400,
             detail="Failed to connect to the database. Please verify your configuration."
         )
 

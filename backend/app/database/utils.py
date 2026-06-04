@@ -2,6 +2,7 @@
 
 from urllib.parse import quote_plus
 
+
 def build_db_connection_url(
     type: str,
     username: str,
