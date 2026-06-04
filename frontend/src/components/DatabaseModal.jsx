@@ -63,7 +63,7 @@ export default function DatabaseModal({
     }
 
     // 4. validation of allowed characters 
-    const hostRegex = /^[a-zA-Z0-9.\-_\[\]:]+$/;
+    const hostRegex = /^[a-zA-Z0-9.\-_[\]:]+$/;
     const userRegex = /^[a-zA-Z0-9.\-_@]+$/;     
     const dbNameRegex = /^[a-zA-Z0-9.\-_]+$/;
 
