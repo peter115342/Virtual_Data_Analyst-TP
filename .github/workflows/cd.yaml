@@ -1,0 +1,275 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  backend:
+    name: Backend checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Install backend dependencies
+        run: uv sync --extra dev --locked
+
+      - name: Ruff lint
+        run: uv run ruff check . --output-format=github
+
+      - name: ty type check
+        run: uvx --from ty==0.0.34 ty check --python .venv --output-format github app tests main.py
+
+      - name: Bandit security lint
+        run: uvx --from bandit==1.9.4 bandit -r app --skip B608
+
+      - name: Run backend tests
+        run: uv run pytest tests
+
+  frontend:
+    name: Frontend lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Run frontend tests
+        run: npm test
+
+  build-and-push:
+    name: Build and push Docker images
+    runs-on: ubuntu-latest
+    needs:
+      - backend
+      - frontend
+    outputs:
+      backend_image: ${{ steps.images.outputs.backend }}
+      frontend_image: ${{ steps.images.outputs.frontend }}
+      image_tag: ${{ steps.images.outputs.tag }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Resolve image names
+        id: images
+        run: |
+          repo="${GITHUB_REPOSITORY,,}"
+          echo "backend=ghcr.io/${repo}-backend" >> "$GITHUB_OUTPUT"
+          echo "frontend=ghcr.io/${repo}-frontend" >> "$GITHUB_OUTPUT"
+          echo "tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push backend image
+        env:
+          BACKEND_IMAGE: ${{ steps.images.outputs.backend }}
+          IMAGE_TAG: ${{ steps.images.outputs.tag }}
+        run: |
+          docker build \
+            --tag "$BACKEND_IMAGE:$IMAGE_TAG" \
+            --tag "$BACKEND_IMAGE:latest" \
+            ./backend
+          docker push "$BACKEND_IMAGE:$IMAGE_TAG"
+          docker push "$BACKEND_IMAGE:latest"
+
+      - name: Build and push frontend image
+        env:
+          FRONTEND_IMAGE: ${{ steps.images.outputs.frontend }}
+          IMAGE_TAG: ${{ steps.images.outputs.tag }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          AZURE_AD_CLIENT_ID: ${{ secrets.AZURE_AD_CLIENT_ID }}
+          AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+          AZURE_AD_AUTHORITY: ${{ secrets.AZURE_AD_AUTHORITY }}
+          AZURE_AD_API_SCOPE: ${{ secrets.AZURE_AD_API_SCOPE }}
+          AZURE_AD_TOKEN_MODE: ${{ secrets.AZURE_AD_TOKEN_MODE }}
+        run: |
+          docker build \
+            --build-arg VITE_API_BASE_URL="${VITE_API_BASE_URL:-}" \
+            --build-arg VITE_AZURE_AD_CLIENT_ID="${AZURE_AD_CLIENT_ID:-}" \
+            --build-arg VITE_AZURE_AD_TENANT_ID="${AZURE_AD_TENANT_ID:-}" \
+            --build-arg VITE_AZURE_AD_AUTHORITY="${AZURE_AD_AUTHORITY:-}" \
+            --build-arg VITE_AZURE_AD_API_SCOPE="${AZURE_AD_API_SCOPE:-}" \
+            --build-arg VITE_AZURE_AD_TOKEN_MODE="${AZURE_AD_TOKEN_MODE:-access_token}" \
+            --tag "$FRONTEND_IMAGE:$IMAGE_TAG" \
+            --tag "$FRONTEND_IMAGE:latest" \
+            ./frontend
+          docker push "$FRONTEND_IMAGE:$IMAGE_TAG"
+          docker push "$FRONTEND_IMAGE:latest"
+
+  deploy:
+    name: Deploy to Azure VM
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate deployment secrets
+        env:
+          AZURE_VM_HOST: ${{ secrets.AZURE_VM_HOST }}
+          AZURE_VM_USER: ${{ secrets.AZURE_VM_USER }}
+          AZURE_VM_SSH_KEY: ${{ secrets.AZURE_VM_SSH_KEY }}
+          PROD_ENV_FILE: ${{ secrets.PROD_ENV_FILE }}
+        run: |
+          missing=0
+          for name in AZURE_VM_HOST AZURE_VM_USER AZURE_VM_SSH_KEY PROD_ENV_FILE; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing required secret: $name"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Configure SSH
+        env:
+          AZURE_VM_HOST: ${{ secrets.AZURE_VM_HOST }}
+          AZURE_VM_PORT: ${{ secrets.AZURE_VM_PORT }}
+          AZURE_VM_SSH_KEY: ${{ secrets.AZURE_VM_SSH_KEY }}
+          AZURE_VM_KNOWN_HOSTS: ${{ secrets.AZURE_VM_KNOWN_HOSTS }}
+        run: |
+          ssh_port="${AZURE_VM_PORT:-22}"
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$AZURE_VM_SSH_KEY" > "$HOME/.ssh/azure_vm_key"
+          chmod 600 "$HOME/.ssh/azure_vm_key"
+
+          if [ -n "$AZURE_VM_KNOWN_HOSTS" ]; then
+            printf '%s\n' "$AZURE_VM_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          else
+            ssh-keyscan -p "$ssh_port" -H "$AZURE_VM_HOST" >> "$HOME/.ssh/known_hosts"
+          fi
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Upload deployment files
+        env:
+          AZURE_VM_HOST: ${{ secrets.AZURE_VM_HOST }}
+          AZURE_VM_USER: ${{ secrets.AZURE_VM_USER }}
+          AZURE_VM_PORT: ${{ secrets.AZURE_VM_PORT }}
+          AZURE_VM_DEPLOY_DIR: ${{ secrets.AZURE_VM_DEPLOY_DIR }}
+          PROD_ENV_FILE: ${{ secrets.PROD_ENV_FILE }}
+        run: |
+          ssh_port="${AZURE_VM_PORT:-22}"
+          deploy_dir="${AZURE_VM_DEPLOY_DIR:-virtual-data-analyst}"
+          temp_env_file="$(mktemp)"
+          trap 'rm -f "$temp_env_file"' EXIT
+
+          printf '%s\n' "$PROD_ENV_FILE" > "$temp_env_file"
+          ssh -i "$HOME/.ssh/azure_vm_key" -p "$ssh_port" "$AZURE_VM_USER@$AZURE_VM_HOST" "mkdir -p '$deploy_dir'"
+          scp -i "$HOME/.ssh/azure_vm_key" -P "$ssh_port" docker-compose.prod.yml "$AZURE_VM_USER@$AZURE_VM_HOST:$deploy_dir/docker-compose.prod.yml"
+          scp -i "$HOME/.ssh/azure_vm_key" -P "$ssh_port" "$temp_env_file" "$AZURE_VM_USER@$AZURE_VM_HOST:$deploy_dir/.env.prod"
+          ssh -i "$HOME/.ssh/azure_vm_key" -p "$ssh_port" "$AZURE_VM_USER@$AZURE_VM_HOST" "chmod 600 '$deploy_dir/.env.prod'"
+
+      - name: Pull and restart containers
+        env:
+          AZURE_VM_HOST: ${{ secrets.AZURE_VM_HOST }}
+          AZURE_VM_USER: ${{ secrets.AZURE_VM_USER }}
+          AZURE_VM_PORT: ${{ secrets.AZURE_VM_PORT }}
+          AZURE_VM_DEPLOY_DIR: ${{ secrets.AZURE_VM_DEPLOY_DIR }}
+          BACKEND_IMAGE: ${{ needs.build-and-push.outputs.backend_image }}
+          FRONTEND_IMAGE: ${{ needs.build-and-push.outputs.frontend_image }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          ssh_port="${AZURE_VM_PORT:-22}"
+          deploy_dir="${AZURE_VM_DEPLOY_DIR:-virtual-data-analyst}"
+
+          ssh -i "$HOME/.ssh/azure_vm_key" -p "$ssh_port" "$AZURE_VM_USER@$AZURE_VM_HOST" \
+            "DEPLOY_DIR='$deploy_dir' BACKEND_IMAGE='$BACKEND_IMAGE' FRONTEND_IMAGE='$FRONTEND_IMAGE' IMAGE_TAG='$IMAGE_TAG' GHCR_USERNAME='$GHCR_USERNAME' GHCR_TOKEN='$GHCR_TOKEN' bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          cd "$DEPLOY_DIR"
+
+          if docker info >/dev/null 2>&1; then
+            DOCKER=(docker)
+          elif sudo -n docker info >/dev/null 2>&1; then
+            DOCKER=(sudo docker)
+          else
+            echo "Docker is not available to this SSH user."
+            exit 1
+          fi
+
+          if "${DOCKER[@]}" compose version >/dev/null 2>&1; then
+            COMPOSE=("${DOCKER[@]}" compose)
+          elif command -v docker-compose >/dev/null 2>&1; then
+            COMPOSE=(docker-compose)
+          else
+            echo "Docker Compose is not installed on the VM."
+            exit 1
+          fi
+
+          cat > .env.deploy <<EOF
+          BACKEND_IMAGE=$BACKEND_IMAGE
+          FRONTEND_IMAGE=$FRONTEND_IMAGE
+          IMAGE_TAG=$IMAGE_TAG
+          EOF
+
+          printf '%s' "$GHCR_TOKEN" | "${DOCKER[@]}" login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+          trap '"${DOCKER[@]}" logout ghcr.io >/dev/null 2>&1 || true' EXIT
+
+          "${COMPOSE[@]}" --env-file .env.deploy -f docker-compose.prod.yml pull
+          "${COMPOSE[@]}" --env-file .env.deploy -f docker-compose.prod.yml up -d --no-build --remove-orphans
+
+          if command -v curl >/dev/null 2>&1; then
+            for _ in $(seq 1 20); do
+              if curl -fsS http://localhost/health >/dev/null; then
+                "${COMPOSE[@]}" --env-file .env.deploy -f docker-compose.prod.yml ps
+                "${DOCKER[@]}" image prune -f
+                exit 0
+              fi
+              sleep 3
+            done
+
+            "${COMPOSE[@]}" --env-file .env.deploy -f docker-compose.prod.yml logs --tail=100 backend frontend
+            exit 1
+          fi
+
+          "${COMPOSE[@]}" --env-file .env.deploy -f docker-compose.prod.yml ps
+          "${DOCKER[@]}" image prune -f
+          REMOTE
